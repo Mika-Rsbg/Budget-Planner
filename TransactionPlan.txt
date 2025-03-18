@@ -1,0 +1,13 @@
+TransactionID
+UserID
+Account #######
+Date
+AmountType
+Amount
+Purpose
+CounterpartyID #######
+CounterpartyName #######
+CategoryID #######
+CategoryName
+UserComments
+DispalyedName
