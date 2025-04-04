@@ -1,7 +1,9 @@
 from utils.manuel_adding.utils_addtransaction import TransactionApp
+from utils.utils_createdatabase import create_database
 
 
 def main():
+    create_database()
     app = TransactionApp()
     app.mainloop()
 

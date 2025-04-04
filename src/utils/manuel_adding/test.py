@@ -130,10 +130,6 @@ class TransactionApp(tk.Tk):
         self.btn_save.grid(row=10, column=0, columnspan=2, padx=5, pady=10)
         self.btn_save.bind("<Return>",
                            self.save_transaction)
-        # Neue Zeile: Abbrechen-Button (zum Formular leeren)
-        self.btn_cancel = ttk.Button(form_frame, text="Abbrechen",
-                                     command=self.clear_form)
-        self.btn_cancel.grid(row=11, column=0, columnspan=2, padx=5, pady=10)
 
         # Rechte Seite: Treeview in einem LabelFrame, mit Transaktionen
         list_frame = ttk.LabelFrame(self, text="Transaktionen")
@@ -167,10 +163,6 @@ class TransactionApp(tk.Tk):
         self.btn_load_mt940 = ttk.Button(list_frame, text="Load MT940",
                                          command=self.load_mt940)
         self.btn_load_mt940.grid(row=1, column=0, columnspan=2, pady=5)
-        # Neuer Button: Reload Treeview
-        self.btn_reload = ttk.Button(list_frame, text="Reload Treeview",
-                                     command=self.load_transactions)
-        self.btn_reload.grid(row=2, column=0, columnspan=2, pady=5)
 
         # Doppelklick-Event: Details in Formular laden
         self.tree.bind("<Double-1>", self.on_treeview_double_click)
@@ -422,19 +414,16 @@ class TransactionApp(tk.Tk):
             self.tree.delete(item)
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # Query angepasst: LEFT JOIN statt JOIN für tbl_Counterparty
+        # Abfrage mit JOIN, um den Kategorienamen und Counterparty abzurufen
         cursor.execute(
-            'SELECT t.i8_TransactionID, t.i8_Date, t.real_Amount, t.str_Purpose, '
-            'c.str_CategoryName, cp.str_CounterpartyName '
+            'SELECT t.i8_TransactionID, t.i8_Date, t.real_Amount, '
+            't.str_Purpose, c.str_CategoryName, cp.str_CounterpartyName '
             'FROM tbl_Transaction t '
             'JOIN tbl_Category c ON t.i8_CategoryID = c.i8_CategoryID '
-            'LEFT JOIN tbl_Counterparty cp ON t.i8_CounterpartyID = cp.i8_CounterpartyID'
+            'JOIN tbl_Counterparty cp ON t.i8_CounterpartyID = cp.i8_CounterpartyID'
         )
         for row in cursor.fetchall():
             trans_id, date, amount, purpose, category, counterparty = row
-            # Falls kein Counterparty-Name vorhanden ist, setze leeren String
-            if counterparty is None:
-                counterparty = ""
             self.tree.insert("", "end", iid=trans_id,
                              values=(date, amount, purpose, category, counterparty))
         conn.close()
@@ -509,7 +498,6 @@ class TransactionApp(tk.Tk):
 
     def load_mt940(self):
         load_file()  # Ruft die MT940-Lade-Funktion aus utils_mt940_loader.py auf
-        self.load_transactions()  # Treeview nach MT940-Import neu laden
 
 
 if __name__ == "__main__":

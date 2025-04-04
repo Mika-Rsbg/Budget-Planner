@@ -41,6 +41,11 @@ def create_database():
             i8_UserID INTEGER DEFAULT 1
             );
         ''')
+        cursor.execute('''
+            INSERT INTO tbl_Category (str_CategoryName)
+            SELECT 'Sonstiges'
+            WHERE NOT EXISTS (SELECT 1 FROM tbl_Category);
+        ''')
         conn.commit()
 
     def create_counterparty_table():
