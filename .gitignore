@@ -164,3 +164,4 @@ temp/
 *nogithub*
 # Database files
 *.db
+.vscode
