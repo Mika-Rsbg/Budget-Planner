@@ -1,12 +1,13 @@
 from pathlib import Path
 import sqlite3
+import config
 
 
-def create_database():
+def create_database(path: Path = None) -> None:
     # Database location
     base_dir = Path(__file__).resolve().parent.parent.parent.parent
-    print(base_dir)
     db_location = base_dir / 'data' / 'database.db'
+    db_location = config.Database.PATH if path is None else path
     # Create the directory if it doesn't exist
     db_location.parent.mkdir(parents=True, exist_ok=True)
     # Connect to the database
@@ -84,4 +85,5 @@ def create_database():
 
 
 if __name__ == '__main__':
-    create_database()
+    create_database(Path(__file__).resolve().parent.parent.parent.parent
+                    / 'data' / 'database.db')
