@@ -1,14 +1,16 @@
 import sqlite3
 from pathlib import Path
+import config
 
 
-def get_accounts(db_location: Path,
-                 selected_columns: list[bool] = [True, True, True, True, True]
-                 ) -> list[tuple]:
+def get_account_data(db_location: Path = config.Database.PATH,
+                     selected_columns: list[bool] = [True, True, True,
+                                                     True, True]
+                     ) -> list[tuple]:
     """
     Retrieves account data from the database.
     Args:
-        db_location (Path): Path to the SQLite database file.
+        db_location (Path): Path to the SQLite database file. Def
         selected_columns (list[bool]): List of booleans indicating which
                                        columns to select.
                                        [AccountID, AccountName, AccountNumber,
@@ -32,16 +34,6 @@ def get_accounts(db_location: Path,
     return account_data
 
 
-# Pfad zum aktuellen Skript
-current_path = Path(__file__).resolve()
-
-# Elternverzeichnis (übergeordneter Ordner von "src")
-parent_directory = current_path.parent.parent.parent.parent
-
-# Ordner, der sich auf derselben Ebene wie "src" befindet
-sibling_folder = parent_directory / "data"
-
-# Datei innerhalb des Zielordners
-file_path = sibling_folder / "database.db"
-
-print(get_accounts(file_path, [True, True, True, True, True]))
+if __name__ == '__main__':
+    print(get_account_data(config.Database.PATH, [False, True, False,
+                                                  False, False]))
