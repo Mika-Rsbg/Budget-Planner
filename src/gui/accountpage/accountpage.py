@@ -112,6 +112,23 @@ class AccountPage(BaseToplevelWindow):
         name_selected_account = self.account_selection_combobox.get()
         self.selected_account_id = self.account_data_dict.get(name_selected_account)
 
+        def filter_list(e):
+            if e[0] == self.selected_account_id:
+                return True
+            else:
+                return False
+        data = db_utils.get_account_data()
+        data = list(filter(filter_list, data))
+        print(data)
+        self.account_name_entry.delete(0, "end")
+        self.account_number_entry.delete(0, "end")
+        self.account_balance_entry.delete(0, "end")
+        self.account_difference_entry.delete(0, "end")
+        self.account_name_entry.insert(0, data[0][1])
+        self.account_number_entry.insert(0, data[0][2])
+        self.account_balance_entry.insert(0, data[0][3])
+        self.account_difference_entry.insert(0, data[0][4])
+
     # ============= Button Callback Methods =============
     def cancel_action(self):
         self.destroy()
