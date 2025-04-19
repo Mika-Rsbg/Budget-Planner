@@ -50,14 +50,15 @@ class BaseWindow(tk.Tk):
 
     def init_ui(self):
         """
-        Methode zum Aufbau der Benutzeroberfläche.
-        Diese Methode sollte in abgeleiteten Klassen überschrieben werden.
+        Methode to initialize the user interface.
+        This method needs to be overridden in subclasses.
+        It is called after the main frame and status bar have been set up.
         """
         raise NotImplementedError("init_ui() muss in Unterklassen"
                                   " überschrieben werden.")
 
     def show_message(self, message):
-        """Hilfsmethode zur Ausgabe von einfachen Meldungen."""
+        """Helpmethod to display a message in a popup window."""
         popup = tk.Toplevel(self)
         popup.title("Nachricht")
 
@@ -71,5 +72,13 @@ class BaseWindow(tk.Tk):
         popup.transient(self)  # bleibt im Vordergrund
 
     def run(self):
-        """Startet die tkinter-Hauptschleife."""
+        """Starts the main loop of the application."""
         self.mainloop()
+
+    def reload(self) -> None:
+        """
+        Destroys all widgets in the main frame and reinitializes the UI.
+        """
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+        self.init_ui()
