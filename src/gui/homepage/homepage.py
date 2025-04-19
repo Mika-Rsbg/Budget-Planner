@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from gui.basewindow import BaseWindow
 from utils.data.selection_utils import get_month_literal
+from utils.data.createdatabase_utils import create_database
+from utils.data.database_utils import get_account_data
 import locale
 
 
@@ -17,7 +19,7 @@ class Homepage(BaseWindow):
         """
         Erzeuge Widgets und Layout für die Homepage.
         """
-        # ============= Überschrift =============
+        # ============= Heanding =============
         self.heading_frame = ttk.Frame(self.main_frame, padding=10)
         # Da wir nun 5 Spalten haben, überdeckt die Überschrift alle
         self.heading_frame.grid(row=0, column=0, columnspan=5, sticky="nsew")
@@ -29,59 +31,59 @@ class Homepage(BaseWindow):
             padding=10
         )
         self.homepage_heading_label.grid(row=0, column=0, sticky="nsew")
-        # Optional: Monatsname setzen, falls du get_month_literal verwendest
         self.homepage_heading_label.config(text=get_month_literal())
 
         # ============= Budget Frame (Row 1, Column 0) =============
         # Fest definierte Größe wie bei den Konto-Widgets (200x150)
-        budget_frame = ttk.Frame(self.main_frame, padding=10, width=200,
-                                 height=150)
-        budget_frame.grid_propagate(False)
-        budget_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        self.budget_frame = tk.Frame(self.main_frame, width=80, height=150)
+        self.budget_frame.configure(padx=10, pady=10)
+        self.budget_frame.grid_propagate(False)
+        self.budget_frame.grid(row=1, column=0, columnspan=2, sticky="nsew",
+                               padx=5, pady=5)
         self.budget_label = tk.Label(
-            budget_frame,
+            self.budget_frame,
             text="0.00 €",
-            font=("Helvetica", 36),
-            width=20,
-            pady=20
+            font=("Helvetica", 28, "bold"),
+            # width=15,
+            pady=10
         )
         self.budget_label.pack(expand=True)
         self.set_budget(0.0)
 
+        # Holt aller Account-Daten in eine Liste
+        account_list = list(get_account_data())
+        print(account_list)
+
         # ============= Konto-Widgets (Row 1, Columns 1 - 4) =============
-        self.create_account_widget(
-            row=1, column=1,
-            account_name="Giro Konto",
-            current_value=-45.04,
-            difference_value=-14.43
-        )
-        self.create_account_widget(
-            row=1, column=2,
-            account_name="Sparbuch",
-            current_value=1293.50,
-            difference_value=362.50
-        )
-        self.create_account_widget(
-            row=1, column=3,
-            account_name="Tagesgeldkonto",
-            current_value=340.50,
-            difference_value=-14.43
-        )
-        self.create_account_widget(
-            row=1, column=4,
-            account_name="Bargeld",
-            current_value=265.63,
-            difference_value=-14.43
-        )
+        for idx, (i8_AccountID, str_AccountName, str_AccountNumber,
+                  real_AccountBalance,
+                  real_AccountDifference) in enumerate(account_list, start=1):
+            self.create_account_widget(
+                row=1, column=idx+1,
+                account_name=str_AccountName,
+                current_value=real_AccountBalance,
+                difference_value=real_AccountDifference
+            )
 
         # ============= Weiter-Button (Row 2) =============
         button = ttk.Button(self.main_frame, text="Weiter",
                             command=self.on_next)
         button.grid(row=2, column=0, columnspan=5, pady=20)
 
+        # ============= Database-Button (Row 3) =============
+        db_button = ttk.Button(self.main_frame, text="Datenbank",
+                               command=self.createdatabase)
+        db_button.grid(row=3, column=0, columnspan=5, pady=20)
+
         # Alle 5 Spalten gleichmäßig gewichten (für responsive Layout)
-        for i in range(5):
+        total_columns = 2 + len(account_list)
+        for i in range(total_columns):
             self.main_frame.columnconfigure(i, weight=1)
+
+        # Set columnspan for heading and buttons
+        self.heading_frame.grid_configure(columnspan=total_columns)
+        button.grid_configure(columnspan=total_columns)
+        db_button.grid_configure(columnspan=total_columns)
 
     def create_account_widget(self,
                               row: int,
@@ -187,6 +189,7 @@ class Homepage(BaseWindow):
             fg_color = "#990000"
 
         self.budget_label.config(bg=bg_color, fg=fg_color)
+        self.budget_frame.config(bg=bg_color)
 
     def on_next(self):
         self.set_budget(-25.6)
@@ -195,6 +198,9 @@ class Homepage(BaseWindow):
             current_value=-5200.00,
             difference_value=14.96
         )
+
+    def createdatabase(self):
+        create_database()
 
 
 if __name__ == '__main__':
