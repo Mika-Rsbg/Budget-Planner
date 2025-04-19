@@ -3,7 +3,7 @@ from pathlib import Path
 import config
 
 
-class DatabaseError(Exception):
+class DatabaseAccountError(Exception):
     """Allgemeine Ausnahmeklasse für Datenbankfehler."""
     pass
 
@@ -51,14 +51,14 @@ def delete_account(db_location: Path = config.Database.PATH,
         conn = sqlite3.connect(db_location)
         cursor = conn.cursor()
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error connecting to database: {e}")
+        raise DatabaseAccountError(f"Error connecting to database: {e}")
     try:
         cursor.execute('''DELETE FROM tbl_Account WHERE i8_AccountID = ?''',
                        (account_id,))
         conn.commit()
         print("Account deleted successfully.")
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error deleting account: {e}")
+        raise DatabaseAccountError(f"Error deleting account: {e}")
     cursor.close()
     conn.close()
 
@@ -104,14 +104,14 @@ def edit_account(db_location: Path = config.Database.PATH,
         conn = sqlite3.connect(db_location)
         cursor = conn.cursor()
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error connecting to database: {e}")
+        raise DatabaseAccountError(f"Error connecting to database: {e}")
 
     try:
         cursor.execute(query, parameters)
         conn.commit()
         print("Account edited successfully.")
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error editing account: {e}")
+        raise DatabaseAccountError(f"Error editing account: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -124,7 +124,7 @@ def create_account(db_location: Path = config.Database.PATH,
         conn = sqlite3.connect(db_location)
         cursor = conn.cursor()
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error connecting to database: {e}")
+        raise DatabaseAccountError(f"Error connecting to database: {e}")
 
     try:
         cursor.execute('''
@@ -135,7 +135,7 @@ def create_account(db_location: Path = config.Database.PATH,
         conn.commit()
         print("Account created successfully.")
     except sqlite3.Error as e:
-        raise DatabaseError(f"Error creating account: {e}")
+        raise DatabaseAccountError(f"Error creating account: {e}")
 
 
 if __name__ == '__main__':
