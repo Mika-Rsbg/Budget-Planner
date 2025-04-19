@@ -1,6 +1,8 @@
 # plugins/plugin_homepage_menu_about.py
 import tkinter as tk
 
+menu_id = 1000
+
 
 def add_to_menu(window, menu_bar):
     about_menu = tk.Menu(menu_bar, tearoff=0)

@@ -36,7 +36,6 @@ def load_plugins(plugin_type: str, plugin_scope: str):
                     print(f"Fehler beim Laden von Plugin {filename}: {e}")
 
     # Sortieren: zuerst "all", dann andere scopes, jeweils nach menu_id
-    sorted_plugins = sorted(
-        plugins, key=lambda item: (0 if item[0] == "all" else 1, item[1])
-    )
+    sorted_plugins = sorted(plugins, key=lambda item: item[1])
+
     return [mod for _, _, mod in sorted_plugins]
