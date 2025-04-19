@@ -39,19 +39,66 @@ def create_database(path: Path = None) -> None:
         ''')
         conn.commit()
 
-    def create_category_table():
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS tbl_Category (
-            i8_CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
-            str_CategoryName TEXT NOT NULL,
-            i8_UserID INTEGER DEFAULT 1
+    def create_category_table(cursor, conn):
+        create_budget_period_table(cursor, conn)
+
+        cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS tbl_Category (
+                i8_CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+                str_CategoryName TEXT UNIQUE NOT NULL,
+                real_Budget REAL DEFAULT 0.0,
+                i8_BudgetPeriodID INTEGER DEFAULT 3,
+                FOREIGN KEY (i8_BudgetPeriodID)
+                    REFERENCES tbl_BudgetPeriod(i8_BudgetPeriodID)
             );
-        ''')
-        cursor.execute('''
-            INSERT INTO tbl_Category (str_CategoryName)
-            SELECT 'Sonstiges'
-            WHERE NOT EXISTS (SELECT 1 FROM tbl_Category);
-        ''')
+            '''
+        )
+        conn.commit()
+
+        insert_initial_categories(cursor, conn)
+
+    def create_budget_period_table(cursor, conn):
+        cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS tbl_BudgetPeriod (
+                i8_BudgetPeriodID INTEGER PRIMARY KEY,
+                str_Name TEXT UNIQUE
+            );
+            '''
+        )
+        conn.commit()
+
+        insert_initial_budget_periods(cursor, conn)
+
+    def insert_initial_budget_periods(cursor, conn):
+        cursor.executemany(
+            '''
+            INSERT OR IGNORE INTO tbl_BudgetPeriod
+            (i8_BudgetPeriodID, str_Name)
+            VALUES (?, ?)
+            ''',
+            [
+                (1, 'daily'),
+                (2, 'weekly'),
+                (3, 'monthly'),
+                (4, 'yearly')
+            ]
+        )
+        conn.commit()
+
+    def insert_initial_categories(cursor, conn):
+        cursor.executemany(
+            '''
+            INSERT OR IGNORE INTO tbl_Category
+            (str_CategoryName, real_Budget, i8_BudgetPeriodID)
+            VALUES (?, ?, ?)
+            ''',
+            [
+                ('Sonstiges', 0.0, 3),
+                ('Spareinlagen', 100.0, 3)
+            ]
+        )
         conn.commit()
 
     def create_counterparty_table():
@@ -64,11 +111,11 @@ def create_database(path: Path = None) -> None:
         ''')
         conn.commit()
 
-    def create_account_table():
+    def create_account_table(cursor, conn):
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS tbl_Account (
             i8_AccountID INTEGER PRIMARY KEY AUTOINCREMENT,
-            str_AccountName TEXT NOT NULL,
+            str_AccountName TEXT UNIQUE NOT NULL,
             str_AccountNumber TEXT,
             real_AccountBalance REAL DEFAULT 0.0,
             real_AccountDifference REAL DEFAULT 0.0
@@ -76,12 +123,14 @@ def create_database(path: Path = None) -> None:
         ''')
         conn.commit()
 
-    # create_category_table()
+    create_category_table(cursor, conn)
     # create_counterparty_table()
-    create_account_table()
+    create_account_table(cursor, conn)
     # create_transactions_table()
 
     print(f'Datenbank wurde erstellt unter: {db_location}')
+    cursor.close()
+    conn.close()
 
 
 if __name__ == '__main__':
