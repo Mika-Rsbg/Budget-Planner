@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from gui.basetoplevelwindow import BaseToplevelWindow
-import utils.data.database_utils as db_utils
+import utils.data.database.account_utils as db_utils
 import utils.data.value_utils as value_utils
 
 
@@ -172,5 +172,5 @@ class AccountPage(BaseToplevelWindow):
         selected_account_id = self.account_data_dict.get(selected_account)
         try:
             db_utils.delete_account(account_id=selected_account_id)
-        except db_utils.DatabaseError as e:
+        except db_utils.DatabaseAccountError as e:
             self.show_message(f"Fehler: {e}")
