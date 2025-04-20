@@ -1,18 +1,29 @@
 import tkinter as tk
 from tkinter import ttk
 from gui.basetoplevelwindow import BaseToplevelWindow
-import utils.data.database.account_utils as db_utils
+import utils.data.database.account_utils as db_account_utils
 import utils.data.value_utils as value_utils
 
 
 class AccountPage(BaseToplevelWindow):
-    def __init__(self, parent, account_id: int = None) -> None:
+    def __init__(self, parent, account_selection_needed: bool = True) -> None:
+        """
+        Initialize the AccountPage window with optional account selection.
+
+        Args:
+            parent(tk.Tk): The parent window.
+            account_selection_needed (bool): Boolean indicating if account
+            selection is required.
+        """
         self.parent = parent
+        self.account_selection_needed = account_selection_needed
         super().__init__(parent, title="Budget Planner - Konto")
 
     def init_ui(self):
         """
-        Erzeuge Widgets und Layout für die Account Page.
+        Create and configure the user interface for the Account Page.
+        This includes widgets for account selection, account details,
+        and action buttons.
         """
         # ============= Heading =============
         self.heading_label = ttk.Label(
@@ -30,8 +41,11 @@ class AccountPage(BaseToplevelWindow):
             font=("Helvetica", 16),
             width=30
         )
-        self.account_data = [(0, "Bitte wählen...")]
-        self.account_data.extend(db_utils.get_account_data(
+        if self.account_selection_needed:
+            self.account_data = [(0, "Bitte wählen...")]
+        else:
+            self.account_data = [(0, "")]
+        self.account_data.extend(db_account_utils.get_account_data(
             selected_columns=[True, True, False, False, False]
         ))
         print(self.account_data)
@@ -91,7 +105,8 @@ class AccountPage(BaseToplevelWindow):
         buttons_frame = ttk.Frame(self.main_frame)
         buttons_frame.grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
 
-        self.cancel_button = ttk.Button(buttons_frame, text="Abbrechen",
+        self.cancel_button = ttk.Button(buttons_frame,
+                                        text="Abbrechen/Schließen",
                                         command=self.cancel_action)
         self.cancel_button.grid(row=0, column=0, padx=5, pady=5)
 
@@ -109,15 +124,24 @@ class AccountPage(BaseToplevelWindow):
 
     # ============= Account Selection Callback =============
     def on_account_selected(self, event=None):
+        """
+        Handle the event when an account is selected from the combobox.
+        Updates the account details fields with the selected account's data.
+
+        Args:
+            event (tk.Event, optional): The event object. Defaults to None.
+        """
         name_selected_account = self.account_selection_combobox.get()
-        self.selected_account_id = self.account_data_dict.get(name_selected_account)
+        self.selected_account_id = self.account_data_dict.get(
+            name_selected_account
+        )
 
         def filter_list(e):
             if e[0] == self.selected_account_id:
                 return True
             else:
                 return False
-        data = db_utils.get_account_data()
+        data = db_account_utils.get_account_data()
         data = list(filter(filter_list, data))
         print(data)
         self.account_name_entry.delete(0, "end")
@@ -131,12 +155,19 @@ class AccountPage(BaseToplevelWindow):
 
     # ============= Button Callback Methods =============
     def cancel_action(self):
+        """
+        Close the AccountPage window and reload the parent window.
+        """
         self.destroy()
         self.parent.reload()
 
     def save_action(self):
-        # Hier sollen die Änderungen in der Datenbank gespeichert werden.
-        account_id = self.account_selection_combobox.current()  # TODO: Ändern auf das Dict
+        """
+        Save the current account details to the database.
+        Validates input and saves the new account data.
+        """
+        account_name_temp = self.account_selection_combobox.current()
+        account_id = self.account_data_dict.get(account_name_temp)
         name = self.account_name_entry.get()
         number = self.account_number_entry.get()
         try:
@@ -147,12 +178,16 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und"
                               "Differenz eingeben.")
             return
-        # TODO: Füge hier den Code ein,
-        # um den Account in der Datenbank zu aktualisieren.
-        self.show_message("Speichern-Funktion ist noch"
-                          "nicht implementiert.")
+        db_account_utils.edit_account(
+            account_id=account_id,
+            new_values=[name, number, balance, difference]
+        )
 
     def new_action(self):
+        """
+        Create a new account using the entered details.
+        Validates input and calls the database utility to create the account.
+        """
         name = self.account_name_entry.get()
         number = self.account_number_entry.get()
         try:
@@ -166,7 +201,7 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und/oder"
                               "Differenz eingeben.")
 
-        db_utils.create_account(
+        db_account_utils.create_account(
             name=name,
             number=number,
             balance=balance,
@@ -174,7 +209,9 @@ class AccountPage(BaseToplevelWindow):
         )
 
     def reset_entrys(self):
-        # Resets the account selection and clears the entry fields.
+        """
+        Reset the account selection and clear all input fields.
+        """
         try:
             self.account_selection_combobox.current(0)
         except tk.TclError:
@@ -185,9 +222,13 @@ class AccountPage(BaseToplevelWindow):
         self.account_difference_entry.delete(0, tk.END)
 
     def delete_action(self):
+        """
+        Delete the currently selected account from the database.
+        Handles errors and displays appropriate messages if deletion fails.
+        """
         selected_account = self.account_selection_combobox.get()
         selected_account_id = self.account_data_dict.get(selected_account)
         try:
-            db_utils.delete_account(account_id=selected_account_id)
-        except db_utils.DatabaseAccountError as e:
+            db_account_utils.delete_account(account_id=selected_account_id)
+        except db_account_utils.DatabaseAccountError as e:
             self.show_message(f"Fehler: {e}")
