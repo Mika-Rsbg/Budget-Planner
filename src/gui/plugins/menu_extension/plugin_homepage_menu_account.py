@@ -9,37 +9,37 @@ def add_to_menu(window, menu_bar):
 
     # Konto hinzufügen
     account_menu.add_command(label="Konto hinzufügen", command=lambda:
-                             open_account_page(window, 0))
+                             open_account_page(window, False))
 
     # Konto bearbeiten
     account_menu.add_command(label="Konto bearbeiten", command=lambda:
-                             window.show_message("Konto wurde bearbeitet."))
+                             open_account_page(window, True))
 
     # Konto löschen
     account_menu.add_command(label="Konto löschen", command=lambda:
-                             window.show_message("Konto wurde gelöscht."))
+                             open_account_page(window, True))
 
     account_menu.add_separator()  # Noch eine Trennlinie
 
     # Transaktion hinzufügen
     account_menu.add_command(label="Transaktion hinzufügen", command=lambda:
                              window.show_message
-                             ("Transaktion wurde hinzugefügt."))
+                             ("Feature in Arbeit."))
 
     # Übersicht anzeigen
     account_menu.add_command(label="Kontenübersicht", command=lambda:
                              window.show_message
-                             ("Hier sind alle Konten aufgelistet."))
+                             ("Feature in Arbeit."))
 
     # Menü zur Menüleiste hinzufügen
     menu_bar.add_cascade(label="Konto", menu=account_menu)
 
 
-def open_account_page(window, opening_mode: int) -> None:
+def open_account_page(window, account_selection_needed: bool) -> None:
     """Open the account page.
 
     Args:
         window: parent window
-        opening_mode (int): 0 = add, 1 = edit, 2 = delete
+        account_selection_needed (bool)
     """
-    AccountPage(window)
+    AccountPage(window, account_selection_needed)
