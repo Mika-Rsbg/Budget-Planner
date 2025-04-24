@@ -201,7 +201,7 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und/oder"
                               "Differenz eingeben.")
 
-        db_account_utils.create_account(
+        db_account_utils.add_account(
             name=name,
             number=number,
             balance=balance,
@@ -230,5 +230,5 @@ class AccountPage(BaseToplevelWindow):
         selected_account_id = self.account_data_dict.get(selected_account)
         try:
             db_account_utils.delete_account(account_id=selected_account_id)
-        except db_account_utils.DatabaseAccountError as e:
+        except db_account_utils.Error as e:
             self.show_message(f"Fehler: {e}")
