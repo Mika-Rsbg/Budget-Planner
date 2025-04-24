@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from gui.basewindow import BaseWindow
-from utils.data.selection_utils import get_month_literal
+from utils.data.date_utils import get_month_literal
 from utils.data.createdatabase_utils import create_database
 from utils.data.database.account_utils import get_account_data
 import locale
