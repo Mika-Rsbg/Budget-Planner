@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from utils.data.date_utils import get_iso_date
 from gui.basetoplevelwindow import BaseToplevelWindow
 import utils.data.database.account_utils as db_account_utils
 import utils.data.value_utils as value_utils
@@ -53,6 +54,7 @@ class AccountPage(BaseToplevelWindow):
         self.account_data_dict = {
             name: id for id, name in self.account_data
         }
+        print(self.account_data_dict)
         self.account_selection_combobox['values'] = list(
             self.account_data_dict.keys()
         )
@@ -167,7 +169,10 @@ class AccountPage(BaseToplevelWindow):
         Save the current account details to the database.
         Validates input and saves the new account data.
         """
-        account_name_temp = self.account_selection_combobox.current()
+        account_name_temp = self.account_selection_combobox.get()
+        if account_name_temp == 0:
+            self.show_message("Bitte Konto auswählen.")
+            return
         account_id = self.account_data_dict.get(account_name_temp)
         name = self.account_name_entry.get()
         number = self.account_number_entry.get()
@@ -181,7 +186,8 @@ class AccountPage(BaseToplevelWindow):
             return
         db_account_utils.update_account(
             account_id=account_id,
-            new_values=[name, number, balance, difference]
+            new_values=[name, number, balance, difference, "",
+                        get_iso_date(today=True)]
         )
 
     def new_action(self):
@@ -232,4 +238,4 @@ class AccountPage(BaseToplevelWindow):
         try:
             db_account_utils.delete_account(account_id=selected_account_id)
         except db_account_utils.Error as e:
-            self.show_message(f"Fehler: {e}")
+            self.show_message(f"Fehler: {e}, Konto id: {selected_account_id}")
