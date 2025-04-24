@@ -17,7 +17,8 @@ class AccountPage(BaseToplevelWindow):
         """
         self.parent = parent
         self.account_selection_needed = account_selection_needed
-        super().__init__(parent, title="Budget Planner - Konto")
+        super().__init__(parent, plugin_scope="accountpage",
+                         title="Budget Planner - Konto")
 
     def init_ui(self):
         """
