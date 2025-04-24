@@ -167,9 +167,29 @@ def create_database(db_path: Path = None) -> None:
                 );
             ''')
             conn.commit()
+            add_cash_account(cursor, conn)
         except sqlite3.Error as e:
             print("[Fehler] Tabelle 'tbl_Account' konnte"
                   f"nicht erstellt werden: {e}")
+
+    def add_cash_account(cursor, conn):
+        if config.Database.CASH_ENABLED or True:
+            try:
+                cursor.execute(
+                    '''
+                    INSERT OR IGNORE INTO tbl_Account
+                    (str_AccountName, str_AccountNumber, real_AccountBalance,
+                    real_AccountDifference, str_RecordDate, str_ChangeDate)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''',
+                    ('Cash', '-', 0.0, 0.0, 0, 0)
+                )
+                conn.commit()
+            except sqlite3.Error as e:
+                print("[Fehler] Bargeldkonto konnte nicht"
+                      f"erstellt werden: {e}")
+        else:
+            print("[Info] Bargeldkonto ist deaktiviert.")
 
     def create_account_history_table(cursor, conn):
         try:
