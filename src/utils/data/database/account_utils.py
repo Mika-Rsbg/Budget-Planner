@@ -66,7 +66,7 @@ def delete_account(db_path: Path = config.Database.PATH,
             '''
             DELETE FROM tbl_Account WHERE i8_AccountID = ?
             ''',
-            account_id,)
+            str(account_id),)
 
         conn.commit()
         print("Account deleted successfully.")
@@ -98,7 +98,7 @@ def update_account(db_path: Path = config.Database.PATH,
 
     # Define the column names corresponding to the new values.
     columns = ["str_AccountName", "str_AccountNumber", "real_AccountBalance",
-               "real_AccountDifference", "i8_RecordDate", "i8_ChangeDate"]
+               "real_AccountDifference", "str_RecordDate", "str_ChangeDate"]
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
