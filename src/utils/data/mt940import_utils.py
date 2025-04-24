@@ -413,5 +413,6 @@ def import_mt940_file(master):
         blocks = split_toblocks_mt940(file_content)
         parsed_data = parse_block(blocks)
         insert_transactions(parsed_data, master)
+        master.reload()
     else:
         print("No file selected")
