@@ -13,6 +13,11 @@ class Error(Exception):
     pass
 
 
+class NoChangesDetectedError(Exception):
+    """Exception raised when no changes are detected during an update."""
+    pass
+
+
 def get_account_data(db_path: Path = config.Database.PATH,
                      selected_columns: list[bool] = [True, True, True,
                                                      True, True]
@@ -70,11 +75,12 @@ def delete_account(db_path: Path = config.Database.PATH,
     cursor.close()
 
 
-def edit_account(db_path: Path = config.Database.PATH,
-                 account_id: int = None,
-                 new_values: list[str] = None) -> None:
+def update_account(db_path: Path = config.Database.PATH,
+                   account_id: int = None,
+                   new_values: list[str] = None) -> None:
     """
-    Edits an account in the database.
+    Edits an account in the database after verifying that at least one of the
+    values is different from the current database values.
     Args:
         db_path (Path): Path to the SQLite database file.
         account_id (int): Account ID of the account to edit.
@@ -84,35 +90,55 @@ def edit_account(db_path: Path = config.Database.PATH,
                                 new_RecordDate, newChangeDate].
                                 If an element is an empty string (""), that
                                 column will not be updated.
+    Raises:
+        Error: If no update is needed or if any database error occurs.
     """
     if new_values is None or len(new_values) != 6:
-        print("Error: new_values must be a list of 6 elements.")
-        return
+        raise Error("Error: new_values must be a list of 6 elements.")
 
     # Define the column names corresponding to the new values.
     columns = ["str_AccountName", "str_AccountNumber", "real_AccountBalance",
                "real_AccountDifference", "i8_RecordDate", "i8_ChangeDate"]
-    # Build the SET part of the SQL query dynamically.
-    updates = []
-    parameters = []
-    for col, new_val in zip(columns, new_values):
-        if new_val != "":
-            updates.append(f"{col} = ?")
-            parameters.append(new_val)
-
-    if not updates:
-        print("No values to update.")
-        return
-
-    query = (f"UPDATE tbl_Account SET {', '.join(updates)}"
-             "WHERE i8_AccountID = ?")
-    parameters.append(account_id)
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
         cursor = conn.cursor()
+        # Fetch the current record for comparison
+        cursor.execute(
+            f"SELECT {', '.join(columns)} FROM "
+            "tbl_Account WHERE i8_AccountID = ?",
+            (account_id,)
+        )
+        current_record = cursor.fetchone()
+        print("Current record:", current_record)
+        if current_record is None:
+            raise Error("No account found with the given ID.")
     except sqlite3.Error as e:
-        raise Error(f"Error connecting to database: {e}")
+        raise Error(f"Error fetching current account data: {e}")
+
+    # Build the SET part of the SQL query dynamically only for changed values.
+    updates = []
+    parameters = []
+    for col, new_val, current_val in zip(columns, new_values, current_record):
+        if new_val != "":
+            try:
+                if new_val != current_val:
+                    updates.append(f"{col} = ?")
+                    parameters.append(new_val)
+                print(current_val, " unequal ", new_val, " ",
+                      str(new_val) != str(current_val))
+            except TypeError:
+                raise Error(
+                    f"TypeError: Cannot compare {col} with value {new_val}."
+                )
+    print("Updates:", updates)
+    print("Parameters:", parameters)
+    if not updates:
+        raise NoChangesDetectedError("No changes detected, update aborted.")
+
+    query = (f"UPDATE tbl_Account SET {', '.join(updates)} "
+             "WHERE i8_AccountID = ?")
+    parameters.append(account_id)
 
     try:
         cursor.execute(query, parameters)
