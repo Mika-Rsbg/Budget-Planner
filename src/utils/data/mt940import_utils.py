@@ -325,6 +325,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 " Even though it was in the MT940 file.",
                 " And should therefore be in the database."
             )
+        balance = float(balance)
         if account_number not in latest:
             latest[account_number] = (record_date, balance, rti_account_id)
         elif record_date > latest[account_number][0]:
@@ -356,7 +357,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
         difference = float(balance) - float(last_balance)
         print(difference)
         try:
-            db_account_utils.edit_account(
+            db_account_utils.update_account(
                 account_id=rti_account_id,
                 new_values=["", "", balance, difference,
                             get_iso_date(record_date), today]
@@ -370,6 +371,9 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 " Even though it was in the MT940 file.",
                 " And should therefore be in the database."
             )
+        except db_account_utils.NoChangesDetectedError:
+            print(f"Account {account_number} already has the same values. "
+                  "Skipping...")
 
 
 def import_mt940_file(master):
