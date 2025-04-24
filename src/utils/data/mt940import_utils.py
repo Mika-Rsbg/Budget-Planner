@@ -80,6 +80,8 @@ def parse_block(blocks: list) -> list:
         # =========== Reference ===========
         if block.startswith(":20:"):
             temp_reference = block[4:]
+            if last_block_86:
+                last_block_86 = False
         # =========== Account Number ===========
         elif block.startswith(":25:"):
             temp_account_number = block[13:]
@@ -311,7 +313,6 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
     latest = {}
     rti_account_id = None
     today = get_iso_date(today=True)
-    print(closing_balance)
     for (account_number, record_date, balance) in closing_balance:
         try:
             rti_account_id = db_account_utils.get_account_id(
