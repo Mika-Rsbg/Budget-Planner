@@ -1,8 +1,10 @@
 from gui.homepage.homepage import Homepage
+from utils.data.createdatabase_utils import create_database
 
 
 def main():
-    app = Homepage(fullscreen=True)
+    create_database()
+    app = Homepage(fullscreen=False)
     app.run()
 
 
