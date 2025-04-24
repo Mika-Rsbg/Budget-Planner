@@ -58,7 +58,7 @@ class BaseWindow(tk.Tk):
         raise NotImplementedError("init_ui() muss in Unterklassen"
                                   " überschrieben werden.")
 
-    def show_message(self, message):
+    def show_message(self, message: str) -> None:
         """Helpmethod to display a message in a popup window."""
         popup = tk.Toplevel(self)
         popup.title("Nachricht")
@@ -73,7 +73,7 @@ class BaseWindow(tk.Tk):
         popup.transient(self)  # bleibt im Vordergrund
 
     def ask_permission(self, message: str,
-                       focus_on: List[bool] = None) -> bool:
+                       focus_on: List[bool] = None) -> None:
         """
         Ask the user for permission to perform an action.
 
@@ -81,9 +81,6 @@ class BaseWindow(tk.Tk):
             message (str): The message to display in the dialog.
             focus_on (List[bool], optional): [ok_button, cancel_button]
                                              - The buttons to focus on.
-
-        Returns:
-            bool: True if the user grants permission, False otherwise.
         """
         popup = tk.Toplevel(self)
         popup.title("Berechtigung erforderlich")
@@ -105,13 +102,21 @@ class BaseWindow(tk.Tk):
         )
         no_button.pack(side=tk.LEFT, padx=5)
 
-        if focus_on is not None:
-            if focus_on[0]:
-                yes_button.focus_set()
-            elif focus_on[1]:
-                no_button.focus_set()
-
         popup.grab_set()
+
+        if focus_on is not None:
+            if len(focus_on) != 2:
+                raise ValueError("focus_on must be a list of two booleans")
+            if focus_on[0]:
+                print("Focusing on yes button")
+                yes_button.focus_set()
+                yes_button.bind("<Return>", lambda event: yes_button.invoke())
+            elif focus_on[1]:
+                print("Focusing on no button")
+                no_button.focus_set()
+                no_button.bind("<Return>", lambda event: no_button.invoke())
+
+        self.wait_window(popup)
 
     def _set_permission(self, popup: tk.Toplevel, permission: bool) -> None:
         """
