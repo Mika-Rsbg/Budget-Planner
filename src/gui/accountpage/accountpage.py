@@ -178,7 +178,7 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und"
                               "Differenz eingeben.")
             return
-        db_account_utils.edit_account(
+        db_account_utils.update_account(
             account_id=account_id,
             new_values=[name, number, balance, difference]
         )
