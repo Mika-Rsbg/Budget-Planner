@@ -159,11 +159,11 @@ def create_database(db_path: Path = None) -> None:
             CREATE TABLE IF NOT EXISTS tbl_Account (
                 i8_AccountID INTEGER PRIMARY KEY AUTOINCREMENT,
                 str_AccountName TEXT UNIQUE NOT NULL,
-                str_AccountNumber TEXT,
+                str_AccountNumber TEXT UNIQUE NOT NULL,
                 real_AccountBalance REAL DEFAULT 0.0,
                 real_AccountDifference REAL DEFAULT 0.0,
-                i8_RecordDate INTEGER,
-                i8_ChangeDate INTEGER
+                str_RecordDate INTEGER,
+                str_ChangeDate INTEGER
                 );
             ''')
             conn.commit()
