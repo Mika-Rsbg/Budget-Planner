@@ -360,7 +360,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
         try:
             db_account_utils.update_account(
                 account_id=rti_account_id,
-                new_values=["", "", balance, difference,
+                new_values=["", "", "", balance, difference,
                             get_iso_date(record_date), today]
             )
             print(f"Account {account_number} updated with"
