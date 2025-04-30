@@ -54,12 +54,13 @@ class Homepage(BaseWindow):
         account_list = list(get_account_data())
         print(account_list)
 
-        # ============= Konto-Widgets (Row 1, Columns 1 - 4) =============
-        for idx, (i8_AccountID, str_AccountName, str_AccountNumber,
-                  real_AccountBalance,
-                  real_AccountDifference) in enumerate(account_list, start=1):
+        # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
+        for (i8_AccountID, i8_WidgetPosition, str_AccountName,
+             str_AccountNumber, real_AccountBalance,
+             real_AccountDifference, str_RecordDate,
+             str_ChangeDate) in account_list:
             self.create_account_widget(
-                row=1, column=idx+1,
+                row=1, column=i8_WidgetPosition+2,
                 account_name=str_AccountName,
                 current_value=real_AccountBalance,
                 difference_value=real_AccountDifference
@@ -85,10 +86,7 @@ class Homepage(BaseWindow):
         button.grid_configure(columnspan=total_columns)
         db_button.grid_configure(columnspan=total_columns)
 
-    def create_account_widget(self,
-                              row: int,
-                              column: int,
-                              account_name: str,
+    def create_account_widget(self, row: int, column: int, account_name: str,
                               current_value: float = 0.0,
                               difference_value: float = 0.0) -> None:
         """
@@ -102,7 +100,7 @@ class Homepage(BaseWindow):
             width=200,
             height=150
         )
-        account_frame.grid_propagate(False)  # Größe fixieren
+        account_frame.grid_propagate(False)
         account_frame.grid(
             row=row,
             column=column,
@@ -130,7 +128,7 @@ class Homepage(BaseWindow):
         )
         diff_label.pack()
 
-        self.account_widgets[account_name] = {
+        self.account_widgets[column-2] = {
             "frame": account_frame,
             "value_label": value_label,
             "diff_label": diff_label,
@@ -138,16 +136,14 @@ class Homepage(BaseWindow):
         }
 
         self.update_account_values(
-            account_name=account_name,
+            widget_position=column-2,
             current_value=current_value,
             difference_value=difference_value
         )
 
-    def update_account_values(self,
-                              account_name: str,
-                              current_value: float,
+    def update_account_values(self, widget_position: int, current_value: float,
                               difference_value: float) -> None:
-        widget = self.account_widgets[account_name]
+        widget = self.account_widgets[widget_position]
         frame = widget["frame"]
         value_label = widget["value_label"]
         diff_label = widget["diff_label"]
@@ -194,7 +190,7 @@ class Homepage(BaseWindow):
     def on_next(self):
         self.set_budget(-25.6)
         self.update_account_values(
-            account_name="Giro Konto",
+            widget_position=1,
             current_value=-5200.00,
             difference_value=14.96
         )
