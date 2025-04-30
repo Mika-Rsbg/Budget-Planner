@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
-from utils.data.createdatabase_utils import create_database
 from utils.data.database.account_utils import get_account_data
 import locale
 
@@ -60,31 +59,19 @@ class Homepage(BaseWindow):
              real_AccountDifference, str_RecordDate,
              str_ChangeDate) in account_list:
             self.create_account_widget(
-                row=1, column=i8_WidgetPosition+2,
+                row=2, column=i8_WidgetPosition,
                 account_name=str_AccountName,
                 current_value=real_AccountBalance,
                 difference_value=real_AccountDifference
             )
 
-        # ============= Weiter-Button (Row 2) =============
-        button = ttk.Button(self.main_frame, text="Weiter",
-                            command=self.on_next)
-        button.grid(row=2, column=0, columnspan=5, pady=20)
-
-        # ============= Database-Button (Row 3) =============
-        db_button = ttk.Button(self.main_frame, text="Datenbank",
-                               command=self.createdatabase)
-        db_button.grid(row=3, column=0, columnspan=5, pady=20)
-
-        # Alle 5 Spalten gleichmäßig gewichten (für responsive Layout)
-        total_columns = 2 + len(account_list)
+        total_columns = len(account_list)
         for i in range(total_columns):
             self.main_frame.columnconfigure(i, weight=1)
 
         # Set columnspan for heading and buttons
         self.heading_frame.grid_configure(columnspan=total_columns)
-        button.grid_configure(columnspan=total_columns)
-        db_button.grid_configure(columnspan=total_columns)
+        self.budget_frame.grid_configure(columnspan=total_columns)
 
     def create_account_widget(self, row: int, column: int, account_name: str,
                               current_value: float = 0.0,
@@ -128,7 +115,7 @@ class Homepage(BaseWindow):
         )
         diff_label.pack()
 
-        self.account_widgets[column-2] = {
+        self.account_widgets[column] = {
             "frame": account_frame,
             "value_label": value_label,
             "diff_label": diff_label,
@@ -136,7 +123,7 @@ class Homepage(BaseWindow):
         }
 
         self.update_account_values(
-            widget_position=column-2,
+            widget_position=column,
             current_value=current_value,
             difference_value=difference_value
         )
@@ -186,17 +173,6 @@ class Homepage(BaseWindow):
 
         self.budget_label.config(bg=bg_color, fg=fg_color)
         self.budget_frame.config(bg=bg_color)
-
-    def on_next(self):
-        self.set_budget(-25.6)
-        self.update_account_values(
-            widget_position=1,
-            current_value=-5200.00,
-            difference_value=14.96
-        )
-
-    def createdatabase(self):
-        create_database()
 
 
 if __name__ == '__main__':
