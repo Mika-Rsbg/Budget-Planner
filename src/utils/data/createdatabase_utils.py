@@ -158,6 +158,7 @@ def create_database(db_path: Path = None) -> None:
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS tbl_Account (
                 i8_AccountID INTEGER PRIMARY KEY AUTOINCREMENT,
+                i8_WidgetPosition INTEGER UNIQUE NOT NULL,
                 str_AccountName TEXT UNIQUE NOT NULL,
                 str_AccountNumber TEXT UNIQUE NOT NULL,
                 real_AccountBalance REAL DEFAULT 0.0,
@@ -206,12 +207,19 @@ def create_database(db_path: Path = None) -> None:
             ON tbl_Transaction(i8_AccountID, i8_CategoryID, str_Date);
         ''')
         cursor.execute('''
-            CREATE INDEX IF NOT EXISTS idx_transaction_counterparty
+            CREATE INDEX IF NOT EXISTS idx_transaction_counterparty_date
             ON tbl_Transaction(i8_CounterpartyID, str_Date);
         ''')
         cursor.execute('''
-            CREATE INDEX IF NOT EXISTS idx_transaction_counterparty
+            CREATE INDEX IF NOT EXISTS
+                idx_transaction_account_counterparty_date
             ON tbl_Transaction(i8_AccountID, i8_CounterpartyID, str_Date);
+        ''')
+
+    def create_indexes_for_account_table(cursor) -> None:
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_account_widget_position
+            ON tbl_Account(i8_WidgetPosition);
         ''')
 
     def create_indexes_for_account_history_table(cursor) -> None:
@@ -228,6 +236,7 @@ def create_database(db_path: Path = None) -> None:
 
     def create_all_indexes(cursor, conn) -> None:
         create_indexes_for_transaction_table(cursor)
+        create_indexes_for_account_table(cursor)
         create_indexes_for_account_history_table(cursor)
         create_indexes_for_category_table(cursor)
         conn.commit()
