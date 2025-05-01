@@ -1,4 +1,3 @@
-# plugins/plugin_homepage_menu_about.py
 import tkinter as tk
 
 menu_id = 1000

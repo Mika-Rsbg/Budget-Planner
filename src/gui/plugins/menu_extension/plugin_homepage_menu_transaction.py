@@ -2,7 +2,7 @@ import tkinter as tk
 # from gui.transactionpage.transactionpage import TransactionPage
 from utils.data.mt940import_utils import import_mt940_file
 
-menu_id = 2
+menu_id = 20
 
 
 def add_to_menu(window, menu_bar):

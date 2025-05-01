@@ -2,7 +2,7 @@ import tkinter as tk
 import utils.data.createdatabase_utils as db_utils
 from gui.basewindow import BaseWindow
 
-menu_id = 3
+menu_id = 30
 
 
 def add_to_menu(window: BaseWindow, menu_bar):

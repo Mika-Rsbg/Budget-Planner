@@ -4,7 +4,7 @@ from gui.accountpage.reorder_account_widgets_page import (
 )
 from gui.basewindow import BaseWindow
 
-menu_id = 4
+menu_id = 40
 
 
 def add_to_menu(window: BaseWindow, menu_bar):

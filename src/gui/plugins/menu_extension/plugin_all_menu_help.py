@@ -1,4 +1,3 @@
-# plugins/menu_extension/plugin_all_menu_help.py
 import tkinter as tk
 
 

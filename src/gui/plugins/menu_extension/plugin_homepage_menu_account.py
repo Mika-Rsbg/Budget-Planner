@@ -1,7 +1,7 @@
 import tkinter as tk
 from gui.accountpage.accountpage import AccountPage
 
-menu_id = 1
+menu_id = 10
 
 
 def add_to_menu(window, menu_bar):
