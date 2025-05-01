@@ -7,14 +7,17 @@ import config
 
 class Error(Exception):
     """General exception class for database errors."""
+    pass
 
-    class NoAccountHistoryFoundError(Exception):
-        """Exception raised when no account history is found."""
-        pass
 
-    class ExistingAccountHistoryError(Exception):
-        """Exception raised when account history already exists."""
-        pass
+class ExistingAccountHistoryError(Exception):
+    """Exception raised when account history already exists."""
+    pass
+
+
+class NoAccountHistoryFoundError(Exception):
+    """Exception raised when no account history is found."""
+    pass
 
 
 def get_last_balance(db_path: Path = config.Database.PATH,
@@ -33,9 +36,9 @@ def get_last_balance(db_path: Path = config.Database.PATH,
 
     Raises:
         AccountHistoryNotFoundError: If no balance record is found for the
-                                     last month or within the previous year.
-        DatabaseAccountHistoryError: If an error occurs during the database
-                                     query or connection.
+            last month or within the previous year.
+        Error: If an error occurs during the database
+            query or connection.
     """
     # Determine the first and last day of the previous month.
     today = date.today()
@@ -45,8 +48,7 @@ def get_last_balance(db_path: Path = config.Database.PATH,
                                 last_day_last_month.month, 1)
 
     try:
-        conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -80,12 +82,14 @@ def get_last_balance(db_path: Path = config.Database.PATH,
         if result is not None:
             return result[0]
 
-        raise Error.NoAccountHistoryFoundError(
+        raise NoAccountHistoryFoundError(
             "No balance record found for the last month or within the"
             "previous year."
         )
     except sqlite3.Error as e:
         raise Error(f"Error retrieving balance: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def add_account_history(db_path: Path = config.Database.PATH,
@@ -104,10 +108,15 @@ def add_account_history(db_path: Path = config.Database.PATH,
         record_date (str): Date of the balance record in ISO format
                            (YYYY-MM-DD).
         change_date (str): Date of the change in ISO format (YYYY-MM-DD).
+
+    Raises:
+        ExistingAccountHistoryError: If an account history record already
+            exists for the specified date.
+        Error: If an error occurs during the database operation.
     """
     try:
         conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -120,7 +129,7 @@ def add_account_history(db_path: Path = config.Database.PATH,
             (account_id, record_date)
         )
         if cursor.fetchone() is not None:
-            raise Error.ExistingAccountHistoryError(
+            raise ExistingAccountHistoryError(
                 "Account history already exists for this date."
             )
 
@@ -136,3 +145,5 @@ def add_account_history(db_path: Path = config.Database.PATH,
         print("Account history record created successfully.")
     except sqlite3.Error as e:
         raise Error(f"Error creating account history record: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
