@@ -1,10 +1,10 @@
-# 🧩 Plugin-System für tkinter GUI
+# 🧩 Plugin System for tkinter GUI
 
-Dieses Projekt zeigt, wie ein modulares Plugin-System in eine tkinter-basierte GUI-Anwendung integriert werden kann. Plugins erweitern z. B. das Menü, ohne die Hauptanwendung zu verändern.
+This project demonstrates how a modular plugin system can be integrated into a tkinter-based GUI application. Plugins can extend, for example, the menu without modifying the main application.
 
 ---
 
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```plaintext
 budget-planner/
@@ -12,7 +12,7 @@ budget-planner/
 │   └── gui/
 │       ├── basewindow.py
 │       └── plugins/
-│           ├── __init__.py            ← Plugin-Loader
+│           ├── __init__.py            ← Plugin Loader
 │           └── menu_extension/
 │               ├── plugin_all_menu_help.py
 │               └── plugin_homepage_menu_account.py
@@ -20,37 +20,37 @@ budget-planner/
 
 ---
 
-## 🔌 Plugin-Konzept
+## 🔌 Plugin Concept
 
-### 🔧 Namenskonvention für Plugin-Dateien:
+### 🔧 File Naming Convention for Plugins:
 
 ```plaintext
 plugin_<scope>_<type>_<name>.py
 ```
 
-| Teil         | Beschreibung                               |
-|--------------|--------------------------------------------|
-| `plugin`     | fixer Prefix für alle Plugins              |
-| `<scope>`    | `all` für global, sonst z. B. `homepage`   |
-| `<type>`     | z. B. `menu`, `toolbar`, `window`          |
-| `<name>`     | Kurzbeschreibung der Funktion              |
+| Part       | Description                                  |
+|------------|----------------------------------------------|
+| `plugin`   | fixed prefix for all plugins                 |
+| `<scope>`  | `all` for global, otherwise e.g. `homepage` |
+| `<type>`   | `menu`                                       |
+| `<name>`   | brief description of the function             |
 
-Beispiel: `plugin_homepage_menu_account.py` erweitert das Menü der Homepage.
+Example: `plugin_homepage_menu_account.py` extends the homepage menu.
 
 ---
 
-## 📂 Plugins laden
+## 📂 Loading Plugins
 
-Alle Plugins werden beim Start der App über `gui.plugins.__init__.load_plugins()` geladen.
+All plugins are loaded at application startup via `gui.plugins.__init__.load_plugins()`.
 
-### 🔢 Menü-Reihenfolge via `menu_id`
-Jedes Plugin kann (optional) ein Attribut `menu_id` definieren. Plugins werden **sortiert nach `menu_id`** geladen.
+### 🔢 Menu Order via `menu_id`
+Each plugin can optionally define a `menu_id` attribute. Plugins are **loaded sorted by `menu_id`**.
 
 ```python
-menu_id = 10  # z. B. für Sortierreihenfolge im Menü
+menu_id = 10  # e.g. for menu sorting order
 ```
 
-### Beispielplugin:
+### Example Plugin:
 ```python
 # plugins/menu_extension/plugin_all_menu_help.py
 import tkinter as tk
@@ -67,10 +67,10 @@ def add_to_menu(window, menu_bar):
 
 ---
 
-## 🛠 Plugin-Loader API
+## 🛠 Plugin Loader API
 
 ### `load_plugins(plugin_type: str, plugin_scope: str) -> list[module]`
 
-- Lädt passende Plugins anhand des Dateinamenschemas
-- Sortiert nach `menu_id`
-- Importiert Module dynamisch
+- Loads matching plugins based on the filename schema
+- Sorts by `menu_id`
+- Dynamically imports modules
