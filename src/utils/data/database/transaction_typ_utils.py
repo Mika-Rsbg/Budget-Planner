@@ -5,7 +5,7 @@ import config
 
 
 class Error(Exception):
-    """Allgemeine Ausnahmeklasse für Datenbankfehler."""
+    """General exception class for database errors."""
     pass
 
 
@@ -18,10 +18,12 @@ def add_transaction_typ(db_path: Path = config.Database.PATH,
         db_path (Path): Path to the SQLite database file.
         name (str): Name of the transaction type.
         number (str): Number of the transaction type.
+    Raises:
+        Error: If an error occurs during the database operation.
     """
     try:
         conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -39,6 +41,8 @@ def add_transaction_typ(db_path: Path = config.Database.PATH,
         print("Transaction type added successfully.")
     except sqlite3.Error as e:
         raise Error(f"Error inserting data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def get_transaction_typ_id(db_path: Path = config.Database.PATH,
@@ -62,8 +66,7 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
         Error: If there is a database error.
     """
     try:
-        conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -91,3 +94,5 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
         return row[0]
     except sqlite3.Error as e:
         raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
