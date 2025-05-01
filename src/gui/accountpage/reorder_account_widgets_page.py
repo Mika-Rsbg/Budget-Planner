@@ -6,12 +6,19 @@ import utils.data.database.account_utils as db_account_utils
 
 
 class ReorderAccountWidgetsWindow(BaseToplevelWindow):
-    def __init__(self, master=None):
+    def __init__(self, master: tk.Tk = None) -> None:
+        """
+        Init an instance of the ReorderAccountWidgetsWindow class.
+        This class is used to reorder account widgets in the GUI.
+
+        Args:
+            master (tk.Tk): The parent window.
+        """
         self.account_widgets = {}
         super().__init__(master, title="Reorder Account Widgets",
                          geometry="620x300")
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         # Bind the Enter key to trigger saving the order
         self.bind("<Return>", lambda event: self.save_order())
 
@@ -92,7 +99,7 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         sign = "+" if difference_value >= 0 else "-"
         diff_label.config(text=f"{sign}{diff_str}", fg=fg)
 
-    def add_reorder_buttons(self):
+    def add_reorder_buttons(self) -> None:
         """
         Adds reorder buttons (left and right) to each account widget.
         """
@@ -153,7 +160,7 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         # Re-add the reorder buttons in the new order.
         self.add_reorder_buttons()
 
-    def save_order(self):
+    def save_order(self) -> None:
         """
         Save the new order of the account widgets to the database.
         """
