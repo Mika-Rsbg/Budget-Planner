@@ -1,95 +1,101 @@
-# 🧩 Plugin-System für tkinter GUI
+# 🧩 Plugin System (tkinter)
 
-Dieses Projekt zeigt, wie ein modulares Plugin-System in eine tkinter-basierte GUI-Anwendung integriert werden kann. Plugins erweitern z. B. das Menü, ohne die Hauptanwendung zu verändern.
+This file explains how the plugin system for the Budget Planner works. The plugin system is designed to be flexible and allows for easy integration of new features without modifying the core codebase. This is particularly useful for maintaining a clean architecture and enabling third-party developers to contribute plugins.
 
 ---
 
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```plaintext
-project_root/
-├── src/
-│   └── gui/
-│       ├── base_window.py
-│       └── plugins/
-│           ├── __init__.py            ← Plugin-Loader
-│           └── menu_extension/
-│               ├── plugin_all_menu_help.py
-│               └── plugin_homepage_menu_extra.py
+src/gui/plugins/
+├── __init__.py      ← Plugin-Loader
+└── menu_extension/
+    ├── plugin_all_menu_help.py
+    └── plugin_homepage_menu_account.py
 ```
 
 ---
 
-## 🔌 Plugin-Konzept
-
-### 🔧 Namenskonvention für Plugin-Dateien:
+## File Naming
 
 ```plaintext
 plugin_<scope>_<type>_<name>.py
 ```
 
-| Teil         | Beschreibung                               |
-|--------------|--------------------------------------------|
-| `plugin`     | fixer Prefix für alle Plugins              |
-| `<scope>`    | `all` für global, sonst z. B. `homepage`   |
-| `<type>`     | z. B. `menu`, `toolbar`, `window`          |
-| `<name>`     | Kurzbeschreibung der Funktion              |
+| Part       | Description                                  |
+|------------|----------------------------------------------|
+| `plugin`   | fixed prefix for all plugins                 |
+| `<scope>`  | `all` for global, otherwise e.g. `homepage`  |
+| `<type>`   | `menu`                                       |
+| `<name>`   | brief description of the function            |
 
-Beispiel: `plugin_homepage_menu_extra.py` erweitert das Menü der Homepage.
+Example: `plugin_homepage_menu_account.py` extends the homepage menu.
 
 ---
 
-## 📂 Plugins laden
+## 📂 Loading Plugins
 
-Alle Plugins werden beim Start der App über `gui.plugins.__init__.load_plugins()` geladen.
+All plugins are loaded during application and during the start of windows startup via `gui.plugins.__init__.load_plugins()`.
 
-### 🔢 Menü-Reihenfolge via `menu_id`
-Jedes Plugin kann (optional) ein Attribut `menu_id` definieren. Plugins werden **sortiert nach Scope und `menu_id`** geladen.
+The function `load_plugins(plugin_type: str, plugin_scope: str) -> list[module]` returns a list of plugin modules, which you can then process:
 
 ```python
-menu_id = 10  # z. B. für Sortierreihenfolge im Menü
+for plugin in load_plugins("menu", self.plugin_scope):
+    if hasattr(plugin, "add_to_menu"):
+        plugin.add_to_menu(self, menu_bar)
 ```
 
-### Beispielplugin:
+### 🔢 Menu Order via `menu_id`
+
+Each plugin can optionally define a `menu_id` attribute. Plugins are **loaded sorted by `menu_id`**.
+
+Tips for `menu_id`:
+- Go up in increments of 10 (e.g. 10, 20, 30) to leave space for future plugins.
+
 ```python
-# src/gui/plugins/menu_extension/plugin_all_menu_help.py
+menu_id = 10  # e.g. for menu sorting order
+```
+
+### Example Plugin
+
+```python
+# plugins/menu_extension/plugin_all_menu_help.py
 import tkinter as tk
 
-menu_id = 1
+# If no id is specified, the default id of 9999 is assigned.
+# Here, we explicitly set menu_id = 5, overriding the default.
+menu_id = 5
 
 def add_to_menu(window, menu_bar):
     help_menu = tk.Menu(menu_bar, tearoff=0)
     help_menu.add_command(
-        label="Hilfe", 
+        label="Hilfe",
         command=lambda: window.show_message("Dies ist die globale Hilfe."))
     menu_bar.add_cascade(label="Hilfe", menu=help_menu)
+
 ```
 
 ---
 
-## 🛠 Plugin-Loader API
+## 🛠 Plugin Loader API
 
 ### `load_plugins(plugin_type: str, plugin_scope: str) -> list[module]`
 
-- Lädt passende Plugins anhand des Dateinamenschemas
-- Sortiert nach Scope und `menu_id`
-- Importiert Module dynamisch
+- Loads matching plugins based on the filename schema
+- Sorts by `menu_id`
+- Dynamically imports modules
 
 ---
 
-## ✅ Vorteile
-- Plugins unabhängig vom Hauptfenster
-- Erweiterungen möglich, ohne bestehende Logik zu ändern
-- Reihenfolge steuerbar über `menu_id`
+## 🛠 Defining Custom Scopes per Window
 
----
+You can define custom scopes for each window in the code. To do this, change the `plugin_scope: str = None` parameter in the window class initialization to the desired scope:
 
-## 💡 Tipps
-- Füge neue Typen (`toolbar`, `window`, ...) genauso hinzu
-- Teste Plugins separat (z. B. mit einem `main()` im Plugin)
+```python
+class MyWindow(BaseWindow):
+    def __init__(self, ..., plugin_scope: str = "mywindow"):
+        super().__init__(..., plugin_scope=plugin_scope)
+        # window-specific initialization
+```
 
----
-
-## 🧪 Todo
-- Beispiel: Toolbar-Plugins
-- Beispiel: Fenster-Plugins (Custom Windows)
+This way, only plugins with this scope and the global `all` scope will be loaded.
