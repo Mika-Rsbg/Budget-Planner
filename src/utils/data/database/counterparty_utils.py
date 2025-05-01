@@ -5,7 +5,7 @@ import config
 
 
 class Error(Exception):
-    """Allgemeine Ausnahmeklasse für Datenbankfehler."""
+    """""General exception class for database errors."""
     pass
 
 
@@ -18,10 +18,12 @@ def add_counterparty(db_path: Path = config.Database.PATH,
         db_path (Path):  Path to the SQLite database file.
         name (str): Name of the counterparty.
         number (str): Account Number of the counterparty.
+    Raises:
+        Error: If an error occurs during the database operation.
     """
     try:
         conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -39,11 +41,13 @@ def add_counterparty(db_path: Path = config.Database.PATH,
         print("Counterparty added successfully.")
     except sqlite3.Error as e:
         raise Error(f"Error inserting data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def get_counterparty_id(db_path: Path = config.Database.PATH,
                         data: list = ["", ""],
-                        supplied_data=[False, False]):
+                        supplied_data=[False, False]) -> int:
     """
     Retrieves the ID of a counterparty from the database based on supplied
     search criteria.
@@ -61,10 +65,12 @@ def get_counterparty_id(db_path: Path = config.Database.PATH,
 
     Returns:
         (int or None): The counterparty's ID if found; otherwise, None.
+
+    Raises:
+        Error: If there is a database error.
     """
     try:
-        conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -90,6 +96,8 @@ def get_counterparty_id(db_path: Path = config.Database.PATH,
         result = cursor.fetchone()
     except sqlite3.Error as e:
         raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
     if result:
         return result[0]
