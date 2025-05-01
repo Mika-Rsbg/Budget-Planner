@@ -7,9 +7,20 @@ from gui.plugins import load_plugins
 class BaseWindow(tk.Tk):
     def __init__(self, plugin_scope: str = None, title: str = "Fenster",
                  geometry: str = "800x600", bg_color: str = "white",
-                 fullscreen: bool = False):
+                 fullscreen: bool = False) -> None:
+        """
+        Base class for all windows in the application.
+        Initializes the main window and sets up the menu, status bar,
+        and main frame.
+
+        Args:
+            plugin_scope (str): The scope of the plugin.
+            title (str): The title of the window.
+            geometry (str): The geometry of the window.
+            bg_color (str): The background color of the window.
+            fullscreen (bool): Whether to start in fullscreen mode.
+        """
         super().__init__()
-        # z. B. "homepage", "admin", "einstellungen"
         self.plugin_scope = plugin_scope
         self.title(title)
         self.geometry(geometry)
@@ -23,7 +34,7 @@ class BaseWindow(tk.Tk):
         self._setup_menu()
         self.init_ui()
 
-    def _apply_styles(self):
+    def _apply_styles(self) -> None:
         style = ttk.Style(self)
         style.theme_use("clam")
         style.configure("TFrame", background=self.bg_color)
@@ -32,17 +43,17 @@ class BaseWindow(tk.Tk):
         style.configure("TEntry", fieldbackground=self.bg_color)
         style.configure("TCheckbutton", background=self.bg_color)
 
-    def _setup_main_frame(self):
+    def _setup_main_frame(self) -> None:
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
-    def _setup_status_bar(self):
+    def _setup_status_bar(self) -> None:
         self.status_var = tk.StringVar(value="Bereit")
         self.status_bar = ttk.Label(self, textvariable=self.status_var,
                                     relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-    def _setup_menu(self):
+    def _setup_menu(self) -> None:
         menu_bar = tk.Menu(self)
         self.config(menu=menu_bar)
 
@@ -50,17 +61,24 @@ class BaseWindow(tk.Tk):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
         This method needs to be overridden in subclasses.
-        It is called after the main frame and status bar have been set up.
+        It is called after the main frame, status bar and the menu
+        have been set up.
         """
-        raise NotImplementedError("init_ui() muss in Unterklassen"
-                                  " überschrieben werden.")
+        raise NotImplementedError(
+            "init_ui() needs to be implemented in subclasses"
+        )
 
     def show_message(self, message: str) -> None:
-        """Helpmethod to display a message in a popup window."""
+        """
+        Helpmethod that shows a message in a popup window.
+
+        Args:
+            message (str): The message to display.
+        """
         popup = tk.Toplevel(self)
         popup.title("Nachricht")
 
@@ -130,7 +148,7 @@ class BaseWindow(tk.Tk):
         self.permission = permission
         popup.destroy()
 
-    def run(self):
+    def run(self) -> None:
         """Starts the main loop of the application."""
         self.mainloop()
 
