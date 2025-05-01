@@ -7,21 +7,22 @@ import utils.data.value_utils as value_utils
 
 
 class AccountPage(BaseToplevelWindow):
-    def __init__(self, parent, account_selection_needed: bool = True) -> None:
+    def __init__(self, parent: tk.Tk,
+                 account_selection_needed: bool = True) -> None:
         """
         Initialize the AccountPage window with optional account selection.
 
         Args:
             parent(tk.Tk): The parent window.
             account_selection_needed (bool): Boolean indicating if account
-            selection is required.
+                selection is required.
         """
         self.parent = parent
         self.account_selection_needed = account_selection_needed
         super().__init__(parent, plugin_scope="accountpage",
                          title="Budget Planner - Konto")
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """
         Create and configure the user interface for the Account Page.
         This includes widgets for account selection, account details,
@@ -126,7 +127,7 @@ class AccountPage(BaseToplevelWindow):
         self.delete_button.grid(row=0, column=3, padx=5, pady=5)
 
     # ============= Account Selection Callback =============
-    def on_account_selected(self, event=None):
+    def on_account_selected(self, event=None) -> None:
         """
         Handle the event when an account is selected from the combobox.
         Updates the account details fields with the selected account's data.
@@ -157,14 +158,14 @@ class AccountPage(BaseToplevelWindow):
         self.account_difference_entry.insert(0, data[0][4])
 
     # ============= Button Callback Methods =============
-    def cancel_action(self):
+    def cancel_action(self) -> None:
         """
         Close the AccountPage window and reload the parent window.
         """
         self.destroy()
         self.parent.reload()
 
-    def save_action(self):
+    def save_action(self) -> None:
         """
         Save the current account details to the database.
         Validates input and saves the new account data.
@@ -190,7 +191,7 @@ class AccountPage(BaseToplevelWindow):
                         get_iso_date(today=True)]
         )
 
-    def new_action(self):
+    def new_action(self) -> None:
         """
         Create a new account using the entered details.
         Validates input and calls the database utility to create the account.
@@ -215,7 +216,7 @@ class AccountPage(BaseToplevelWindow):
             difference=difference
         )
 
-    def reset_entrys(self):
+    def reset_entrys(self) -> None:
         """
         Reset the account selection and clear all input fields.
         """
@@ -228,7 +229,7 @@ class AccountPage(BaseToplevelWindow):
         self.account_balance_entry.delete(0, tk.END)
         self.account_difference_entry.delete(0, tk.END)
 
-    def delete_action(self):
+    def delete_action(self) -> None:
         """
         Delete the currently selected account from the database.
         Handles errors and displays appropriate messages if deletion fails.
@@ -237,5 +238,7 @@ class AccountPage(BaseToplevelWindow):
         selected_account_id = self.account_data_dict.get(selected_account)
         try:
             db_account_utils.delete_account(account_id=selected_account_id)
+        except db_account_utils.NoAccountFoundError as e:
+            self.show_message(f"Fehler: {e}, Konto id: {selected_account_id}")
         except db_account_utils.Error as e:
             self.show_message(f"Fehler: {e}, Konto id: {selected_account_id}")
