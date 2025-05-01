@@ -10,7 +10,7 @@ class Error(Exception):
 
 
 def create_database(db_path: Path = None) -> None:
-    def create_transactions_table(cursor, conn):
+    def create_transactions_table(cursor, conn) -> None:
         try:
             cursor.execute(
                 '''
@@ -46,7 +46,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Tabelle 'tbl_Transaction' konnte"
                   f"nicht erstellt werden: {e}")
 
-    def create_category_table(cursor, conn):
+    def create_category_table(cursor, conn) -> None:
         create_budget_period_table(cursor, conn)
         try:
             cursor.execute(
@@ -67,7 +67,7 @@ def create_database(db_path: Path = None) -> None:
                   f"nicht erstellt werden: {e}")
         insert_initial_categories(cursor, conn)
 
-    def create_budget_period_table(cursor, conn):
+    def create_budget_period_table(cursor, conn) -> None:
         try:
             cursor.execute(
                 '''
@@ -83,7 +83,7 @@ def create_database(db_path: Path = None) -> None:
                   f"nicht erstellt werden: {e}")
         insert_initial_budget_periods(cursor, conn)
 
-    def insert_initial_budget_periods(cursor, conn):
+    def insert_initial_budget_periods(cursor, conn) -> None:
         try:
             cursor.executemany(
                 '''
@@ -103,7 +103,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Budgetperioden konnten nicht"
                   f"erstellt werden: {e}")
 
-    def insert_initial_categories(cursor, conn):
+    def insert_initial_categories(cursor, conn) -> None:
         try:
             cursor.executemany(
                 '''
@@ -121,7 +121,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Initialkategorien konnten nicht"
                   f"erstellt werden: {e}")
 
-    def create_counterparty_table(cursor, conn):
+    def create_counterparty_table(cursor, conn) -> None:
         try:
             cursor.execute(
                 '''
@@ -137,7 +137,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Tabelle 'tbl_Counterparty' konnte"
                   f"nicht erstellt werden: {e}")
 
-    def create_transaction_typ_table(cursor, conn):
+    def create_transaction_typ_table(cursor, conn) -> None:
         try:
             cursor.execute(
                 '''
@@ -153,7 +153,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Tabelle 'tbl_TransactionTyp' konnte"
                   f"nicht erstellt werden: {e}")
 
-    def create_account_table(cursor, conn):
+    def create_account_table(cursor, conn) -> None:
         try:
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS tbl_Account (
@@ -172,7 +172,7 @@ def create_database(db_path: Path = None) -> None:
             print("[Fehler] Tabelle 'tbl_Account' konnte"
                   f"nicht erstellt werden: {e}")
 
-    def create_account_history_table(cursor, conn):
+    def create_account_history_table(cursor, conn) -> None:
         try:
             cursor.execute(
                 '''
@@ -245,7 +245,7 @@ def create_database(db_path: Path = None) -> None:
         db_path = db_path if db_path else config.Database.PATH
         db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
 
         # Tabellen erstellen
         create_category_table(cursor, conn)
@@ -262,10 +262,13 @@ def create_database(db_path: Path = None) -> None:
         print("Indexes were created successfully.")
     except sqlite3.Error as e:
         print(f"[Fehler] Datenbankverbindung fehlgeschlagen: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def delete_database(path: Path = None) -> None:
-    """Delete the database file.
+    """
+    Delete the database file.
 
     Args:
         path (Path): Path to the database file.
@@ -283,8 +286,3 @@ def delete_database(path: Path = None) -> None:
         raise Error(f'Datenbank nicht gefunden: {db_path}')
     except Exception as e:
         raise Error(f"[Fehler] Datenbank konnte nicht gelöscht werden: {e}")
-
-
-if __name__ == '__main__':
-    create_database(Path(__file__).resolve().parent.parent.parent.parent
-                    / 'data' / 'database.db')
