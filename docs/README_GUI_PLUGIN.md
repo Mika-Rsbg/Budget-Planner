@@ -7,15 +7,15 @@ Dieses Projekt zeigt, wie ein modulares Plugin-System in eine tkinter-basierte G
 ## 📁 Projektstruktur
 
 ```plaintext
-project_root/
+budget-planner/
 ├── src/
 │   └── gui/
-│       ├── base_window.py
+│       ├── basewindow.py
 │       └── plugins/
 │           ├── __init__.py            ← Plugin-Loader
 │           └── menu_extension/
 │               ├── plugin_all_menu_help.py
-│               └── plugin_homepage_menu_extra.py
+│               └── plugin_homepage_menu_account.py
 ```
 
 ---
@@ -35,7 +35,7 @@ plugin_<scope>_<type>_<name>.py
 | `<type>`     | z. B. `menu`, `toolbar`, `window`          |
 | `<name>`     | Kurzbeschreibung der Funktion              |
 
-Beispiel: `plugin_homepage_menu_extra.py` erweitert das Menü der Homepage.
+Beispiel: `plugin_homepage_menu_account.py` erweitert das Menü der Homepage.
 
 ---
 
@@ -44,7 +44,7 @@ Beispiel: `plugin_homepage_menu_extra.py` erweitert das Menü der Homepage.
 Alle Plugins werden beim Start der App über `gui.plugins.__init__.load_plugins()` geladen.
 
 ### 🔢 Menü-Reihenfolge via `menu_id`
-Jedes Plugin kann (optional) ein Attribut `menu_id` definieren. Plugins werden **sortiert nach Scope und `menu_id`** geladen.
+Jedes Plugin kann (optional) ein Attribut `menu_id` definieren. Plugins werden **sortiert nach `menu_id`** geladen.
 
 ```python
 menu_id = 10  # z. B. für Sortierreihenfolge im Menü
@@ -52,17 +52,17 @@ menu_id = 10  # z. B. für Sortierreihenfolge im Menü
 
 ### Beispielplugin:
 ```python
-# src/gui/plugins/menu_extension/plugin_all_menu_help.py
+# plugins/menu_extension/plugin_all_menu_help.py
 import tkinter as tk
 
-menu_id = 1
+# No id specified, so it will get the default id of 9999
 
 def add_to_menu(window, menu_bar):
     help_menu = tk.Menu(menu_bar, tearoff=0)
-    help_menu.add_command(
-        label="Hilfe", 
-        command=lambda: window.show_message("Dies ist die globale Hilfe."))
+    help_menu.add_command(label="Hilfe", command=lambda:
+                          window.show_message("Dies ist die globale Hilfe."))
     menu_bar.add_cascade(label="Hilfe", menu=help_menu)
+
 ```
 
 ---
@@ -72,5 +72,5 @@ def add_to_menu(window, menu_bar):
 ### `load_plugins(plugin_type: str, plugin_scope: str) -> list[module]`
 
 - Lädt passende Plugins anhand des Dateinamenschemas
-- Sortiert nach Scope und `menu_id`
+- Sortiert nach `menu_id`
 - Importiert Module dynamisch
