@@ -229,6 +229,11 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
 
     Args:
         data (list): A list of dictionaries containing the transactions.
+        window (tk.Tk): The main window of the application.
+
+    Raises:
+        DatabaseMT940Error: If there is an error inserting the transactions
+            into the database.
     """
     closing_balance = []
     for entry in data:
@@ -240,7 +245,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 data=[None, temp_account_number, None, None],
                 supplied_data=[False, True, False, False]
             )
-        except db_account_utils.Error:
+        except db_account_utils.NoAccountFoundError:
             print(f"Account {temp_account_number} not found in database.")
             db_account_utils.add_account_mt940(
                 master=window,
@@ -303,7 +308,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             db_transaction_utils.add_transaction(
                 data=rti_data
             )
-        except db_transaction_utils.Error.AlreadyExistsError:
+        except db_transaction_utils.AlreadyExistsError:
             print("Transaction already exists. Skipping...")
         except db_transaction_utils.Error:
             print("Error inserting transaction.")
@@ -319,7 +324,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 data=[None, account_number, None, None],
                 supplied_data=[False, True, False, False]
             )
-        except db_account_utils.Error:
+        except db_account_utils.NoAccountFoundError:
             print(f"Account {account_number} not found in database.")
             raise DatabaseMT940Error(
                 f"Account {account_number} not found in database.",
@@ -339,7 +344,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             )
             print(f"Account history for {account_number} "
                   f"added with date: {record_date} and balance: {balance}")
-        except db_account_history_utils.Error.ExistingAccountHistoryError:
+        except db_account_history_utils.ExistingAccountHistoryError:
             print(f"Account history for {account_number} already exists. "
                   "Skipping...")
 
@@ -349,7 +354,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             last_balance = db_account_history_utils.get_last_balance(
                 account_id=rti_account_id
             )
-        except db_account_history_utils.Error.NoAccountHistoryFoundError:
+        except db_account_history_utils.NoAccountHistoryFoundError:
             print("No balance found for the last month or within the previous "
                   "year.")
             last_balance = 0.0
@@ -365,7 +370,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             )
             print(f"Account {account_number} updated with"
                   f"new balance: {balance}")
-        except db_account_utils.Error:
+        except db_account_utils.NoAccountFoundError:
             print(f"Account {account_number} not found in database.")
             raise DatabaseMT940Error(
                 f"Account {account_number} not found in database.",
@@ -377,7 +382,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                   "Skipping...")
 
 
-def import_mt940_file(master):
+def import_mt940_file(master: tk.Tk) -> None:
     """
     Import an MT940 formatted file using a file dialog and process its
     contents.
