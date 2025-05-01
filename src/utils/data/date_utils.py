@@ -54,7 +54,7 @@ def get_iso_date(date: str = None, today: bool = False) -> str:
     month = int(date[2:4])
     day = int(date[4:6])
 
-    # Jahr 00–69 => 2000–2069, Jahr 70–99 => 1970–1999
+    # Year 00–69 => 2000–2069, Year 70–99 => 1970–1999
     full_year = 2000 + year if year < 70 else 1900 + year
 
     dt = datetime.datetime(full_year, month, day)
