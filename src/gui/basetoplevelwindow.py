@@ -4,8 +4,19 @@ from gui.plugins import load_plugins
 
 
 class BaseToplevelWindow(tk.Toplevel):
-    def __init__(self, master=None, plugin_scope=None, title="Fenster",
-                 geometry="600x400", bg_color="white"):
+    def __init__(self, master: tk.Tk = None, plugin_scope: str = None,
+                 title: str = "Fenster", geometry: str = "600x400",
+                 bg_color: str = "white") -> None:
+        """
+        Init an instance of the BaseToplevelWindow class.
+
+        Args:
+            master (tk.Tk): The parent window.
+            plugin_scope (str): The scope for loading plugins.
+            title (str): The title of the window.
+            geometry (str): The size of the window.
+            bg_color (str): The background color of the window.
+        """
         super().__init__(master)
         self.plugin_scope = plugin_scope
         self.title(title)
@@ -46,10 +57,23 @@ class BaseToplevelWindow(tk.Toplevel):
                 plugin.add_to_menu(self, menu_bar)
 
     def init_ui(self) -> None:
-        raise NotImplementedError("init_ui() muss in Unterklassen"
-                                  "überschrieben werden.")
+        """
+        Methode to initialize the user interface.
+        This method needs to be overridden in subclasses.
+        It is called after the main frame, status bar and the menu
+        have been set up.
+        """
+        raise NotImplementedError(
+            "init_ui() needs to be implemented in subclasses"
+        )
 
-    def show_message(self, message) -> None:
+    def show_message(self, message: str) -> None:
+        """
+        Helpmethod that shows a message in a popup window.
+
+        Args:
+            message (str): The message to display.
+        """
         popup = tk.Toplevel(self)
         popup.title("Nachricht")
 
