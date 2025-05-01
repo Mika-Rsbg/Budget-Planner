@@ -62,7 +62,8 @@ menu_id = 10  # e.g. for menu sorting order
 # plugins/menu_extension/plugin_all_menu_help.py
 import tkinter as tk
 
-# If no id is specified, the default id of 9999 is assigned
+# If no id is specified, the default id of 9999 is assigned.
+# Here, we explicitly set menu_id = 5, overriding the default.
 menu_id = 5
 
 def add_to_menu(window, menu_bar):
