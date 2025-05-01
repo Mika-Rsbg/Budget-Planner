@@ -4,12 +4,19 @@ from gui.basetoplevelwindow import BaseToplevelWindow
 
 
 class NameInputDialog(BaseToplevelWindow):
-    def __init__(self, master: tk.Tk = None, number: str = None):
+    def __init__(self, master: tk.Tk = None, number: str = None) -> None:
+        """
+        Init an instance of the NameInputDialog class.
+
+        Args:
+            master (tk.Tk): The parent window.
+            number (str): The account number (IBAN).
+        """
         self.number = number
         super().__init__(master, title="Name eingeben", geometry="250x200")
         self.name = None
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         if self.number is not None:
             self.number_label = ttk.Label(self.main_frame,
                                           text=f"Nummer: {self.number}")
@@ -35,7 +42,10 @@ class NameInputDialog(BaseToplevelWindow):
         # Set the default focus to the entry widget
         self.entry.focus_set()
 
-    def validate_name_input(self):
+    def validate_name_input(self) -> str:
+        """
+        Validates the name input from the entry widget.
+        """
         name = self.entry.get().strip()
         if not name:
             self.label.config(text="Bitte einen Namen eingeben!",
@@ -50,7 +60,6 @@ class NameInputDialog(BaseToplevelWindow):
         if self.name is None:
             return
         self.destroy()
-        # self.destroy()
 
     def on_cancel(self):
         self.name = None
