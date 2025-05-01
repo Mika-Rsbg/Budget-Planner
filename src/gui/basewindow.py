@@ -5,8 +5,9 @@ from gui.plugins import load_plugins
 
 
 class BaseWindow(tk.Tk):
-    def __init__(self, plugin_scope=None, title="Fenster", geometry="800x600",
-                 bg_color="white", fullscreen=False):
+    def __init__(self, plugin_scope: str = None, title: str = "Fenster",
+                 geometry: str = "800x600", bg_color: str = "white",
+                 fullscreen: bool = False):
         super().__init__()
         # z. B. "homepage", "admin", "einstellungen"
         self.plugin_scope = plugin_scope
@@ -69,8 +70,8 @@ class BaseWindow(tk.Tk):
         button = ttk.Button(popup, text="OK", command=popup.destroy)
         button.pack(pady=10)
 
-        popup.grab_set()  # blockiert das Hauptfenster
-        popup.transient(self)  # bleibt im Vordergrund
+        popup.grab_set()
+        popup.transient(self)
 
     def ask_permission(self, message: str,
                        focus_on: List[bool] = None) -> None:
