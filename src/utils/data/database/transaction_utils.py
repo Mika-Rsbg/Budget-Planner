@@ -5,12 +5,13 @@ import config
 
 
 class Error(Exception):
-    """Allgemeine Ausnahmeklasse für Datenbankfehler."""
+    """General exception class for database errors."""
     pass
 
-    class AlreadyExistsError(Exception):
-        """Exception raised when a record already exists."""
-        pass
+
+class AlreadyExistsError(Exception):
+    """Exception raised when a record already exists."""
+    pass
 
 
 def get_transaction_dat(db_path: Path = config.Database.PATH):
@@ -36,7 +37,9 @@ def add_transaction(db_path: Path = config.Database.PATH,
 
     Raises:
         Error: If an error occurs during the database operation or if a
-               duplicate is found.
+            duplicate is found.
+        AlreadyExistsError: If a transaction with the same details already
+            exists in the database.
     """
     (account_id, date, bookingdate, tt_id, amount,
      purpose, counterparty_id, category_id, user_comments,
@@ -44,7 +47,7 @@ def add_transaction(db_path: Path = config.Database.PATH,
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
-        cursor = conn.cursor()
+        cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
@@ -67,7 +70,7 @@ def add_transaction(db_path: Path = config.Database.PATH,
              counterparty_id, category_id)
         )
         if cursor.fetchone():
-            raise Error.AlreadyExistsError("Transaction already exists.")
+            raise AlreadyExistsError("Transaction already exists.")
     except sqlite3.Error as e:
         raise Error(f"Error checking for duplicate transaction: {e}")
 
@@ -103,3 +106,5 @@ def add_transaction(db_path: Path = config.Database.PATH,
         conn.commit()
     except sqlite3.Error as e:
         raise Error(f"Error creating transaction: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
