@@ -11,12 +11,17 @@ import config
 
 
 class Error(Exception):
-    """Allgemeine Ausnahmeklasse für Datenbankfehler."""
+    """General exception class for database errors."""
     pass
 
 
 class NoChangesDetectedError(Exception):
     """Exception raised when no changes are detected during an update."""
+    pass
+
+
+class NoAccountFoundError(Exception):
+    """Exception raised when no account is found."""
     pass
 
 
@@ -37,6 +42,9 @@ def get_account_data(db_path: Path = config.Database.PATH,
                                        ChangeDate]
     Return:
         List of tuples containing account data (AccountID, AccountName).
+    Raises:
+        Error: If the number of selected columns does not match the expected
+               number of columns.
     """
     cursor = DatabaseConnection.get_cursor(db_path)
     columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
@@ -55,6 +63,8 @@ def get_account_data(db_path: Path = config.Database.PATH,
 
     cursor.execute(query)
     account_data = cursor.fetchall()
+    DatabaseConnection.close_cursor()
+    print("Account data retrieved successfully.")
     return account_data
 
 
@@ -65,6 +75,9 @@ def delete_account(db_path: Path = config.Database.PATH,
     Args:
         db_path (Path): Path to the SQLite database file.
         account_id (int): Account ID of the account to delete.
+    Raises:
+        Error: If the account ID is not provided or if any database error
+               occurs.
     """
     try:
         conn = DatabaseConnection.get_connection(db_path)
@@ -76,13 +89,14 @@ def delete_account(db_path: Path = config.Database.PATH,
             '''
             DELETE FROM tbl_Account WHERE i8_AccountID = ?
             ''',
-            str(account_id),)
+            (account_id,))
 
         conn.commit()
         print("Account deleted successfully.")
     except sqlite3.Error as e:
         raise Error(f"Error deleting account: {e}")
-    cursor.close()
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def update_account(db_path: Path = config.Database.PATH,
@@ -174,6 +188,10 @@ def add_account_mt940(db_path: Path = config.Database.PATH,
         number (str): Number of the account.
         balance (float): Balance of the account.
         difference (float, optional): Difference of the account.
+        master (tk.Tk, optional): The parent Tkinter window for the dialog.
+    Raises:
+        Error: If the account number is not provided or if any database error
+               occurs.
     """
     if name is None:
         dialog = NameInputDialog(master)
@@ -276,7 +294,7 @@ def get_account_id(db_path: Path = config.Database.PATH,
               elements.
         Error: If no filtering criteria are provided
               (i.e., all elements in supplied_data are False).
-        Error: If no matching account is found in the database.
+        NoAccountFoundError: If no matching account is found in the database.
         Error: If an error occurs during the database query.
     """
     if data is None or len(data) != 4:
@@ -306,7 +324,7 @@ def get_account_id(db_path: Path = config.Database.PATH,
         cursor.execute(query, parameters)
         result = cursor.fetchone()
         if result is None:
-            raise Error("No matching account found.")
+            raise NoAccountFoundError("No matching account found.")
         return result[0]
     except sqlite3.Error as e:
         raise Error(f"Error querying account ID: {e}")
