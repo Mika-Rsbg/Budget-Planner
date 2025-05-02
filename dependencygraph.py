@@ -231,9 +231,10 @@ def main():
             g, pos, ax=ax, node_color="lightblue", node_size=sizes
         )
         nx.draw_networkx_labels(
-            g, pos, labels=labels, ax=ax, font_color="black"
+            g, pos, labels=labels, ax=ax, font_color="black",
+            font_weight="bold"
         )
-        nx.draw_networkx_edges(g, pos, ax=ax, edge_color="lightgray",
+        nx.draw_networkx_edges(g, pos, ax=ax, edge_color="gray",
                                arrowstyle="->", arrowsize=20,
                                connectionstyle="arc3,rad=0.3")
         ax.set_title("Import-Diagramm (Flow-Layout LR)")
