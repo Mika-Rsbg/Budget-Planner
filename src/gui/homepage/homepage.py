@@ -160,18 +160,21 @@ class Homepage(BaseWindow):
             "%.2f €", abs(difference_value), grouping=True
         )
 
-        is_positive = current_value >= 0
-        bg_color = "#ccffcc" if is_positive else "#ffcccc"
-        fg_color = "#006600" if is_positive else "#990000"
+        is_current_positive = current_value >= 0
+        is_diff_positive = difference_value >= 0
+        bg_color = "#ccffcc" if is_current_positive else "#ffcccc"
+        current_fg = "#006600" if is_current_positive else "#990000"
+        diff_fg = "#006600" if is_diff_positive else "#990000"
 
         frame.config(bg=bg_color)
-        for lbl in (value_label, diff_label, name_label):
-            lbl.config(bg=bg_color)
-        value_label.config(text=current_str, fg=fg_color)
+        for lbl in (value_label, name_label):
+            lbl.config(bg=bg_color, fg=current_fg)
+        diff_label.config(bg=bg_color)
 
+        value_label.config(text=current_str)
         sign = '+' if difference_value >= 0 else '-'
-        diff_label.config(text=f"{sign}{diff_str}", fg=fg_color)
-        name_label.config(fg=fg_color)
+        diff_label.config(text=f"{sign}{diff_str}", fg=diff_fg)
+        name_label.config(fg=current_fg)
 
     def set_budget(self, amount: float) -> None:
         self.budget_value = amount
