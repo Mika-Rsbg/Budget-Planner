@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from gui.plugins import load_plugins
+from gui.plugins.__init__ import load_plugins
 
 
 class BaseToplevelWindow(tk.Toplevel):
