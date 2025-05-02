@@ -99,7 +99,7 @@ class Homepage(BaseWindow):
                 difference_value=real_AccountDifference
             )
 
-        total_columns = len(account_list)
+        total_columns = len(account_list) if len(account_list) > 0 else 1
         for i in range(total_columns):
             self.main_frame.columnconfigure(i, weight=1)
 
