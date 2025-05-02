@@ -1,5 +1,9 @@
 import tkinter as tk
 from gui.accountpage.accountpage import AccountPage
+from gui.accountpage.reorder_account_widgets_page import (
+    ReorderAccountWidgetsWindow,
+)
+from gui.basewindow import BaseWindow
 
 menu_id = 10
 
@@ -19,12 +23,12 @@ def add_to_menu(window, menu_bar):
     account_menu.add_command(label="Konto löschen", command=lambda:
                              open_account_page(window, True))
 
-    account_menu.add_separator()  # Noch eine Trennlinie
+    account_menu.add_separator()
 
-    # Transaktion hinzufügen
-    account_menu.add_command(label="Transaktion hinzufügen", command=lambda:
-                             window.show_message
-                             ("Feature in Arbeit."))
+    account_menu.add_command(label="Widgets neu anordnen",
+                             command=lambda: reorder_account_widgets(window))
+
+    account_menu.add_separator()
 
     # Übersicht anzeigen
     account_menu.add_command(label="Kontenübersicht", command=lambda:
@@ -43,3 +47,14 @@ def open_account_page(window, account_selection_needed: bool) -> None:
         account_selection_needed (bool)
     """
     AccountPage(window, account_selection_needed)
+
+
+def reorder_account_widgets(window: BaseWindow) -> None:
+    """
+    Tests the ReorderAccountWidgetsWindow by creating an instance of it.
+    This function is intended for testing purposes only and should not be
+    used in release code.
+    """
+    app = ReorderAccountWidgetsWindow(master=window)
+    window.wait_window(app)
+    window.reload()
