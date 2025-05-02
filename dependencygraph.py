@@ -200,10 +200,11 @@ def main():
                     layers[old_d].remove(n)
                     depth[n] = new_d
                     layers.setdefault(new_d, []).append(n)
-    horizontal_gap = 1.0
+    horizontal_gap = 3.0
     vertical_gap = 1.0
     pos = {}
     # small right shift per step within a layer
+    horizontal_gap = horizontal_gap if horizontal_gap > 0 else 0.001
     intra_layer_offset = horizontal_gap * 0.1
     # isolate nodes with no connections and place them in top-left corner
     isolates = [n for n in g.nodes() if g.degree(n) == 0]
@@ -223,6 +224,7 @@ def main():
             pos[n] = (x, y)
 
     fig, ax = plt.subplots()
+    selected = None
 
     # Zeichenfunktion extrahieren
     def draw_graph():
@@ -234,9 +236,20 @@ def main():
             g, pos, labels=labels, ax=ax, font_color="black",
             font_weight="bold"
         )
-        nx.draw_networkx_edges(g, pos, ax=ax, edge_color="gray",
-                               arrowstyle="->", arrowsize=20,
-                               connectionstyle="arc3,rad=0.3")
+        # highlight edges for selected node
+        if selected is not None:
+            edge_colors = ['red' if u == selected or v == selected
+                           else 'gray' for u, v in g.edges()]
+            edge_widths = [2.0 if u == selected or v == selected
+                           else 1.0 for u, v in g.edges()]
+        else:
+            edge_colors = 'gray'
+            edge_widths = 1.0
+        nx.draw_networkx_edges(
+            g, pos, ax=ax, edge_color=edge_colors, width=edge_widths,
+            arrowstyle="->", arrowsize=20,
+            connectionstyle="arc3,rad=0.3"
+        )
         ax.set_title("Import-Diagramm (Flow-Layout LR)")
         ax.set_axis_off()
         fig.canvas.draw_idle()
@@ -248,7 +261,6 @@ def main():
     # initial draw
     draw_graph()
     # setup interactive draggable nodes
-    selected = None
 
     def on_press(event):
         nonlocal selected
@@ -258,6 +270,7 @@ def main():
             xt, yt = ax.transData.transform((x, y))
             if ((xt - event.x)**2 + (yt - event.y)**2)**0.5 < 40:
                 selected = n
+                draw_graph()  # update highlight
                 break
 
     def on_motion(event):
