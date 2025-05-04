@@ -3,6 +3,7 @@ from tkinter import ttk
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
 from utils.data.database.account_utils import get_account_data
+from gui.budget_suggestion.suggestion_dialog import BudgetSuggestionDialog
 import locale
 
 
@@ -82,6 +83,14 @@ class Homepage(BaseWindow):
         )
         self.budget_label.pack(expand=True)
         self.set_budget(0.0)
+        
+        # ============= AI Suggestion Button =============
+        self.suggestion_button = ttk.Button(
+            self.budget_frame,
+            text="Get AI Budget Suggestions",
+            command=self.open_budget_suggestions
+        )
+        self.suggestion_button.pack(side=tk.BOTTOM, pady=5)
 
         # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
         # Get the account data from the database
@@ -189,6 +198,11 @@ class Homepage(BaseWindow):
 
         self.budget_label.config(bg=bg_color, fg=fg_color)
         self.budget_frame.config(bg=bg_color)
+        
+    def open_budget_suggestions(self):
+        """Open the budget suggestions dialog."""
+        suggestion_dialog = BudgetSuggestionDialog(self)
+        self.wait_window(suggestion_dialog)
 
 
 if __name__ == '__main__':
