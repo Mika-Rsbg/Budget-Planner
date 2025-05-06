@@ -15,7 +15,9 @@ def main() -> None:
     from gui.homepage.homepage import Homepage
     from utils.data.createdatabase_utils import create_database
 
+    logger.info("-------------------------------------------------")
     logger.info("Application started.")
+    logger.info("-------------------------------------------------")
 
     create_database()
 
