@@ -17,6 +17,8 @@ def logg(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        logger.debug(f'End: {func.__name__} (Duration: {end - start:.2f}s)')
+        logger.debug(
+            f'End: {func.__name__} (Duration: {end - start:.2f}s)'
+        )
         return result
     return wrapper

@@ -64,7 +64,7 @@ def get_account_data(db_path: Path = config.Database.PATH,
     cursor.execute(query)
     account_data = cursor.fetchall()
     DatabaseConnection.close_cursor()
-    print("Account data retrieved successfully.")
+    print("Account data retrieved successfully. (Account_Utils)")
     return account_data
 
 
