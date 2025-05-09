@@ -1,10 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
+import logging
+from utils.logging.logging_tools import logg
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
 from utils.data.database.account_utils import get_account_data
 from gui.budget_suggestion.suggestion_dialog import BudgetSuggestionDialog
 import locale
+
+
+logger = logging.getLogger(__name__)
 
 
 class Homepage(BaseWindow):
@@ -83,7 +88,7 @@ class Homepage(BaseWindow):
         )
         self.budget_label.pack(expand=True)
         self.set_budget(0.0)
-        
+
         # ============= AI Suggestion Button =============
         self.suggestion_button = ttk.Button(
             self.budget_frame,
@@ -154,6 +159,7 @@ class Homepage(BaseWindow):
         }
         self.update_account_values(column, current_value, difference_value)
 
+    @logg
     def update_account_values(self, widget_position: int, current_value: float,
                               difference_value: float) -> None:
         widget = self.account_widgets[widget_position]
@@ -185,6 +191,7 @@ class Homepage(BaseWindow):
         diff_label.config(text=f"{sign}{diff_str}", fg=diff_fg)
         name_label.config(fg=current_fg)
 
+    @logg
     def set_budget(self, amount: float) -> None:
         self.budget_value = amount
         self.budget_label.config(text=f"{amount:.2f} €")
@@ -198,13 +205,10 @@ class Homepage(BaseWindow):
 
         self.budget_label.config(bg=bg_color, fg=fg_color)
         self.budget_frame.config(bg=bg_color)
-        
+        logger.info(f"Budget set to {amount:.2f} €")
+
+    @logg
     def open_budget_suggestions(self):
         """Open the budget suggestions dialog."""
         suggestion_dialog = BudgetSuggestionDialog(self)
         self.wait_window(suggestion_dialog)
-
-
-if __name__ == '__main__':
-    app = Homepage()
-    app.mainloop()
