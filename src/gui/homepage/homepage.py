@@ -217,8 +217,6 @@ class Homepage(BaseWindow):
         self.budget_frame.config(bg=bg_color)
         logger.info(f"Budget set to {amount:.2f} €")
 
-        logger.info(f"Budget set to {amount:.2f} €")
-
     @logg
     def open_budget_suggestions(self):
         """Open the budget suggestions dialog."""
