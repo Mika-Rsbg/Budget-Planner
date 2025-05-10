@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
+import logging
+from utils.logging.logging_tools import logg
 from gui.basetoplevelwindow import BaseToplevelWindow
+
+
+logger = logging.getLogger(__name__)
 
 
 class NameInputDialog(BaseToplevelWindow):
@@ -42,6 +47,7 @@ class NameInputDialog(BaseToplevelWindow):
         # Set the default focus to the entry widget
         self.entry.focus_set()
 
+    @logg
     def validate_name_input(self) -> str:
         """
         Validates the name input from the entry widget.
@@ -52,15 +58,20 @@ class NameInputDialog(BaseToplevelWindow):
                               foreground="red")
             return None
         self.label.config(text="Name:", foreground="black")
-        print(f"Name: {name}")
+        logger.debug(f"Name input validated: {name}")
+        logger.info(f"Name is: {name}")
         return name
 
+    @logg
     def on_ok(self):
         self.name = self.validate_name_input()
         if self.name is None:
+            logger.debug("Name is None, not closing the dialog.")
             return
         self.destroy()
 
+    @logg
     def on_cancel(self):
+        logger.debug("Canceled name input.")
         self.name = None
         self.destroy()
