@@ -321,7 +321,7 @@ def create_database(db_path: Path = None) -> None:
         create_transaction_typ_table(cursor, conn)
         create_transactions_table(cursor, conn)
 
-        logger.info(f'Tables created successfully: {db_path}')
+        logger.info('Tables created successfully.')
 
         # Indizes erstellen
         create_all_indexes(cursor, conn)
