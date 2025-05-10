@@ -1,6 +1,6 @@
 ---
 name: "Legacy Code Review"
-description: "Mark outdated code for review to align with current standards."
+about: "Mark outdated code for review to align with current standards."
 title: "[Legacy Code Review] <Your Title Here>"
 labels: legacy code; code review
 assignees: ''
