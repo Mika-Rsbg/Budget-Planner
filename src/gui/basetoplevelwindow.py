@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
+import logging
+from utils.logging.logging_tools import logg
 from gui.plugins.__init__ import load_plugins
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseToplevelWindow(tk.Toplevel):
@@ -29,6 +34,7 @@ class BaseToplevelWindow(tk.Toplevel):
         self._setup_menu()
         self.init_ui()
 
+    @logg
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
         style.theme_use("clam")
@@ -38,16 +44,19 @@ class BaseToplevelWindow(tk.Toplevel):
         style.configure("TEntry", fieldbackground=self.bg_color)
         style.configure("TCheckbutton", background=self.bg_color)
 
+    @logg
     def _setup_main_frame(self) -> None:
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
+    @logg
     def _setup_status_bar(self) -> None:
         self.status_var = tk.StringVar(value="Bereit")
         self.status_bar = ttk.Label(self, textvariable=self.status_var,
                                     relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+    @logg
     def _setup_menu(self) -> None:
         menu_bar = tk.Menu(self)
         self.config(menu=menu_bar)
@@ -56,6 +65,7 @@ class BaseToplevelWindow(tk.Toplevel):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
+    @logg
     def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
@@ -63,10 +73,12 @@ class BaseToplevelWindow(tk.Toplevel):
         It is called after the main frame, status bar and the menu
         have been set up.
         """
+        logger.error("init_ui() not implemented in subclass")
         raise NotImplementedError(
             "init_ui() needs to be implemented in subclasses"
         )
 
+    @logg
     def show_message(self, message: str) -> None:
         """
         Helpmethod that shows a message in a popup window.
@@ -86,10 +98,13 @@ class BaseToplevelWindow(tk.Toplevel):
         popup.grab_set()
         popup.transient(self)
 
+    @logg
     def reload(self) -> None:
         """
         Destroys all widgets in the main frame and reinitializes the UI.
         """
         for widget in self.main_frame.winfo_children():
             widget.destroy()
+        logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        logger.info("Reloaded the UI.")
