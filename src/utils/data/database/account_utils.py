@@ -215,6 +215,7 @@ def add_account_mt940(db_path: Path = config.Database.PATH,
                occurs.
     """
     if name is None:
+        logger.info("Get name of the new account. To add the new account.")
         dialog = NameInputDialog(master)
         master.wait_window(dialog)
         name = dialog.name
@@ -343,9 +344,6 @@ def get_account_id(db_path: Path = config.Database.PATH,
 
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
-        logger.debug("Querying account ID with conditions:")
-        logger.debug(f"Query: {query}")
-        logger.debug(f"Parameters: {parameters}")
         cursor.execute(query, parameters)
         result = cursor.fetchone()
         if result is None:
