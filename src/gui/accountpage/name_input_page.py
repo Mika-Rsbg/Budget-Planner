@@ -17,6 +17,7 @@ class NameInputDialog(BaseToplevelWindow):
             master (tk.Tk): The parent window.
             number (str): The account number (IBAN).
         """
+        logger.debug("Initializing NameInputDialog")
         self.number = number
         super().__init__(master, title="Name eingeben", geometry="250x200")
         self.name = None
@@ -58,8 +59,8 @@ class NameInputDialog(BaseToplevelWindow):
                               foreground="red")
             return None
         self.label.config(text="Name:", foreground="black")
-        logger.debug(f"Name input validated: {name}")
-        logger.info(f"Name is: {name}")
+        logger.debug(f"Name input successfully validated: {name}")
+        logger.info(f"Name of the new account is: {name}")
         return name
 
     @logg
