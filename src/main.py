@@ -15,16 +15,26 @@ def main() -> None:
     from gui.homepage.homepage import Homepage
     from utils.data.createdatabase_utils import create_database
 
-    logger.info("-------------------------------------------------")
-    logger.info("Application started.")
-    logger.info("-------------------------------------------------")
+    logger.info("")
+    logger.info("################### APPLICATION STARTED ###################")
+    logger.info("")
 
     create_database()
 
     app = Homepage(fullscreen=False)
     app.run()
 
+    logger.info("")
+    logger.info("################### APPLICATION FINISHED ##################")
+    logger.info("")
+
 
 if __name__ == "__main__":
     setup_logging()
+    logger.info("")
+    logger.info("=============== BOOTSTRAP APPLICATION =====================")
+    logger.info("")
     main()
+    logger.info("")
+    logger.info("=============== SHUTDOWN COMPLETE =========================")
+    logger.info("")
