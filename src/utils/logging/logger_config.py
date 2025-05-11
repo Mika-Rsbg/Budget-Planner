@@ -6,8 +6,14 @@ def setup_logging():
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - [%(levelname)s] - %(message)s"
+        "%(asctime)s - %(name)s - %(funcName)s - [%(levelname)s] -"
+        " %(message)s"
     )
+
+    # formatter = logging.Formatter(
+    #     "%(asctime)s - %(name)-50s - %(funcName)-30s - [%(levelname)-7s] -"
+    #     " %(message)s"
+    # )
 
     # Output to file (DEBUG level) → app.log
     debug_handler = logging.FileHandler("app.log", encoding="utf-8")
