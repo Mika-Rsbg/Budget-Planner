@@ -28,7 +28,7 @@ class DatabaseConnection:
         """
         if DatabaseConnection._instance is None:
             DatabaseConnection._instance = sqlite3.connect(db_path)
-            logging.info(f"Database connection created: {db_path}")
+            logger.info(f"Database connection created: {db_path}")
         return DatabaseConnection._instance
 
     @staticmethod
@@ -49,8 +49,6 @@ class DatabaseConnection:
             DatabaseConnection._cursor = DatabaseConnection.get_connection(
                 db_path
             ).cursor()
-            logging.debug(f"Database cursor created: {db_path}")
-        logging.debug("Database cursor retrieved.")
         return DatabaseConnection._cursor
 
     def close_cursor() -> None:
@@ -61,7 +59,6 @@ class DatabaseConnection:
         if DatabaseConnection._cursor:
             DatabaseConnection._cursor.close()
             DatabaseConnection._cursor = None
-            logger.debug("Database cursor closed.")
 
     @staticmethod
     def close_connection() -> None:
