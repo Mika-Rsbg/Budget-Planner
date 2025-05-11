@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Homepage(BaseWindow):
     def __init__(self, fullscreen: bool = False) -> None:
+        logger.debug("Initializing Homepage")
         # Init empty dictionary for account widgets
         self.account_widgets = {}
         super().__init__(plugin_scope="homepage",
@@ -137,8 +138,6 @@ class Homepage(BaseWindow):
             current_value (float): The current value of the account.
             difference_value (float): The difference value of the account.
         """
-        logger.info(f"Creating account widget: {account_name} "
-                    f"(column {column})")
         frame = self._create_account_widget_frame(row, column)
         labels = {
             'name': self._make_account_widget_label(
