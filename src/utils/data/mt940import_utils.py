@@ -50,10 +50,11 @@ def split_toblocks_mt940(file_content: str) -> list:
     # Add the last block
     if current_block:
         blocks.append(''.join(current_block))
-    logger.debug("Bank statement successfully split into blocks")
+    logger.debug("Bank statement successfully split into blocks.")
     return blocks
 
 
+@logg
 def parse_block(blocks: list) -> list:
     """Parse the blocks and extract the data.
 
@@ -226,9 +227,11 @@ def parse_block(blocks: list) -> list:
             temp_purpose = None
             temp_counterparty_name = None
             temp_closing_balance = None
+    logger.debug("Bank statement successfully parsed.")
     return parsed_data
 
 
+@logg
 def insert_transactions(data: list, window: tk.Tk) -> None:
     """Insert the transactions into the database. Using database utils.
 
@@ -348,6 +351,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                      "in the database.")
         skipped_last_transaction = False
         number_skipped_transactions = 0
+    logger.debug("Transactions successfully inserted to database.")
 
     # Add the closing balance to the database
     latest = {}
@@ -448,8 +452,11 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 f"Account {account_number} already has the same values. "
                 "Skipping..."
             )
+    logger.debug("Account history successfully inserted to database.")
+    logger.debug("Bank statement successfully inserted to database.")
 
 
+@logg
 def import_mt940_file(master: tk.Tk) -> None:
     """
     Import an MT940 formatted file using a file dialog and process its
@@ -481,11 +488,13 @@ def import_mt940_file(master: tk.Tk) -> None:
         filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
     )
     if file_path:
+        logger.info("Start importing bank statment.")
         with open(file_path, 'r', encoding='utf8') as file:
             file_content = file.read()
         blocks = split_toblocks_mt940(file_content)
         parsed_data = parse_block(blocks)
         insert_transactions(parsed_data, master)
+        logger.info("Imported bank statment successfully.")
         master.reload()
     else:
         logger.info("No file selected.")
