@@ -165,3 +165,7 @@ temp/
 # Database files
 *.db
 .vscode
+
+
+# Mac files
+.DB_Store
