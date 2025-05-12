@@ -244,8 +244,10 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             into the database.
     """
     closing_balance = []
-    skipped_last_transaction = False
+    # Initialize counters
     number_skipped_transactions = 0
+    number_consecutive_inserted_transactions = 0
+    skipped_last_transaction = False
     for entry in data:
         # temp: not ready for the database
         # rti: ready to insert
@@ -324,6 +326,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             db_transaction_utils.add_transaction(
                 data=rti_data
             )
+            number_consecutive_inserted_transactions += 1
             if skipped_last_transaction:
                 logger.debug(f"Skipped {number_skipped_transactions} "
                              "transactions because they were already "
@@ -331,9 +334,23 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 skipped_last_transaction = False
                 number_skipped_transactions = 0
         except db_transaction_utils.AlreadyExistsError:
+            # Log consecutive inserted transactions if interrupted
+            if number_consecutive_inserted_transactions > 0:
+                logger.debug(
+                    f"Inserted {number_consecutive_inserted_transactions} "
+                    "consecutive transactions into the database."
+                )
+                number_consecutive_inserted_transactions = 0
             number_skipped_transactions += 1
             skipped_last_transaction = True
         except db_transaction_utils.Error:
+            # Log consecutive inserted transactions if interrupted
+            if number_consecutive_inserted_transactions > 0:
+                logger.debug(
+                    f"Inserted {number_consecutive_inserted_transactions} "
+                    "consecutive transactions into the database."
+                )
+                number_consecutive_inserted_transactions = 0
             if skipped_last_transaction:
                 logger.debug(f"Skipped {number_skipped_transactions} "
                              "transactions because they were already "
@@ -343,15 +360,16 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
 
-    # If the last transaction was skipped, log the number of skipped
-    # transactions
+    # Final logging for any remaining consecutive inserted or
+    # skipped transactions
+    if number_consecutive_inserted_transactions > 0:
+        logger.debug(f"Inserted {number_consecutive_inserted_transactions} "
+                     "consecutive transactions into the database.")
+
     if skipped_last_transaction:
         logger.debug(f"Skipped {number_skipped_transactions} "
                      "transactions because they were already "
                      "in the database.")
-        skipped_last_transaction = False
-        number_skipped_transactions = 0
-    logger.debug("Transactions successfully inserted to database.")
 
     # Add the closing balance to the database
     latest = {}
