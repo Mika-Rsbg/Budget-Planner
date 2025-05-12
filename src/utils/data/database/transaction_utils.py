@@ -1,7 +1,11 @@
 import sqlite3
 from pathlib import Path
+import logging
 from utils.data.database_connection import DatabaseConnection
 import config
+
+
+logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
@@ -49,6 +53,7 @@ def add_transaction(db_path: Path = config.Database.PATH,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.exception(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -70,8 +75,10 @@ def add_transaction(db_path: Path = config.Database.PATH,
              counterparty_id, category_id)
         )
         if cursor.fetchone():
+            logger.debug("Transaction already exists.")
             raise AlreadyExistsError("Transaction already exists.")
     except sqlite3.Error as e:
+        logger.error(f"Error checking for duplicate transaction: {e}")
         raise Error(f"Error checking for duplicate transaction: {e}")
 
     try:
@@ -105,6 +112,7 @@ def add_transaction(db_path: Path = config.Database.PATH,
         )
         conn.commit()
     except sqlite3.Error as e:
+        logger.error(f"Error creating transaction: {e}")
         raise Error(f"Error creating transaction: {e}")
     finally:
         DatabaseConnection.close_cursor()
