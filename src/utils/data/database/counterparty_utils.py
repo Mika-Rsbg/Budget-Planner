@@ -1,7 +1,11 @@
 import sqlite3
 from pathlib import Path
+import logging
 from utils.data.database_connection import DatabaseConnection
 import config
+
+
+logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
@@ -25,6 +29,7 @@ def add_counterparty(db_path: Path = config.Database.PATH,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -38,8 +43,9 @@ def add_counterparty(db_path: Path = config.Database.PATH,
             (name, number)
         )
         conn.commit()
-        print("Counterparty added successfully.")
+        logger.debug("Counterparty added successfully.")
     except sqlite3.Error as e:
+        logger.error(f"Error inserting data: {e}")
         raise Error(f"Error inserting data: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -72,6 +78,7 @@ def get_counterparty_id(db_path: Path = config.Database.PATH,
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     # Build the WHERE clause based on which fields are supplied
@@ -95,6 +102,7 @@ def get_counterparty_id(db_path: Path = config.Database.PATH,
         cursor.execute(query, tuple(values))
         result = cursor.fetchone()
     except sqlite3.Error as e:
+        logger.error(f"Error querying data: {e}")
         raise Error(f"Error querying data: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -102,4 +110,5 @@ def get_counterparty_id(db_path: Path = config.Database.PATH,
     if result:
         return result[0]
     else:
+        logger.warning("No matching counterparty found.")
         raise Error("No matching counterparty found.")
