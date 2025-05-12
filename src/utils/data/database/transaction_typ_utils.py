@@ -1,7 +1,11 @@
 import sqlite3
 from pathlib import Path
+import logging
 from utils.data.database_connection import DatabaseConnection
 import config
+
+
+logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
@@ -25,6 +29,7 @@ def add_transaction_typ(db_path: Path = config.Database.PATH,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logging.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -38,8 +43,10 @@ def add_transaction_typ(db_path: Path = config.Database.PATH,
             (name, number)
         )
         conn.commit()
+        logger.debug("Transaction type added successfully.")
         print("Transaction type added successfully.")
     except sqlite3.Error as e:
+        logger.exception(f"Error inserting data: {e}")
         raise Error(f"Error inserting data: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -68,6 +75,7 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -90,9 +98,11 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
         cursor.execute(query, params)
         row = cursor.fetchone()
         if row is None:
+            logger.error("No matching transaction type found.")
             raise Error("No matching transaction type found.")
         return row[0]
     except sqlite3.Error as e:
+        logger.exception(f"Error querying data: {e}")
         raise Error(f"Error querying data: {e}")
     finally:
         DatabaseConnection.close_cursor()
