@@ -34,7 +34,6 @@ class BaseToplevelWindow(tk.Toplevel):
         self._setup_menu()
         self.init_ui()
 
-    @logg
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
         style.theme_use("clam")
@@ -44,19 +43,16 @@ class BaseToplevelWindow(tk.Toplevel):
         style.configure("TEntry", fieldbackground=self.bg_color)
         style.configure("TCheckbutton", background=self.bg_color)
 
-    @logg
     def _setup_main_frame(self) -> None:
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
-    @logg
     def _setup_status_bar(self) -> None:
         self.status_var = tk.StringVar(value="Bereit")
         self.status_bar = ttk.Label(self, textvariable=self.status_var,
                                     relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-    @logg
     def _setup_menu(self) -> None:
         menu_bar = tk.Menu(self)
         self.config(menu=menu_bar)
