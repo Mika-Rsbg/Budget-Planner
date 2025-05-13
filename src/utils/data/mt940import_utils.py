@@ -65,6 +65,7 @@ def parse_block(blocks: list) -> list:
         list: A list of dictionaries containing the parsed data.
     """
     parsed_data = []
+    number_parsed_transactions: int = 0
     last_block_86 = False
     # Temporary variables to store data
     temp_transaction_type_number = None
@@ -214,6 +215,7 @@ def parse_block(blocks: list) -> list:
 
             # Add the transaction to the parsed data
             parsed_data.append(transaction)
+            number_parsed_transactions += 1
 
             # Reset temporary variables for the next transaction
             temp_reference = None
@@ -227,6 +229,7 @@ def parse_block(blocks: list) -> list:
             temp_purpose = None
             temp_counterparty_name = None
             temp_closing_balance = None
+    logger.debug("Parsed %d transactions.", number_parsed_transactions)
     logger.debug("Bank statement successfully parsed.")
     return parsed_data
 
