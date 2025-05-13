@@ -249,7 +249,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
     closing_balance = []
     # Initialize counters
     number_skipped_transactions = 0
-    number_consecutive_inserted_transactions = 0
+    number_inserted_transactions = 0
     skipped_last_transaction = False
     for entry in data:
         # temp: not ready for the database
@@ -329,45 +329,27 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             db_transaction_utils.add_transaction(
                 data=rti_data
             )
-            number_consecutive_inserted_transactions += 1
-            if skipped_last_transaction:
-                logger.debug(f"Skipped {number_skipped_transactions} "
-                             "transactions because they were already "
-                             "in the database.")
-                skipped_last_transaction = False
-                number_skipped_transactions = 0
+            number_inserted_transactions += 1
         except db_transaction_utils.AlreadyExistsError:
-            # Log consecutive inserted transactions if interrupted
-            if number_consecutive_inserted_transactions > 0:
-                logger.debug(
-                    f"Inserted {number_consecutive_inserted_transactions} "
-                    "consecutive transactions into the database."
-                )
-                number_consecutive_inserted_transactions = 0
             number_skipped_transactions += 1
-            skipped_last_transaction = True
         except db_transaction_utils.Error:
-            # Log consecutive inserted transactions if interrupted
-            if number_consecutive_inserted_transactions > 0:
-                logger.debug(
-                    f"Inserted {number_consecutive_inserted_transactions} "
-                    "consecutive transactions into the database."
-                )
-                number_consecutive_inserted_transactions = 0
-            if skipped_last_transaction:
-                logger.debug(f"Skipped {number_skipped_transactions} "
-                             "transactions because they were already "
-                             "in the database.")
-                skipped_last_transaction = False
-                number_skipped_transactions = 0
+            logger.debug(
+                f"Inserted {number_inserted_transactions} "
+                "transactions into the database."
+            )
+            number_inserted_transactions = 0
+            logger.debug(f"Skipped {number_skipped_transactions} "
+                         "transactions because they were already "
+                         "in the database.")
+            number_skipped_transactions = 0
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
 
-    # Final logging for any remaining consecutive inserted or
+    # Final logging for any remaining inserted or
     # skipped transactions
-    if number_consecutive_inserted_transactions > 0:
-        logger.debug(f"Inserted {number_consecutive_inserted_transactions} "
-                     "consecutive transactions into the database.")
+    if number_inserted_transactions > 0:
+        logger.debug(f"Inserted {number_inserted_transactions} "
+                     "transactions into the database.")
 
     if skipped_last_transaction:
         logger.debug(f"Skipped {number_skipped_transactions} "
@@ -378,8 +360,8 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
     latest = {}
     rti_account_id = None
     today = get_iso_date(today=True)
-    skipped_last_ac_his_entry = False
     number_skipped_ac_his_entrys = 0
+    number_added_ac_his_entrys = 0
     for (account_number, record_date, balance) in closing_balance:
         try:
             rti_account_id = db_account_utils.get_account_id(
@@ -406,32 +388,38 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 balance=balance, record_date=get_iso_date(record_date),
                 change_date=today
             )
-            logger.info(
-                f"Account history for {account_number} "
-                f"added with date: {record_date} and balance: {balance}"
-            )
-            if skipped_last_ac_his_entry:
-                logger.debug(
-                    f"Skipped {number_skipped_ac_his_entrys} "
-                    "account history entries because they were already "
-                    "in the database."
-                )
-                skipped_last_ac_his_entry = False
-                number_skipped_ac_his_entrys = 0
+            number_added_ac_his_entrys += 1
         except db_account_history_utils.ExistingAccountHistoryError:
             number_skipped_ac_his_entrys += 1
-            skipped_last_ac_his_entry = True
+        except db_account_history_utils.Error:
+            if number_added_ac_his_entrys > 0:
+                logger.debug(
+                    f"Inserted {number_added_ac_his_entrys} "
+                    "account history entries into the database."
+                )
+                number_added_ac_his_entrys = 0
+            if number_skipped_ac_his_entrys > 0:
+                logger.debug(
+                    f"Skipped {number_skipped_ac_his_entrys} "
+                    "account history entries."
+                )
+                number_skipped_ac_his_entrys = 0
 
-    # If the last account history entry was skipped, log the number of
-    # skipped account history entries
-    if skipped_last_ac_his_entry:
+            logger.error("Error inserting account history entry.")
+            raise DatabaseMT940Error("Error inserting account history entry.")
+
+    # Log summary after the loop
+    if number_skipped_ac_his_entrys > 0:
         logger.debug(
             f"Skipped {number_skipped_ac_his_entrys} "
-            "account history entries because they were already "
-            "in the database."
+            "account history entries because "
+            "they were already in the database."
         )
-        skipped_last_ac_his_entry = False
-        number_skipped_ac_his_entrys = 0
+    if number_added_ac_his_entrys > 0:
+        logger.debug(
+            f"Inserted {number_added_ac_his_entrys} "
+            "account history entries into the database."
+        )
 
     for account_number, (record_date, balance,
                          rti_account_id) in latest.items():
