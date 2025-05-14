@@ -27,7 +27,7 @@ def setup_logging():
 
     # Output to console (DEBUG level)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)  # Change back to DEBUG
     console_handler.setFormatter(formatter)
 
     # Remove previous handlers (if any)
