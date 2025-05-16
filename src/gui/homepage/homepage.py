@@ -1,14 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
+import locale
+import logging
+from utils.logging.logging_tools import logg
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
 from utils.data.database.account_utils import get_account_data
 from gui.budget_suggestion.suggestion_dialog import BudgetSuggestionDialog
-import locale
+
+logger = logging.getLogger(__name__)
 
 
 class Homepage(BaseWindow):
     def __init__(self, fullscreen: bool = False) -> None:
+        logger.debug("Initializing Homepage")
         # Init empty dictionary for account widgets
         self.account_widgets = {}
         super().__init__(plugin_scope="homepage",
@@ -83,7 +88,7 @@ class Homepage(BaseWindow):
         )
         self.budget_label.pack(expand=True)
         self.set_budget(0.0)
-        
+
         # ============= AI Suggestion Button =============
         self.suggestion_button = ttk.Button(
             self.budget_frame,
@@ -95,12 +100,15 @@ class Homepage(BaseWindow):
         # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
         # Get the account data from the database
         account_list = list(get_account_data())
-        print(account_list)
+        logger.info(f"Retrieved {len(account_list)} accounts from database.")
+        logger.debug(f"Account data retrieved: {account_list}")
 
         for (i8_AccountID, i8_WidgetPosition, str_AccountName,
              str_AccountNumber, real_AccountBalance,
              real_AccountDifference, str_RecordDate,
              str_ChangeDate) in account_list:
+            logger.info(f"Creating widget for account '{str_AccountName}' "
+                        f"at position {i8_WidgetPosition}")
             self.create_account_widget(
                 row=2, column=i8_WidgetPosition,
                 account_name=str_AccountName,
@@ -116,6 +124,7 @@ class Homepage(BaseWindow):
         self.heading_frame.grid_configure(columnspan=total_columns)
         self.budget_frame.grid_configure(columnspan=total_columns)
 
+    @logg
     def create_account_widget(self, row: int, column: int, account_name: str,
                               current_value: float = 0.0,
                               difference_value: float = 0.0) -> None:
@@ -154,37 +163,44 @@ class Homepage(BaseWindow):
         }
         self.update_account_values(column, current_value, difference_value)
 
+    @logg
     def update_account_values(self, widget_position: int, current_value: float,
                               difference_value: float) -> None:
-        widget = self.account_widgets[widget_position]
-        frame = widget['frame']
-        value_label = widget['value_label']
-        diff_label = widget['diff_label']
-        name_label = widget['name_label']
+        try:
+            widget = self.account_widgets[widget_position]
+            frame = widget['frame']
+            value_label = widget['value_label']
+            diff_label = widget['diff_label']
+            name_label = widget['name_label']
 
-        current_str = locale.format_string(
-            "%.2f €", current_value, grouping=True
-        )
-        diff_str = locale.format_string(
-            "%.2f €", abs(difference_value), grouping=True
-        )
+            current_str = locale.format_string(
+                "%.2f €", current_value, grouping=True
+            )
+            diff_str = locale.format_string(
+                "%.2f €", abs(difference_value), grouping=True
+            )
 
-        is_current_positive = current_value >= 0
-        is_diff_positive = difference_value >= 0
-        bg_color = "#ccffcc" if is_current_positive else "#ffcccc"
-        current_fg = "#006600" if is_current_positive else "#990000"
-        diff_fg = "#006600" if is_diff_positive else "#990000"
+            is_current_positive = current_value >= 0
+            is_diff_positive = difference_value >= 0
+            bg_color = "#ccffcc" if is_current_positive else "#ffcccc"
+            current_fg = "#006600" if is_current_positive else "#990000"
+            diff_fg = "#006600" if is_diff_positive else "#990000"
 
-        frame.config(bg=bg_color)
-        for lbl in (value_label, name_label):
-            lbl.config(bg=bg_color, fg=current_fg)
-        diff_label.config(bg=bg_color)
+            frame.config(bg=bg_color)
+            for lbl in (value_label, name_label):
+                lbl.config(bg=bg_color, fg=current_fg)
+            diff_label.config(bg=bg_color)
 
-        value_label.config(text=current_str)
-        sign = '+' if difference_value >= 0 else '-'
-        diff_label.config(text=f"{sign}{diff_str}", fg=diff_fg)
-        name_label.config(fg=current_fg)
+            value_label.config(text=current_str)
+            sign = '+' if difference_value >= 0 else '-'
+            diff_label.config(text=f"{sign}{diff_str}", fg=diff_fg)
+            name_label.config(fg=current_fg)
+            logger.info(f"Updated widget {widget_position}: "
+                        f"value={current_value}, diff={difference_value}")
+        except Exception as e:
+            logger.error(f"Error updating widget {widget_position}: {e}")
 
+    @logg
     def set_budget(self, amount: float) -> None:
         self.budget_value = amount
         self.budget_label.config(text=f"{amount:.2f} €")
@@ -198,13 +214,12 @@ class Homepage(BaseWindow):
 
         self.budget_label.config(bg=bg_color, fg=fg_color)
         self.budget_frame.config(bg=bg_color)
-        
+        logger.info(f"Budget set to {amount:.2f} €")
+
+    @logg
     def open_budget_suggestions(self):
         """Open the budget suggestions dialog."""
+        logger.info("Opening budget suggestions dialog.")
         suggestion_dialog = BudgetSuggestionDialog(self)
         self.wait_window(suggestion_dialog)
-
-
-if __name__ == '__main__':
-    app = Homepage()
-    app.mainloop()
+        logger.info("Budget suggestions dialog closed.")

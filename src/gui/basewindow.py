@@ -1,7 +1,12 @@
 from typing import List
 import tkinter as tk
 from tkinter import ttk
+import logging
 from gui.plugins.__init__ import load_plugins
+from utils.logging.logging_tools import logg
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseWindow(tk.Tk):
@@ -61,6 +66,7 @@ class BaseWindow(tk.Tk):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
+    @logg
     def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
@@ -68,10 +74,12 @@ class BaseWindow(tk.Tk):
         It is called after the main frame, status bar and the menu
         have been set up.
         """
+        logger.error("init_ui() not implemented in subclass")
         raise NotImplementedError(
             "init_ui() needs to be implemented in subclasses"
         )
 
+    @logg
     def show_message(self, message: str) -> None:
         """
         Helpmethod that shows a message in a popup window.
@@ -91,6 +99,7 @@ class BaseWindow(tk.Tk):
         popup.grab_set()
         popup.transient(self)
 
+    @logg
     def ask_permission(self, message: str,
                        focus_on: List[bool] = None) -> None:
         """
@@ -125,17 +134,19 @@ class BaseWindow(tk.Tk):
 
         if focus_on is not None:
             if len(focus_on) != 2:
+                logger.exception("focus_on must be a list of two booleans")
                 raise ValueError("focus_on must be a list of two booleans")
             if focus_on[0]:
-                print("Focusing on yes button")
+                logger.debug("Focusing on yes button")
                 yes_button.focus_set()
                 yes_button.bind("<Return>", lambda event: yes_button.invoke())
             elif focus_on[1]:
-                print("Focusing on no button")
+                logger.debug("Focusing on no button")
                 no_button.focus_set()
                 no_button.bind("<Return>", lambda event: no_button.invoke())
 
         self.wait_window(popup)
+        logger.debug("Permission dialog closed.")
 
     def _set_permission(self, popup: tk.Toplevel, permission: bool) -> None:
         """
@@ -146,16 +157,22 @@ class BaseWindow(tk.Tk):
             permission (bool): The permission value to set.
         """
         self.permission = permission
+        logger.debug(f"Permission set to {permission}.")
         popup.destroy()
 
+    @logg
     def run(self) -> None:
         """Starts the main loop of the application."""
+        logger.info("Starting main loop.")
         self.mainloop()
 
+    @logg
     def reload(self) -> None:
         """
         Destroys all widgets in the main frame and reinitializes the UI.
         """
         for widget in self.main_frame.winfo_children():
             widget.destroy()
+        logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        logger.info("Reloaded the UI.")

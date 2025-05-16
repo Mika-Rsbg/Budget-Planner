@@ -1,8 +1,24 @@
 import os
 import importlib
+import logging
+from utils.logging.logging_tools import logg
 
 
+logger = logging.getLogger(__name__)
+
+
+@logg
 def load_plugins(plugin_type: str, plugin_scope: str):
+    """
+    Load plugins from the specified directory based on their type and scope.
+
+    Args:
+        plugin_type (str): Typ des Plugins (z.B. "data", "gui").
+        plugin_scope (str): Typ des Scopes (z.B. "all", "local", "global").
+    Returns:
+        list: List of loaded plugin modules.
+    """
+    error_during_import: bool = False
     base_path = os.path.dirname(__file__)
     base_package = "gui.plugins"
     plugins = []
@@ -33,9 +49,20 @@ def load_plugins(plugin_type: str, plugin_scope: str):
                     menu_id = getattr(module, "menu_id", 9999)
                     plugins.append((scope, menu_id, module))
                 except Exception as e:
-                    print(f"Fehler beim Laden von Plugin {filename}: {e}")
+                    logger.exception(
+                        f"Fehler beim Laden des Plugins {filename}: {e}"
+                    )
+                    error_during_import = True
 
     # Sortieren: zuerst "all", dann andere scopes, jeweils nach menu_id
     sorted_plugins = sorted(plugins, key=lambda item: item[1])
 
+    if error_during_import:
+        logger.warning(
+            "There were errors during the import of some plugins. "
+        )
+    else:
+        logger.info(
+            "All plugins were imported successfully."
+        )
     return [mod for _, _, mod in sorted_plugins]

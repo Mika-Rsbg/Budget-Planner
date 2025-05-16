@@ -1,7 +1,11 @@
 import sqlite3
 from pathlib import Path
 from typing import Optional
+import logging
 import config
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseConnection:
@@ -24,6 +28,7 @@ class DatabaseConnection:
         """
         if DatabaseConnection._instance is None:
             DatabaseConnection._instance = sqlite3.connect(db_path)
+            logger.info(f"Database connection created: {db_path}")
         return DatabaseConnection._instance
 
     @staticmethod
@@ -65,3 +70,4 @@ class DatabaseConnection:
             DatabaseConnection.close_cursor()
             DatabaseConnection._instance.close()
             DatabaseConnection._instance = None
+            logger.info("Database connection closed.")

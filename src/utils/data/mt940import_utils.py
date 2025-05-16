@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
+import logging
+from utils.logging.logging_tools import logg
 from .database import account_utils as db_account_utils
 from .database import account_history_utils as db_account_history_utils
 from .database import counterparty_utils as db_counterparty_utils
@@ -8,11 +10,15 @@ from .database import transaction_utils as db_transaction_utils
 from .date_utils import get_iso_date
 
 
+logger = logging.getLogger(__name__)
+
+
 class DatabaseMT940Error(Exception):
     """General exception class for database errors."""
     pass
 
 
+@logg
 def split_toblocks_mt940(file_content: str) -> list:
     """
     Split the file content into blocks based on the ":" character at the
@@ -44,10 +50,11 @@ def split_toblocks_mt940(file_content: str) -> list:
     # Add the last block
     if current_block:
         blocks.append(''.join(current_block))
-    print("Successfully split into blocks")
+    logger.debug("Bank statement successfully split into blocks.")
     return blocks
 
 
+@logg
 def parse_block(blocks: list) -> list:
     """Parse the blocks and extract the data.
 
@@ -58,6 +65,7 @@ def parse_block(blocks: list) -> list:
         list: A list of dictionaries containing the parsed data.
     """
     parsed_data = []
+    number_parsed_transactions: int = 0
     last_block_86 = False
     # Temporary variables to store data
     temp_transaction_type_number = None
@@ -126,7 +134,7 @@ def parse_block(blocks: list) -> list:
             elif 'DR' in block:
                 amount_start = block.find('DR') + 2
             else:
-                print("Error: No amount found")
+                logger.error("No amount found")
             if 'S' in block:
                 amount_end_search_param = 'S'
             elif 'N' in block:
@@ -207,6 +215,7 @@ def parse_block(blocks: list) -> list:
 
             # Add the transaction to the parsed data
             parsed_data.append(transaction)
+            number_parsed_transactions += 1
 
             # Reset temporary variables for the next transaction
             temp_reference = None
@@ -220,10 +229,12 @@ def parse_block(blocks: list) -> list:
             temp_purpose = None
             temp_counterparty_name = None
             temp_closing_balance = None
-    print(parsed_data)
+    logger.debug("Parsed %d transactions.", number_parsed_transactions)
+    logger.debug("Bank statement successfully parsed.")
     return parsed_data
 
 
+@logg
 def insert_transactions(data: list, window: tk.Tk) -> None:
     """Insert the transactions into the database. Using database utils.
 
@@ -236,6 +247,10 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             into the database.
     """
     closing_balance = []
+    # Initialize counters
+    number_skipped_transactions = 0
+    number_inserted_transactions = 0
+    skipped_last_transaction = False
     for entry in data:
         # temp: not ready for the database
         # rti: ready to insert
@@ -246,7 +261,9 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 supplied_data=[False, True, False, False]
             )
         except db_account_utils.NoAccountFoundError:
-            print(f"Account {temp_account_number} not found in database.")
+            logger.warning(
+                f"Account {temp_account_number} not found in database."
+            )
             db_account_utils.add_account_mt940(
                 master=window,
                 number=temp_account_number, balance=entry['OpeningBalance']
@@ -267,7 +284,9 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 supplied_data=[True, True]
             )
         except db_transaction_typ_utils.Error:
-            print(f"Transaction type {temp_tt_name} not found in database.")
+            logger.warning(
+                f"Transaction type {temp_tt_name} not found in database."
+            )
             db_transaction_typ_utils.add_transaction_typ(
                 name=temp_tt_name, number=temp_tt_number
             )
@@ -285,8 +304,10 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 supplied_data=[True, True]
             )
         except db_counterparty_utils.Error:
-            print(f"Counterparty {temp_counterparty_name} not found in "
-                  "database.")
+            logger.warning(
+                f"Counterparty {temp_counterparty_name} not found in "
+                "database."
+            )
             db_counterparty_utils.add_counterparty(
                 name=temp_counterparty_name, number=temp_counterparty_number
             )
@@ -308,16 +329,39 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
             db_transaction_utils.add_transaction(
                 data=rti_data
             )
+            number_inserted_transactions += 1
         except db_transaction_utils.AlreadyExistsError:
-            print("Transaction already exists. Skipping...")
+            number_skipped_transactions += 1
         except db_transaction_utils.Error:
-            print("Error inserting transaction.")
+            logger.debug(
+                f"Inserted {number_inserted_transactions} "
+                "transactions into the database."
+            )
+            number_inserted_transactions = 0
+            logger.debug(f"Skipped {number_skipped_transactions} "
+                         "transactions because they were already "
+                         "in the database.")
+            number_skipped_transactions = 0
+            logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
+
+    # Final logging for any remaining inserted or
+    # skipped transactions
+    if number_inserted_transactions > 0:
+        logger.debug(f"Inserted {number_inserted_transactions} "
+                     "transactions into the database.")
+
+    if skipped_last_transaction:
+        logger.debug(f"Skipped {number_skipped_transactions} "
+                     "transactions because they were already "
+                     "in the database.")
 
     # Add the closing balance to the database
     latest = {}
     rti_account_id = None
     today = get_iso_date(today=True)
+    number_skipped_ac_his_entrys = 0
+    number_added_ac_his_entrys = 0
     for (account_number, record_date, balance) in closing_balance:
         try:
             rti_account_id = db_account_utils.get_account_id(
@@ -325,10 +369,12 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 supplied_data=[False, True, False, False]
             )
         except db_account_utils.NoAccountFoundError:
-            print(f"Account {account_number} not found in database.")
+            logger.warning(
+                f"Account {account_number} not found in database."
+            )
             raise DatabaseMT940Error(
-                f"Account {account_number} not found in database.",
-                " Even though it was in the MT940 file.",
+                f"Account {account_number} not found in database."
+                " Even though it was in the MT940 file."
                 " And should therefore be in the database."
             )
         balance = float(balance)
@@ -342,11 +388,38 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 balance=balance, record_date=get_iso_date(record_date),
                 change_date=today
             )
-            print(f"Account history for {account_number} "
-                  f"added with date: {record_date} and balance: {balance}")
+            number_added_ac_his_entrys += 1
         except db_account_history_utils.ExistingAccountHistoryError:
-            print(f"Account history for {account_number} already exists. "
-                  "Skipping...")
+            number_skipped_ac_his_entrys += 1
+        except db_account_history_utils.Error:
+            if number_added_ac_his_entrys > 0:
+                logger.debug(
+                    f"Inserted {number_added_ac_his_entrys} "
+                    "account history entries into the database."
+                )
+                number_added_ac_his_entrys = 0
+            if number_skipped_ac_his_entrys > 0:
+                logger.debug(
+                    f"Skipped {number_skipped_ac_his_entrys} "
+                    "account history entries."
+                )
+                number_skipped_ac_his_entrys = 0
+
+            logger.error("Error inserting account history entry.")
+            raise DatabaseMT940Error("Error inserting account history entry.")
+
+    # Log summary after the loop
+    if number_skipped_ac_his_entrys > 0:
+        logger.debug(
+            f"Skipped {number_skipped_ac_his_entrys} "
+            "account history entries because "
+            "they were already in the database."
+        )
+    if number_added_ac_his_entrys > 0:
+        logger.debug(
+            f"Inserted {number_added_ac_his_entrys} "
+            "account history entries into the database."
+        )
 
     for account_number, (record_date, balance,
                          rti_account_id) in latest.items():
@@ -355,33 +428,44 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
                 account_id=rti_account_id
             )
         except db_account_history_utils.NoAccountHistoryFoundError:
-            print("No balance found for the last month or within the previous "
-                  "year.")
+            logger.debug(
+                "No balance found within the previous year."
+            )
             last_balance = 0.0
-        print(last_balance)
-        print(balance)
+        logger.debug(
+            f"Last balance: {last_balance} and new balance: {balance}")
         difference = float(balance) - float(last_balance)
-        print(difference)
+        logger.debug(
+            f"Difference between last balance and new balance: {difference}"
+        )
         try:
             db_account_utils.update_account(
                 account_id=rti_account_id,
                 new_values=["", "", "", balance, difference,
                             get_iso_date(record_date), today]
             )
-            print(f"Account {account_number} updated with"
-                  f"new balance: {balance}")
+            logger.info(
+                f"Account {account_number} updated with new balance: {balance}"
+            )
         except db_account_utils.NoAccountFoundError:
-            print(f"Account {account_number} not found in database.")
+            logger.warning(
+                f"Account {account_number} not found in database."
+            )
             raise DatabaseMT940Error(
                 f"Account {account_number} not found in database.",
                 " Even though it was in the MT940 file.",
                 " And should therefore be in the database."
             )
         except db_account_utils.NoChangesDetectedError:
-            print(f"Account {account_number} already has the same values. "
-                  "Skipping...")
+            logger.debug(
+                f"Account {account_number} already has the same values. "
+                "Skipping..."
+            )
+    logger.debug("Account history successfully inserted to database.")
+    logger.debug("Bank statement successfully inserted to database.")
 
 
+@logg
 def import_mt940_file(master: tk.Tk) -> None:
     """
     Import an MT940 formatted file using a file dialog and process its
@@ -397,7 +481,7 @@ def import_mt940_file(master: tk.Tk) -> None:
         - Inserts the parsed transactions into the program by calling
           insert_transactions, using the provided master window for context.
 
-    If no file is selected, the function prints a message indicating that no
+    If no file is selected, the function loggs a message indicating that no
     file was chosen.
 
     Args:
@@ -413,11 +497,13 @@ def import_mt940_file(master: tk.Tk) -> None:
         filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
     )
     if file_path:
+        logger.info("Start importing bank statment.")
         with open(file_path, 'r', encoding='utf8') as file:
             file_content = file.read()
         blocks = split_toblocks_mt940(file_content)
         parsed_data = parse_block(blocks)
         insert_transactions(parsed_data, master)
+        logger.info("Imported bank statment successfully.")
         master.reload()
     else:
-        print("No file selected")
+        logger.info("No file selected.")

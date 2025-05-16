@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
+import logging
+from utils.logging.logging_tools import logg
 from gui.plugins.__init__ import load_plugins
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseToplevelWindow(tk.Toplevel):
@@ -56,6 +61,7 @@ class BaseToplevelWindow(tk.Toplevel):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
+    @logg
     def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
@@ -63,10 +69,12 @@ class BaseToplevelWindow(tk.Toplevel):
         It is called after the main frame, status bar and the menu
         have been set up.
         """
+        logger.error("init_ui() not implemented in subclass")
         raise NotImplementedError(
             "init_ui() needs to be implemented in subclasses"
         )
 
+    @logg
     def show_message(self, message: str) -> None:
         """
         Helpmethod that shows a message in a popup window.
@@ -86,10 +94,13 @@ class BaseToplevelWindow(tk.Toplevel):
         popup.grab_set()
         popup.transient(self)
 
+    @logg
     def reload(self) -> None:
         """
         Destroys all widgets in the main frame and reinitializes the UI.
         """
         for widget in self.main_frame.winfo_children():
             widget.destroy()
+        logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        logger.info("Reloaded the UI.")

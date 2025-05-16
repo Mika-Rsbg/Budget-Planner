@@ -1,5 +1,9 @@
 import datetime
 import calendar
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_month_literal(month: int = None, en: bool = False) -> str:
@@ -48,6 +52,7 @@ def get_iso_date(date: str = None, today: bool = False) -> str:
         return datetime.datetime.now().strftime("%Y-%m-%d")
 
     if date is None or len(date) != 6 or not date.isdigit():
+        logger.error("Invalid date format. Expected YYMMDD.")
         raise ValueError("Date must be a string in the format YYMMDD.")
 
     year = int(date[:2])

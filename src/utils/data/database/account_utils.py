@@ -4,10 +4,14 @@ import string
 import sqlite3
 from pathlib import Path
 from typing import List
+import logging
 from gui.accountpage.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
 from utils.data.date_utils import get_iso_date
 import config
+
+
+logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
@@ -52,7 +56,9 @@ def get_account_data(db_path: Path = config.Database.PATH,
                "real_AccountDifference", "str_RecordDate", "str_ChangeDate"]
 
     if len(columns) != len(selected_columns):
-        raise Error("Wrong number of  values provided.",
+        logger.error("Wrong number of selected columns provided."
+                     f"Expected {len(columns)}, got {len(selected_columns)}.")
+        raise Error("Wrong number of  values provided."
                     f"Expected {len(columns)}, got {len(selected_columns)}.")
 
     query = 'SELECT '
@@ -64,7 +70,8 @@ def get_account_data(db_path: Path = config.Database.PATH,
     cursor.execute(query)
     account_data = cursor.fetchall()
     DatabaseConnection.close_cursor()
-    print("Account data retrieved successfully.")
+    logger.debug("Account data retrieved successfully.")
+    logger.debug(f"Account data: {account_data}")
     return account_data
 
 
@@ -83,6 +90,7 @@ def delete_account(db_path: Path = config.Database.PATH,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.exception(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
     try:
         cursor.execute(
@@ -92,8 +100,10 @@ def delete_account(db_path: Path = config.Database.PATH,
             (account_id,))
 
         conn.commit()
+        logger.debug(f"Account with ID {account_id} deleted successfully.")
         print("Account deleted successfully.")
     except sqlite3.Error as e:
+        logger.exception(f"Error deleting account: {e}")
         raise Error(f"Error deleting account: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -124,6 +134,8 @@ def update_account(db_path: Path = config.Database.PATH,
                "str_RecordDate", "str_ChangeDate"]
 
     if len(columns) != len(new_values):
+        logger.error("Wrong number of new values provided."
+                     f"Expected {len(columns)}, got {len(new_values)}.")
         raise Error("Wrong number of new values provided.",
                     f"Expected {len(columns)}, got {len(new_values)}.")
 
@@ -137,10 +149,13 @@ def update_account(db_path: Path = config.Database.PATH,
             (account_id,)
         )
         current_record = cursor.fetchone()
+        logger.debug("Current record fetched successfully.")
         print("Current record:", current_record)
         if current_record is None:
+            logger.exception("No account found with the given ID.")
             raise Error("No account found with the given ID.")
     except sqlite3.Error as e:
+        logger.exception(f"Error fetching current account data: {e}")
         raise Error(f"Error fetching current account data: {e}")
 
     # Build the SET part of the SQL query dynamically only for changed values.
@@ -153,12 +168,16 @@ def update_account(db_path: Path = config.Database.PATH,
                     updates.append(f"{col} = ?")
                     parameters.append(new_val)
             except TypeError:
+                logger.exception(
+                    f"TypeError: Cannot compare {col} with value {new_val}."
+                )
                 raise Error(
                     f"TypeError: Cannot compare {col} with value {new_val}."
                 )
     print("Updates:", updates)
     print("Parameters:", parameters)
     if not updates:
+        logger.debug("No changes detected, update aborted.")
         raise NoChangesDetectedError("No changes detected, update aborted.")
 
     query = (f"UPDATE tbl_Account SET {', '.join(updates)} "
@@ -168,8 +187,10 @@ def update_account(db_path: Path = config.Database.PATH,
     try:
         cursor.execute(query, parameters)
         conn.commit()
+        logger.debug(f"Account with ID {account_id} updated successfully.")
         print("Account edited successfully.")
     except sqlite3.Error as e:
+        logger.exception(f"Error editing account: {e}")
         raise Error(f"Error editing account: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -194,21 +215,22 @@ def add_account_mt940(db_path: Path = config.Database.PATH,
                occurs.
     """
     if name is None:
+        logger.info("Get name of the new account. To add the new account.")
         dialog = NameInputDialog(master)
         master.wait_window(dialog)
         name = dialog.name
         if not name:
-            print("No name provided.")
-            print("Random Name will be used.")
+            logger.debug("No name provided. Generating random name.")
             name = ''.join(random.choices(string.ascii_letters, k=8))
-            print("Random name generated:", name)
+            logger.debug(f"Random name generated: {name}")
     if number is None:
+        logger.error("add_account_mt940: Account number is required.")
         raise Error("add_account_mt940: Account number is required.")
     if balance is None:
-        print("No balance provided. Setting balance to 0.0.")
+        logger.debug("No balance provided. Setting balance to 0.0.")
         balance = 0.0
     if difference is None:
-        print("No difference provided. Setting difference to 0.0.")
+        logger.debug("No difference provided. Setting difference to 0.0.")
         difference = 0.0
     add_account(db_path, name=name, number=number, balance=balance,
                 difference=difference)
@@ -238,6 +260,7 @@ def add_account(db_path: Path = config.Database.PATH,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.exception(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     if position is None:
@@ -263,8 +286,9 @@ def add_account(db_path: Path = config.Database.PATH,
             (position, name, number, balance, difference, record_date,
              change_date))
         conn.commit()
-        print("Account created successfully.")
+        logger.debug("Account added successfully.")
     except sqlite3.Error as e:
+        logger.exception(f"Error creating account: {e}")
         raise Error(f"Error creating account: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -309,6 +333,7 @@ def get_account_id(db_path: Path = config.Database.PATH,
             conditions.append(f"{col} = ?")
             parameters.append(value)
     if not conditions:
+        logger.error("No criteria provided to query account ID.")
         raise Error("No criteria provided to query account ID.")
     # Build the SQL query dynamically based on the provided criteria.
     where_clause = " AND ".join(conditions)
@@ -319,14 +344,14 @@ def get_account_id(db_path: Path = config.Database.PATH,
 
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
-        print("Query:", query)
-        print("Parameters:", parameters)
         cursor.execute(query, parameters)
         result = cursor.fetchone()
         if result is None:
+            logger.error("No matching account found.")
             raise NoAccountFoundError("No matching account found.")
         return result[0]
     except sqlite3.Error as e:
+        logger.exception(f"Error querying account ID: {e}")
         raise Error(f"Error querying account ID: {e}")
     finally:
         DatabaseConnection.close_cursor()
@@ -348,6 +373,7 @@ def shift_widget_positions(db_path: Path = config.Database.PATH,
         Error: If the old position is invalid or if any database error occurs.
     """
     if old_pos is None or new_pos is None:
+        logger.error("Both old_pos and new_pos must be provided.")
         raise Error("Both old_pos and new_pos must be provided.")
 
     conn = DatabaseConnection.get_connection(db_path)
@@ -356,6 +382,7 @@ def shift_widget_positions(db_path: Path = config.Database.PATH,
     try:
         # Check if the old and new positions are similar
         if old_pos == new_pos:
+            logger.warning("Old position is the same as new position.")
             raise NoChangesDetectedError("No changes detected, "
                                          "update aborted.")
         else:
@@ -366,17 +393,18 @@ def shift_widget_positions(db_path: Path = config.Database.PATH,
                 (account_id,)
             )
             temp_current_postion = cursor.fetchall()
-            print("Position in database before change:",
-                  temp_current_postion[0][0])
+            logger.debug("Positon in database before change: "
+                         f"{temp_current_postion[0][0]}")
             if temp_current_postion[0][0] == new_pos:
+                logger.warning("New position is the same as current position.")
                 raise NoChangesDetectedError("No changes detected, "
                                              "update aborted.")
             if temp_current_postion[0][0] != old_pos:
                 # raise Error("The current position of the account does not "
                 #             "match the provided old position.")
                 old_pos = temp_current_postion[0][0]
-                print("Old position updated to current position:",
-                      old_pos)
+                logger.debug("Old position updated to current position:"
+                             f" {old_pos}")
         # Temporarily offset the positions of the accounts
         cursor.execute(
             """
@@ -417,10 +445,12 @@ def shift_widget_positions(db_path: Path = config.Database.PATH,
             """,
             (new_pos, old_pos),
         )
-        print("Shifting done")
+        logger.debug("Widget positions shifted successfully.")
     except sqlite3.IntegrityError as e:
+        logger.exception(f"IntegrityError: {e}")
         raise Error(f"IntegrityError: {e}")
     except sqlite3.Error as e:
+        logger.exception(f"Error shifting widget positions: {e}")
         raise Error(f"Error shifting widget positions: {e}")
     finally:
         conn.commit()
