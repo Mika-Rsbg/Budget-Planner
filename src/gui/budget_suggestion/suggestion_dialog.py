@@ -1,38 +1,41 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import locale
+from typing import cast, Dict, List, Union
+import logging
+from gui.basetoplevelwindow import BaseToplevelWindow
+from utils.logging.logging_tools import logg
 from utils.ai.budget_suggestions import BudgetSuggestionEngine
 
 
-class BudgetSuggestionDialog(tk.Toplevel):
+logger = logging.getLogger(__name__)
+
+
+class BudgetSuggestionDialog(BaseToplevelWindow):
     """
     Dialog for collecting income/expense data and showing budget suggestions.
     """
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.title("AI Budget Suggestions")
-        self.geometry("600x500")
+    def __init__(self, parent: tk.Tk):
+        super().__init__(parent, plugin_scope="suggestion-dialog",
+                         title="Budget Planner - Suggestion Dialog",
+                         geometry="600x500")
         self.resizable(False, True)
 
         # Initialize suggestion engine
         self.suggestion_engine = BudgetSuggestionEngine()
 
         # Set up the UI
-        self._init_ui()
+        self.init_ui()
 
         # Make dialog modal
         self.transient(parent)
         self.grab_set()
 
-    def _init_ui(self):
+    def init_ui(self):
         """Initialize the user interface."""
-        # Main frame
-        main_frame = ttk.Frame(self, padding=20)
-        main_frame.pack(fill=tk.BOTH, expand=True)
-
         # --- Pack Buttons LAST with side=tk.BOTTOM ---
-        self.button_frame = ttk.Frame(main_frame)
+        self.button_frame = ttk.Frame(self.main_frame)
 
         # Use tk.Button for color customization
         tk.Button(
@@ -58,7 +61,7 @@ class BudgetSuggestionDialog(tk.Toplevel):
         # --- Pack Content sections TOP ---
         # Title
         title_label = ttk.Label(
-            main_frame,
+            self.main_frame,
             text="AI Budget Suggestions",
             font=("Helvetica", 16, "bold")
         )
@@ -66,7 +69,7 @@ class BudgetSuggestionDialog(tk.Toplevel):
 
         # Income frame
         income_frame = ttk.LabelFrame(
-            main_frame, text="Monthly Income", padding=10
+            self.main_frame, text="Monthly Income", padding=10
         )
         income_frame.pack(fill=tk.X, pady=10)
 
@@ -80,12 +83,12 @@ class BudgetSuggestionDialog(tk.Toplevel):
         self.income_entry.grid(row=0, column=1, sticky=tk.W, pady=5)
         # Expenses frame
         expenses_frame = ttk.LabelFrame(
-            main_frame, text="Monthly Expenses (Optional)", padding=10
+            self.main_frame, text="Monthly Expenses (Optional)", padding=10
         )
         expenses_frame.pack(fill=tk.X, pady=10)  # REMOVE side=tk.TOP
 
         # Expense categories
-        self.expense_vars = {}
+        self.expense_vars: Dict[str, tk.StringVar] = {}
         expense_categories = [
             ("Housing (rent/mortgage)", "housing"),
             ("Utilities", "utilities"),
@@ -112,47 +115,51 @@ class BudgetSuggestionDialog(tk.Toplevel):
 
         # Results frame (created but not packed initially)
         self.results_frame = ttk.LabelFrame(
-            main_frame, text="Your Personalized Budget Plan", padding=10
+            self.main_frame, text="Your Personalized Budget Plan", padding=10
         )
 
         # Set focus to income entry
         self.income_entry.focus_set()
 
+    @logg
     def _generate_suggestions(self):
         """Generate and display budget suggestions based on user input."""
-        print("Generate Suggestions button clicked")  # Debug print
+        logger.debug("Generate Suggestions button clicked")
         try:
             # Get income
             income_str = self.income_var.get().strip()
             if not income_str:
-                messagebox.showerror("Error",
+                messagebox.showerror("Error",  # type: ignore
                                      "Please enter your monthly income.")
                 return
 
-            income = float(income_str.replace(',', '.'))
+            income: float = float(income_str.replace(',', '.'))
 
             # Get expenses (if provided)
-            expenses = {}
+            expenses: Dict[str, float] = {}
             for key, var in self.expense_vars.items():
                 value = var.get().strip()
                 if value:
                     expenses[key] = float(value.replace(',', '.'))
 
             # Generate suggestions
+            suggestions: Dict[str, Union[Dict[str, float], List[str]]]
             suggestions = self.suggestion_engine.get_suggestion(
                 income, expenses
             )
-            print("Suggestions generated:", suggestions)  # Debug print
+            logger.debug("Suggestions generated:", suggestions)
 
             # Display results
             self._display_suggestions(suggestions, income)
 
         except ValueError:
-            messagebox.showerror(
+            messagebox.showerror(  # type:ignore
                 "Error", "Please enter valid numbers for income and expenses."
             )
 
-    def _display_suggestions(self, suggestions, income):
+    def _display_suggestions(
+            self, suggestions: Dict[str, Union[Dict[str, float], List[str]]],
+            income: float):
         """Display the generated suggestions."""
         # Clear previous results
         for widget in self.results_frame.winfo_children():
@@ -204,7 +211,11 @@ class BudgetSuggestionDialog(tk.Toplevel):
         }
 
         row = 1
-        for category, percentage in suggestions["allocations"].items():
+        allocations = cast(
+            Dict[str, float], suggestions.get("allocations", {})
+        )
+        for category, percentage in allocations.items():
+
             # Category Name
             ttk.Label(
                 allocation_table, text=category_names.get(category, category)
@@ -216,7 +227,7 @@ class BudgetSuggestionDialog(tk.Toplevel):
                 row=row, column=1, sticky=tk.W, padx=5, pady=2
             )
             # Amount
-            amount = suggestions["suggested_amounts"][category]
+            amount = cast(Dict[str, float], suggestions["suggested_amounts"])
             # Use locale for currency formatting
             amount_str = locale.format_string("%.2f", amount, grouping=True)
             ttk.Label(allocation_table, text=amount_str).grid(

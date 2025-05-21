@@ -1,3 +1,4 @@
+from typing import Dict, List, Tuple, Union
 """
 Module for AI-based budget suggestions.
 This provides rule-based suggestions for budgeting based on
@@ -12,22 +13,24 @@ class BudgetSuggestionEngine:
 
     def __init__(self):
         # Default allocation percentages based on common financial advice
-        self.default_allocations = {
+        self.default_allocations: Dict[str, float] = {
             "needs": 0.50,  # 50% for needs (housing, food, utilities, etc.)
             "wants": 0.30,  # 30% for wants (entertainment, dining out, etc.)
             "savings": 0.20  # 20% for savings and debt repayment
         }
 
         # Income brackets for different suggestion tiers
-        self.income_brackets = [
+        self.income_brackets: List[Tuple[int, Union[int, float]]] = [
             (0, 1500),      # Low income
             (1500, 3000),   # Medium income
             (3000, 6000),   # High income
             (6000, float('inf'))  # Very high income
         ]
 
-    def get_suggestion(self, monthly_income: float,
-                       expenses: dict = None) -> dict:
+    def get_suggestion(
+            self, monthly_income: float,
+            expenses: Dict[str, float] = {}
+            ) -> Dict[str, Union[Dict[str, float], List[str]]]:
         """
         Generate budget suggestions based on income and expenses.
 
@@ -46,7 +49,7 @@ class BudgetSuggestionEngine:
         allocations = self._adjust_allocations_for_bracket(bracket)
 
         # Calculate suggested amounts
-        suggested_amounts = {
+        suggested_amounts: Dict[str, float] = {
             category: monthly_income * percentage
             for category, percentage in allocations.items()
         }
@@ -54,11 +57,13 @@ class BudgetSuggestionEngine:
         # Generate personalized tips
         tips = self._generate_tips(monthly_income, bracket, expenses)
 
-        return {
+        return_dict: Dict[str, Union[Dict[str, float], List[str]]] = {
             "allocations": allocations,
             "suggested_amounts": suggested_amounts,
             "tips": tips
         }
+
+        return return_dict
 
     def _get_income_bracket(self, income: float) -> int:
         """Determine which income bracket the user falls into."""
@@ -67,9 +72,11 @@ class BudgetSuggestionEngine:
                 return i
         return len(self.income_brackets) - 1  # Default to highest bracket
 
-    def _adjust_allocations_for_bracket(self, bracket: int) -> dict:
+    def _adjust_allocations_for_bracket(
+            self, bracket: int
+            ) -> Dict[str, float]:
         """Adjust allocation percentages based on income bracket."""
-        allocations = self.default_allocations.copy()
+        allocations: Dict[str, float] = self.default_allocations.copy()
 
         # Adjust allocations based on bracket
         if bracket == 0:  # Low income
@@ -95,12 +102,13 @@ class BudgetSuggestionEngine:
 
         return allocations
 
-    def _generate_tips(self, income: float, bracket: int,
-                       expenses: dict = None) -> list:
+    def _generate_tips(
+            self, income: float, bracket: int,
+            expenses: Dict[str, float] = {}) -> List[str]:
         """
         Generate personalized financial tips based on income and expenses.
         """
-        tips = []
+        tips: List[str] = []
 
         # General tips based on income bracket
         if bracket == 0:
