@@ -75,7 +75,6 @@ def add_transaction(db_path: Path = config.Database.PATH,
              counterparty_id, category_id)
         )
         if cursor.fetchone():
-            logger.debug("Transaction already exists.")
             raise AlreadyExistsError("Transaction already exists.")
     except sqlite3.Error as e:
         logger.error(f"Error checking for duplicate transaction: {e}")
