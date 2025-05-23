@@ -250,7 +250,6 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
     # Initialize counters
     number_skipped_transactions = 0
     number_inserted_transactions = 0
-    skipped_last_transaction = False
     for entry in data:
         # temp: not ready for the database
         # rti: ready to insert
@@ -333,15 +332,17 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
         except db_transaction_utils.AlreadyExistsError:
             number_skipped_transactions += 1
         except db_transaction_utils.Error:
-            logger.debug(
-                f"Inserted {number_inserted_transactions} "
-                "transactions into the database."
-            )
-            number_inserted_transactions = 0
-            logger.debug(f"Skipped {number_skipped_transactions} "
-                         "transactions because they were already "
-                         "in the database.")
-            number_skipped_transactions = 0
+            if number_inserted_transactions > 0:
+                logger.debug(
+                    f"Inserted {number_inserted_transactions} "
+                    "transactions into the database."
+                )
+                number_inserted_transactions = 0
+            if number_skipped_transactions > 0:
+                logger.debug(f"Skipped {number_skipped_transactions} "
+                             "transactions because they were already "
+                             "in the database.")
+                number_skipped_transactions = 0
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
 
@@ -350,8 +351,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
     if number_inserted_transactions > 0:
         logger.debug(f"Inserted {number_inserted_transactions} "
                      "transactions into the database.")
-
-    if skipped_last_transaction:
+    if number_skipped_transactions > 0:
         logger.debug(f"Skipped {number_skipped_transactions} "
                      "transactions because they were already "
                      "in the database.")
