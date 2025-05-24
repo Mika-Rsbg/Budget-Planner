@@ -308,6 +308,8 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
             logger.info(
                 f"Account {account_number} updated with new balance: {balance}"
             )
+            logger.debug("Account balances successfully updated in the "
+                         "database.")
         except db_account_utils.NoAccountFoundError:
             logger.warning(
                 f"Account {account_number} not found in database."
@@ -322,7 +324,12 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
                 f"Account {account_number} already has the same values. "
                 "Skipping..."
             )
-    logger.debug("Account balances successfully updated in the database.")
+        except db_account_utils.RecordTooOldError:
+            logger.info(
+                f"Account {account_number} has a balance with a record date "
+                "newer than the latest in this bank statement. "
+                "Skipping update."
+            )
 
 
 def insert_account_history_entries(

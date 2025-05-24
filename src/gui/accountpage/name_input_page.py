@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class NameInputDialog(BaseToplevelWindow):
-    def __init__(self, master: tk.Tk = None, number: str = None) -> None:
+    def __init__(self, master: tk.Tk, number: str = "") -> None:
         """
         Init an instance of the NameInputDialog class.
 

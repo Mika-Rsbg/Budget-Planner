@@ -3,7 +3,7 @@ import random
 import string
 import sqlite3
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Optional, Union
 import logging
 from gui.accountpage.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
@@ -29,16 +29,21 @@ class NoAccountFoundError(Exception):
     pass
 
 
+class RecordTooOldError(Exception):
+    """Exception raised when the record date is too old."""
+    pass
+
+
 def get_account_data(db_path: Path = config.Database.PATH,
-                     selected_columns: list[bool] = [True, True, True,
+                     selected_columns: List[bool] = [True, True, True,
                                                      True, True, True,
                                                      True, True]
-                     ) -> list[tuple]:
+                     ) -> List[Tuple[int, str]]:
     """
     Retrieves account data from the database.
     Args:
         db_path (Path): Path to the SQLite database file.
-        selected_columns (list[bool]): List of booleans indicating which
+        selected_columns (List[bool]): List of booleans indicating which
                                        columns to select.
                                        [AccountID, WidgetPosition, AccountName,
                                        AccountNumber, AccountBalance,
@@ -76,7 +81,7 @@ def get_account_data(db_path: Path = config.Database.PATH,
 
 
 def delete_account(db_path: Path = config.Database.PATH,
-                   account_id: int = None) -> None:
+                   account_id: Optional[int] = None) -> None:
     """
     Deletes an account from the database.
     Args:
@@ -118,7 +123,7 @@ def update_account(db_path: Path = config.Database.PATH,
     Args:
         db_path (Path): Path to the SQLite database file.
         account_id (int): Account ID of the account to edit.
-        new_values (list[str]): List of new values for the columns in the order
+        new_values (List[str]): List of new values for the columns in the order
                                 [new_WidgetPosition, new_AccountName,
                                 new_AccountNumber, new_AccountBalance,
                                 new_AccountDifference, new_RecordDate,
@@ -150,8 +155,17 @@ def update_account(db_path: Path = config.Database.PATH,
         )
         current_record = cursor.fetchone()
         logger.debug("Current record fetched successfully.")
+        # Remove the following logging statement.
         print("Current record:", current_record)
-        if current_record is None:
+        # Check if the new record date is older than the current record date
+        if current_record is not None:
+            if current_record[5] is not None:
+                if new_values[5] < current_record[5]:
+                    logger.debug("New record date is older than the one in "
+                                 "the database.")
+                    raise RecordTooOldError("New record date is older than "
+                                            "the one in the database.")
+        else:
             logger.exception("No account found with the given ID.")
             raise Error("No account found with the given ID.")
     except sqlite3.Error as e:
@@ -159,8 +173,8 @@ def update_account(db_path: Path = config.Database.PATH,
         raise Error(f"Error fetching current account data: {e}")
 
     # Build the SET part of the SQL query dynamically only for changed values.
-    updates = []
-    parameters = []
+    updates: List[str] = []
+    parameters: List[str] = []
     for col, new_val, current_val in zip(columns, new_values, current_record):
         if new_val != "":
             try:
@@ -197,9 +211,11 @@ def update_account(db_path: Path = config.Database.PATH,
 
 
 def add_account_mt940(db_path: Path = config.Database.PATH,
-                      name: str = None, number: str = None,
-                      balance: float = None, difference: float = None,
-                      master: tk.Tk = None) -> None:
+                      name: Optional[str] = None, number: Optional[str] = None,
+                      balance: Optional[float] = None,
+                      difference: Optional[float] = None,
+                      master: Optional[tk.Tk] = None
+                      ) -> None:
     """
     Adds an account to the database while importing an MT940 file.
 
@@ -303,9 +319,9 @@ def get_account_id(db_path: Path = config.Database.PATH,
 
     Args:
         db_path (Path, optional): Path to the SQLite database file.
-        data (list): A list of 4 elements in the order [AccountName,
+        data (List): A list of 4 elements in the order [AccountName,
                      AccountNumber, AccountBalance, AccountDifference].
-        supplied_data (list of bool): A list of booleans indicating which
+        supplied_data (List of bool): A list of booleans indicating which
                                       corresponding elements of 'data' to use
                                       as filter criteria. Each True value
                                       corresponds to applying an equality
@@ -326,7 +342,7 @@ def get_account_id(db_path: Path = config.Database.PATH,
                     "of 4 elements: [Name, Number, Balance, Difference].")
     columns = ["str_AccountName", "str_AccountNumber", "real_AccountBalance",
                "real_AccountDifference"]
-    conditions = []
+    conditions: List = []
     parameters = []
     for col, should_filter, value in zip(columns, supplied_data, data):
         if should_filter:
