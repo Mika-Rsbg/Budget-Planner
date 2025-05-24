@@ -3,7 +3,7 @@ import random
 import string
 import sqlite3
 from pathlib import Path
-from typing import List
+from typing import List, Union
 import logging
 from gui.accountpage.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
@@ -110,8 +110,8 @@ def delete_account(db_path: Path = config.Database.PATH,
 
 
 def update_account(db_path: Path = config.Database.PATH,
-                   account_id: int = None,
-                   new_values: list[str] = None) -> None:
+                   account_id: int | None = None,
+                   new_values: List[Union[str, float]] = []) -> None:
     """
     Edits an account in the database after verifying that at least one of the
     values is different from the current database values.
