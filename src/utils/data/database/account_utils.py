@@ -157,13 +157,13 @@ def update_account(db_path: Path = config.Database.PATH,
         logger.debug("Current record fetched successfully.")
         # Remove the following logging statement.
         print("Current record:", current_record)
-        # Check if the record date is new then the one provided
+        # Check if the new record date is older than the current record date
         if current_record is not None:
             if current_record[5] is not None:
-                if current_record[5] < new_values[5]:
-                    logger.debug("Record date is older than the one in "
+                if new_values[5] < current_record[5]:
+                    logger.debug("New record date is older than the one in "
                                  "the database.")
-                    raise RecordTooOldError("Record date is older than "
+                    raise RecordTooOldError("New record date is older than "
                                             "the one in the database.")
         else:
             logger.exception("No account found with the given ID.")
