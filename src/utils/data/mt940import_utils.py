@@ -381,8 +381,6 @@ def insert_account_history_entries(
         except db_account_history_utils.ExistingAccountHistoryError:
             number_skipped_ac_his_entries += 1
         except db_account_history_utils.Error:
-            # Redundant debug logs removed to avoid duplication
-
             logger.error("Error inserting account history entry.")
             raise DatabaseMT940Error("Error inserting account history entry.")
 
@@ -398,7 +396,8 @@ def insert_account_history_entries(
             f"Inserted {number_added_ac_his_entries} "
             "account history entries into the database."
         )
-    logger.debug("Account history successfully inserted to database.")
+    logger.debug("Account history entries successfully inserted to database"
+                 "or skipped.")
 
     return latest
 
@@ -508,22 +507,9 @@ def insert_transactions(data: List[Dict],
         except db_transaction_utils.AlreadyExistsError:
             number_skipped_transactions += 1
         except db_transaction_utils.Error:
-            if number_inserted_transactions > 0:
-                logger.debug(
-                    f"Inserted {number_inserted_transactions} "
-                    "transactions into the database."
-                )
-                number_inserted_transactions = 0
-            if number_skipped_transactions > 0:
-                logger.debug(f"Skipped {number_skipped_transactions} "
-                             "transactions because they were already "
-                             "in the database.")
-                number_skipped_transactions = 0
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
 
-    # Final logging for any remaining inserted or
-    # skipped transactions
     if number_inserted_transactions > 0:
         logger.debug(f"Inserted {number_inserted_transactions} "
                      "transactions into the database.")
@@ -531,7 +517,7 @@ def insert_transactions(data: List[Dict],
         logger.debug(f"Skipped {number_skipped_transactions} "
                      "transactions because they were already "
                      "in the database.")
-    logger.debug("Transactions successfully inserted to database.")
+    logger.debug("Transactions successfully inserted to datbase or skipped.")
 
     return closing_balance
 
