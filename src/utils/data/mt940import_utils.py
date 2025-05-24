@@ -517,7 +517,7 @@ def insert_transactions(data: List[Dict],
         logger.debug(f"Skipped {number_skipped_transactions} "
                      "transactions because they were already "
                      "in the database.")
-    logger.debug("Transactions successfully inserted to datbase or skipped.")
+    logger.debug("Transactions successfully inserted to database or skipped.")
 
     return closing_balance
 
