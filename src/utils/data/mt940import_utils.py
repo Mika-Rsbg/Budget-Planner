@@ -1,6 +1,7 @@
-import tkinter as tk
 from tkinter import filedialog
 import logging
+from typing import List, Dict, Tuple
+from gui.basewindow import BaseWindow
 from utils.logging.logging_tools import logg
 from .database import account_utils as db_account_utils
 from .database import account_history_utils as db_account_history_utils
@@ -235,18 +236,193 @@ def parse_block(blocks: list) -> list:
 
 
 @logg
-def insert_transactions(data: list, window: tk.Tk) -> None:
-    """Insert the transactions into the database. Using database utils.
+def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
+    """Insert the transactions and everything else, like account history and
+        stuff, into the database. Using database utils.
 
     Args:
         data (list): A list of dictionaries containing the transactions.
-        window (tk.Tk): The main window of the application.
+        window (BaseWindow): The main window of the application.
 
     Raises:
         DatabaseMT940Error: If there is an error inserting the transactions
             into the database.
     """
-    closing_balance = []
+    closing_balance = insert_transactions(data, window)
+
+    # Add the closing balance to the database
+    latest = insert_account_history_entries(closing_balance)
+
+    update_account_balances(latest)
+    logger.debug("Bank statement successfully inserted to database.")
+
+
+def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
+    """
+    Update the account balances in the database based on the latest
+    account history entries.
+    This function retrieves the last balance for each account from the
+    database, calculates the difference between the last balance and the
+    new balance, and updates the account with the new balance and the
+    calculated difference. It also handles cases where the account is not
+    found in the database, raising a DatabaseMT940Error if necessary.
+    Args:
+        latest (Dict[str, Tuple[str, float, int]]): A dictionary containing
+            the latest account history entries, where the key is the account
+            number and the value is a tuple of (record_date, balance,
+            rti_account_id).
+
+            Example:
+                {
+                    "123456789": ("2023-10-01", 1500.75, 1),
+                    "987654321": ("2023-10-02", -500.50, 2)
+                }
+    Raises:
+        DatabaseMT940Error: If an account is not found in the database or if
+            there is an error updating the account.
+    """
+    today = get_iso_date(today=True)
+    for account_number, (record_date, balance,
+                         rti_account_id) in latest.items():
+        try:
+            last_balance = db_account_history_utils.get_last_balance(
+                account_id=rti_account_id
+            )
+        except db_account_history_utils.NoAccountHistoryFoundError:
+            logger.debug(
+                "No balance found within the previous year."
+            )
+            last_balance = 0.0
+        logger.debug(
+            f"Last balance: {last_balance} and new balance: {balance}")
+        difference = round(float(balance) - float(last_balance), 2)
+        logger.debug(
+            f"Difference between last balance and new balance: {difference}"
+        )
+        try:
+            db_account_utils.update_account(
+                account_id=rti_account_id,
+                new_values=["", "", "", balance, difference,
+                            get_iso_date(record_date), today]
+            )
+            logger.info(
+                f"Account {account_number} updated with new balance: {balance}"
+            )
+        except db_account_utils.NoAccountFoundError:
+            logger.warning(
+                f"Account {account_number} not found in database."
+            )
+            raise DatabaseMT940Error(
+                f"Account {account_number} not found in database.",
+                " Even though it was in the MT940 file.",
+                " And should therefore be in the database."
+            )
+        except db_account_utils.NoChangesDetectedError:
+            logger.debug(
+                f"Account {account_number} already has the same values. "
+                "Skipping..."
+            )
+    logger.debug("Account balances successfully updated in the database.")
+
+
+def insert_account_history_entries(
+        closing_balance: List[Tuple[str, str, str]]
+        ) -> Dict[str, Tuple[str, float, int]]:
+    """
+    Insert the account history entries into the database.
+    This function processes the closing balances from the MT940 data,
+    retrieves the corresponding account IDs, and inserts the account history
+    entries into the database. It also handles cases where the account
+    history entry already exists, skipping those entries and logging the
+    number of skipped and added entries.
+    Args:
+        closing_balance (List[Tuple[str, str, str]]): A list of tuples
+            containing account numbers, record dates, and balances.
+    Returns:
+        (Dict[str, Tuple[str, float, int]]): A dictionary containing the latest
+            account history entries, where the key is the account number and
+            the value is a tuple of (record_date, balance, rti_account_id).
+    Raises:
+        DatabaseMT940Error: If there is an error inserting account history
+            entries into the database.
+    """
+    latest = {}
+    rti_account_id = None
+    today = get_iso_date(today=True)
+    number_skipped_ac_his_entries = 0
+    number_added_ac_his_entries = 0
+    for (account_number, record_date, balance) in closing_balance:
+        try:
+            rti_account_id = db_account_utils.get_account_id(
+                data=[None, account_number, None, None],
+                supplied_data=[False, True, False, False]
+            )
+        except db_account_utils.NoAccountFoundError:
+            logger.warning(
+                f"Account {account_number} not found in database."
+            )
+            raise DatabaseMT940Error(
+                f"Account {account_number} not found in database."
+                " Even though it was in the MT940 file."
+                " And should therefore be in the database."
+            )
+        balance = float(balance)
+        if account_number not in latest:
+            latest[account_number] = (record_date, balance, rti_account_id)
+        elif record_date > latest[account_number][0]:
+            latest[account_number] = (record_date, balance, rti_account_id)
+        try:
+            db_account_history_utils.add_account_history(
+                account_id=rti_account_id,
+                balance=balance, record_date=get_iso_date(record_date),
+                change_date=today
+            )
+            number_added_ac_his_entries += 1
+        except db_account_history_utils.ExistingAccountHistoryError:
+            number_skipped_ac_his_entries += 1
+        except db_account_history_utils.Error:
+            # Redundant debug logs removed to avoid duplication
+
+            logger.error("Error inserting account history entry.")
+            raise DatabaseMT940Error("Error inserting account history entry.")
+
+    # Log summary after the loop
+    if number_skipped_ac_his_entries > 0:
+        logger.debug(
+            f"Skipped {number_skipped_ac_his_entries} "
+            "account history entries because "
+            "they were already in the database."
+        )
+    if number_added_ac_his_entries > 0:
+        logger.debug(
+            f"Inserted {number_added_ac_his_entries} "
+            "account history entries into the database."
+        )
+    logger.debug("Account history successfully inserted to database.")
+
+    return latest
+
+
+def insert_transactions(data: List[Dict],
+                        window: BaseWindow) -> List[Tuple[str, str, str]]:
+    """
+    Process the parsed MT940 data and insert it into the database.
+    This function iterates through the provided data, retrieves or creates
+    necessary database entries for accounts, transaction types, and
+    counterparties, and inserts transactions into the database.
+    It also collects closing balances for each transaction.
+    Args:
+        data (List[Dict]): A list of dictionaries containing parsed MT940 data.
+        window (BaseWindow): The main application window, used for context.
+    Returns:
+        List[Tuple[str, str, float]]: A list of tuples containing closing
+            balances for each transaction in the format
+            (account_number, record_date, balance).
+    Raises:
+        DatabaseMT940Error: If there is an error inserting transactions into
+            the database.
+    """
+    closing_balance: List[Tuple[str, str, str]] = []
     # Initialize counters
     number_skipped_transactions = 0
     number_inserted_transactions = 0
@@ -318,7 +494,7 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
         rti_user_comments = None  # No user comments
         rti_displayed_name = None  # No displayed name
         # Add the closing balance to the list
-        if entry['ClosingBalance'] is not None:
+        if entry.get('ClosingBalance') is not None:
             closing_balance.append(entry['ClosingBalance'])
 
         rti_data = (rti_account_id, rti_date, rti_bookingdate, rti_tt_id,
@@ -355,118 +531,13 @@ def insert_transactions(data: list, window: tk.Tk) -> None:
         logger.debug(f"Skipped {number_skipped_transactions} "
                      "transactions because they were already "
                      "in the database.")
+    logger.debug("Transactions successfully inserted to database.")
 
-    # Add the closing balance to the database
-    latest = {}
-    rti_account_id = None
-    today = get_iso_date(today=True)
-    number_skipped_ac_his_entrys = 0
-    number_added_ac_his_entrys = 0
-    for (account_number, record_date, balance) in closing_balance:
-        try:
-            rti_account_id = db_account_utils.get_account_id(
-                data=[None, account_number, None, None],
-                supplied_data=[False, True, False, False]
-            )
-        except db_account_utils.NoAccountFoundError:
-            logger.warning(
-                f"Account {account_number} not found in database."
-            )
-            raise DatabaseMT940Error(
-                f"Account {account_number} not found in database."
-                " Even though it was in the MT940 file."
-                " And should therefore be in the database."
-            )
-        balance = float(balance)
-        if account_number not in latest:
-            latest[account_number] = (record_date, balance, rti_account_id)
-        elif record_date > latest[account_number][0]:
-            latest[account_number] = (record_date, balance, rti_account_id)
-        try:
-            db_account_history_utils.add_account_history(
-                account_id=rti_account_id,
-                balance=balance, record_date=get_iso_date(record_date),
-                change_date=today
-            )
-            number_added_ac_his_entrys += 1
-        except db_account_history_utils.ExistingAccountHistoryError:
-            number_skipped_ac_his_entrys += 1
-        except db_account_history_utils.Error:
-            if number_added_ac_his_entrys > 0:
-                logger.debug(
-                    f"Inserted {number_added_ac_his_entrys} "
-                    "account history entries into the database."
-                )
-                number_added_ac_his_entrys = 0
-            if number_skipped_ac_his_entrys > 0:
-                logger.debug(
-                    f"Skipped {number_skipped_ac_his_entrys} "
-                    "account history entries."
-                )
-                number_skipped_ac_his_entrys = 0
-
-            logger.error("Error inserting account history entry.")
-            raise DatabaseMT940Error("Error inserting account history entry.")
-
-    # Log summary after the loop
-    if number_skipped_ac_his_entrys > 0:
-        logger.debug(
-            f"Skipped {number_skipped_ac_his_entrys} "
-            "account history entries because "
-            "they were already in the database."
-        )
-    if number_added_ac_his_entrys > 0:
-        logger.debug(
-            f"Inserted {number_added_ac_his_entrys} "
-            "account history entries into the database."
-        )
-
-    for account_number, (record_date, balance,
-                         rti_account_id) in latest.items():
-        try:
-            last_balance = db_account_history_utils.get_last_balance(
-                account_id=rti_account_id
-            )
-        except db_account_history_utils.NoAccountHistoryFoundError:
-            logger.debug(
-                "No balance found within the previous year."
-            )
-            last_balance = 0.0
-        logger.debug(
-            f"Last balance: {last_balance} and new balance: {balance}")
-        difference = float(balance) - float(last_balance)
-        logger.debug(
-            f"Difference between last balance and new balance: {difference}"
-        )
-        try:
-            db_account_utils.update_account(
-                account_id=rti_account_id,
-                new_values=["", "", "", balance, difference,
-                            get_iso_date(record_date), today]
-            )
-            logger.info(
-                f"Account {account_number} updated with new balance: {balance}"
-            )
-        except db_account_utils.NoAccountFoundError:
-            logger.warning(
-                f"Account {account_number} not found in database."
-            )
-            raise DatabaseMT940Error(
-                f"Account {account_number} not found in database.",
-                " Even though it was in the MT940 file.",
-                " And should therefore be in the database."
-            )
-        except db_account_utils.NoChangesDetectedError:
-            logger.debug(
-                f"Account {account_number} already has the same values. "
-                "Skipping..."
-            )
-    logger.debug("Account history successfully inserted to database.")
-    logger.debug("Bank statement successfully inserted to database.")
+    return closing_balance
 
 
 @logg
-def import_mt940_file(master: tk.Tk) -> None:
+def import_mt940_file(master: BaseWindow) -> None:
     """
     Import an MT940 formatted file using a file dialog and process its
     contents.
@@ -502,7 +573,7 @@ def import_mt940_file(master: tk.Tk) -> None:
             file_content = file.read()
         blocks = split_toblocks_mt940(file_content)
         parsed_data = parse_block(blocks)
-        insert_transactions(parsed_data, master)
+        insert_all_data_to_db(parsed_data, master)
         logger.info("Imported bank statment successfully.")
         master.reload()
     else:
