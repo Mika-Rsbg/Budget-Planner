@@ -129,12 +129,16 @@ def parse_block(blocks: list) -> list:
             temp_bookingdate = block[6:10]
             # =========== Amount ===========
             # 1 => +; 0 => -
-            temp_amount_type = 1 if block[11:12] in ("C", "RD") else -1
-            if 'CR' in block:
-                amount_start = block.find('CR') + 2
-            elif 'DR' in block:
-                amount_start = block.find('DR') + 2
-            else:
+            temp_amount_type = (1 if block[10:11] in ("C") or
+                                block[10:12] in ("RD") else -1)
+            # Find the start of the amount by searching for the
+            # first digit after position 13
+            amount_start = None
+            for idx, char in enumerate(block[11:], start=11):
+                if char.isdigit():
+                    amount_start = idx
+                    break
+            if amount_start is None:
                 logger.error("No amount found")
             if 'S' in block:
                 amount_end_search_param = 'S'
