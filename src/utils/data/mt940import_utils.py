@@ -129,7 +129,7 @@ def parse_block(blocks: list) -> list:
             # =========== Date ===========
             temp_date = block[:6]
             temp_bookingdate = block[6:10]
-            # =========== Amount-Typ (+/-) ===========
+            # =========== Amount-Type (+/-) ===========
             # 1 => +; 0 => -
             temp_amount_type = (1 if block[10:11] in ("C") or
                                 block[10:12] in ("RD") else -1)
