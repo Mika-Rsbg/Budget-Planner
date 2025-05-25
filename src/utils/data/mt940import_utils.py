@@ -77,6 +77,7 @@ def parse_block(blocks: list) -> list:
     temp_date = None
     temp_bookingdate = None
     temp_amount_type = None
+    temp_currency = None
     temp_amount = None
     temp_purpose_adition = None
     temp_purpose = None
@@ -110,6 +111,7 @@ def parse_block(blocks: list) -> list:
                 transaction['OpeningBalance'] = temp_opening_balance
                 transaction['Date'] = temp_date
                 transaction['Bookingdate'] = temp_bookingdate
+                transaction['Currency'] = temp_currency
                 transaction['Amount'] = temp_amount
                 transaction['TransactionTypeNumber'] = (
                     temp_transaction_type_number
@@ -127,14 +129,25 @@ def parse_block(blocks: list) -> list:
             # =========== Date ===========
             temp_date = block[:6]
             temp_bookingdate = block[6:10]
-            # =========== Amount ===========
+            # =========== Amount-Type (+/-) ===========
             # 1 => +; 0 => -
-            temp_amount_type = 1 if block[11:12] in ("C", "RD") else -1
-            if 'CR' in block:
-                amount_start = block.find('CR') + 2
-            elif 'DR' in block:
-                amount_start = block.find('DR') + 2
-            else:
+            temp_amount_type = (1 if block[10] == 'C' or
+                                block[10:12] == 'RD' else -1)
+            # =========== Currency ===========
+            if block[10:12] == "RC" or block[10:12] == "RD":
+                currency_position = 12
+            else:  # "C" or "D"
+                currency_position = 11
+            temp_currency = block[currency_position]
+            # =========== Amount ===========
+            # Find the start of the amount by searching for the
+            # first digit after position 11
+            amount_start = None
+            for idx, char in enumerate(block[11:], start=11):
+                if char.isdigit():
+                    amount_start = idx
+                    break
+            if amount_start is None:
                 logger.error("No amount found")
             if 'S' in block:
                 amount_end_search_param = 'S'
