@@ -141,7 +141,7 @@ def parse_block(blocks: list) -> list:
             temp_currency = block[currency_position]
             # =========== Amount ===========
             # Find the start of the amount by searching for the
-            # first digit after position 13
+            # first digit after position 11
             amount_start = None
             for idx, char in enumerate(block[11:], start=11):
                 if char.isdigit():
