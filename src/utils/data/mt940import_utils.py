@@ -131,8 +131,8 @@ def parse_block(blocks: list) -> list:
             temp_bookingdate = block[6:10]
             # =========== Amount-Type (+/-) ===========
             # 1 => +; 0 => -
-            temp_amount_type = (1 if block[10:11] in ("C") or
-                                block[10:12] in ("RD") else -1)
+            temp_amount_type = (1 if block[10] == 'C' or
+                                block[10:12] == 'RD' else -1)
             # =========== Currency ===========
             if block[10:12] == "RC" or block[10:12] == "RD":
                 currency_position = 12
