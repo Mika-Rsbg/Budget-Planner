@@ -232,7 +232,7 @@ def add_account_mt940(db_path: Path = config.Database.PATH,
     """
     if name is None:
         logger.info("Get name of the new account. To add the new account.")
-        dialog = NameInputDialog(master)
+        dialog = NameInputDialog(master, number=number)
         master.wait_window(dialog)
         name = dialog.name
         if not name:

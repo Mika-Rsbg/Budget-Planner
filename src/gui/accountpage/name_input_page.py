@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import logging
+from typing import Optional
 from utils.logging.logging_tools import logg
 from gui.basetoplevelwindow import BaseToplevelWindow
 
@@ -49,7 +50,7 @@ class NameInputDialog(BaseToplevelWindow):
         self.entry.focus_set()
 
     @logg
-    def validate_name_input(self) -> str:
+    def validate_name_input(self) -> Optional[str]:
         """
         Validates the name input from the entry widget.
         """
