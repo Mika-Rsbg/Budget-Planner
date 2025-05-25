@@ -29,12 +29,33 @@ def main() -> None:
     logger.info("")
 
 
+def main_test() -> None:
+    """
+    Test function to run the application in test mode.
+    It creates the database and runs the homepage application in test mode.
+    """
+    import tkinter as tk
+    from gui.transactionpage.transactionpage import TransactionPage
+    from utils.data.createdatabase_utils import create_database
+
+    logger.info("")
+    logger.info("################### TEST MODE STARTED #####################")
+    logger.info("")
+    create_database()
+    app = tk.Tk()
+    app.withdraw()  # Hide the root window
+    transaction_page = TransactionPage(master=app, plugin_scope="test_scope")
+    print(transaction_page)
+    app.mainloop()
+
+
 if __name__ == "__main__":
     setup_logging()
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    main()
+    # main()
+    main_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
     logger.info("")
