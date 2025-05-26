@@ -1,6 +1,7 @@
 import logging
 import tkinter as tk
 from tkinter import ttk
+from typing import List, Union
 from gui.basetoplevelwindow import BaseToplevelWindow
 
 
@@ -11,6 +12,7 @@ class TransactionPage(BaseToplevelWindow):
     def __init__(self, master=None, plugin_scope=None,
                  title="Transaction Page",
                  geometry="800x600", bg_color="white"):
+        self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         super().__init__(master, plugin_scope, title, geometry, bg_color)
         self.init_ui()
 
@@ -23,6 +25,7 @@ class TransactionPage(BaseToplevelWindow):
         self.account_infomation_frame.grid(
             row=0, column=0, padx=10, pady=10, sticky="nsew"
         )
+        self.frames.append(self.account_infomation_frame)
 
         # === Acount Name ===
         self.account_name_label = tk.Label(
@@ -51,6 +54,7 @@ class TransactionPage(BaseToplevelWindow):
         self.transaction_information_frame.grid(
             row=1, column=0, padx=10, pady=10, sticky="nsew"
         )
+        self.frames.append(self.transaction_information_frame)
 
         # === Date ===
         self.date_label = tk.Label(
@@ -62,11 +66,11 @@ class TransactionPage(BaseToplevelWindow):
             self.transaction_information_frame, background=self.bg_color,
             foreground="black")
         self.date_entry.grid(row=0, column=1, sticky="ew")
-        self.date_warning_label = tk.Label(
-            self.transaction_information_frame, text="",
-            background=self.bg_color, foreground="red"
-        )
-        self.date_warning_label.grid(row=1, column=0, columnspan=2)
+        # self.date_warning_label = tk.Label(
+        #     self.transaction_information_frame, text="",
+        #     background=self.bg_color, foreground="red"
+        # )
+        # self.date_warning_label.grid(row=1, column=0, columnspan=2)
         # ========================= Transaction Type is always "manual"
         # === Amount ===
         self.amount_label = tk.Label(
@@ -78,11 +82,11 @@ class TransactionPage(BaseToplevelWindow):
             self.transaction_information_frame, background=self.bg_color,
             foreground="black")
         self.amount_entry.grid(row=2, column=1, sticky="ew")
-        self.amount_warning_label = tk.Label(
-            self.transaction_information_frame, text="",
-            background=self.bg_color, foreground="red"
-        )
-        self.amount_warning_label.grid(row=3, column=0, columnspan=2)
+        # self.amount_warning_label = tk.Label(
+        #     self.transaction_information_frame, text="",
+        #     background=self.bg_color, foreground="red"
+        # )
+        # self.amount_warning_label.grid(row=3, column=0, columnspan=2)
         # === Purpose ===
         self.purpose_label = tk.Label(
             self.transaction_information_frame, text="Beschreibung:",
@@ -93,11 +97,11 @@ class TransactionPage(BaseToplevelWindow):
             self.transaction_information_frame, background=self.bg_color,
             foreground="black")
         self.purpose_entry.grid(row=4, column=1, sticky="ew")
-        self.purpose_warning_label = tk.Label(
-            self.transaction_information_frame, text="",
-            background=self.bg_color, foreground="red"
-        )
-        self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
+        # self.purpose_warning_label = tk.Label(
+        #     self.transaction_information_frame, text="",
+        #     background=self.bg_color, foreground="red"
+        # )
+        # self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
         # === Counterparty ===
         self.counterparty_label = tk.Label(
             self.transaction_information_frame, text="Gegenpartei:",
@@ -149,3 +153,22 @@ class TransactionPage(BaseToplevelWindow):
         # === Padding ===
         for widget in self.transaction_information_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
+
+        # ======= Category =======
+        self.category_frame = tk.LabelFrame(
+            self.main_frame, text="Kategorie",
+            background=self.bg_color, foreground="black"
+        )
+        self.category_frame.grid(
+            row=2, column=0, padx=10, pady=10, sticky="nsew"
+        )
+        self.category_label = tk.Label(
+            self.category_frame, text="Kategorie:",
+            background=self.bg_color, foreground="black"
+        )
+        self.category_label.grid(row=0, column=0)
+        self.category_dropdown = tk.OptionMenu(
+            self.category_frame,
+            tk.StringVar(value="Kategorie auswählen"),
+            "Category 1", "Category 2", "Category 3"
+        )
