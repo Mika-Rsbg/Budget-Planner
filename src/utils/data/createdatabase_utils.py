@@ -45,7 +45,7 @@ def create_database(db_path: Path = None) -> None:
                         REFERENCES tbl_Account(i8_AccountID)
                         ON DELETE CASCADE,
                     FOREIGN KEY (i8_TransactionTypeID)
-                        REFERENCES tbl_TransactionType(i8_TransactionTypeID)
+                        REFERENCES tbl_TransactionTyp(i8_TransactionTypID)
                         ON DELETE SET NULL
                 );
                 '''
