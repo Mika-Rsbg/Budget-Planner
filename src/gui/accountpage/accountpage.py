@@ -2,12 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 from utils.data.date_utils import get_iso_date
 from gui.basetoplevelwindow import BaseToplevelWindow
+from gui.basewindow import BaseWindow
 import utils.data.database.account_utils as db_account_utils
 import utils.data.value_utils as value_utils
 
 
 class AccountPage(BaseToplevelWindow):
-    def __init__(self, parent: tk.Tk,
+    def __init__(self, parent: BaseWindow,
                  account_selection_needed: bool = True) -> None:
         """
         Initialize the AccountPage window with optional account selection.
