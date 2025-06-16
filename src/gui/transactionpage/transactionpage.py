@@ -1,7 +1,7 @@
 import logging
 import tkinter as tk
 from tkinter import ttk
-from typing import List, Union
+from typing import List, Union, cast
 from gui.basetoplevelwindow import BaseToplevelWindow
 from utils.data.database.account_utils import get_account_data
 
@@ -14,8 +14,12 @@ class TransactionPage(BaseToplevelWindow):
                  title="Transaction Page",
                  geometry="800x600", bg_color="white"):
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
+        self.account_data = get_account_data(
+            selected_columns=[True, False, True, True, True,
+                              False, False, False]
+        )
+        """List[Tuple[int, str, str, float]]"""
         super().__init__(master, plugin_scope, title, geometry, bg_color)
-        self.account_data = get_account_data()
         logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
 
@@ -36,14 +40,43 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.account_name_label.grid(row=0, column=0)  # , sticky="nsew")
+        account_names: List[str] = [
+            cast(str, account[1]) for account in self.account_data
+        ]
         self.account_name_var = tk.StringVar(value="Select Account")
         self.account_name_dropdown = ttk.Combobox(
             self.account_infomation_frame,
             textvariable=self.account_name_var,
-            values=["Account 1", "Account 2", "Account 3"],
+            values=account_names,
             state="readonly"
         )
         self.account_name_dropdown.grid(row=0, column=1, sticky="ew")
+
+        def on_account_selected(event):
+            selected_name = self.account_name_var.get()
+            for account in self.account_data:
+                if account[1] == selected_name:
+                    self.account_number_entry.config(state="normal")
+                    self.account_number_entry.delete(0, tk.END)
+                    self.account_number_entry.insert(0, str(account[2]))
+                    self.account_number_entry.config(state="readonly")
+                    break
+
+        self.account_name_dropdown.bind(
+            '<<ComboboxSelected>>', on_account_selected
+        )
+
+        # === Account Number ===
+        self.account_number_label = tk.Label(
+            self.account_infomation_frame, text="Account Nummer:",
+            background=self.bg_color, foreground="black"
+        )
+        self.account_number_label.grid(row=1, column=0)
+        self.account_number_entry = tk.Entry(
+            self.account_infomation_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.account_number_entry.grid(row=1, column=1, sticky="ew")
 
         # === Padding ===
         for widget in self.account_infomation_frame.winfo_children():
@@ -51,7 +84,7 @@ class TransactionPage(BaseToplevelWindow):
 
         # ======= Transaction Information =======
         self.transaction_information_frame = tk.LabelFrame(
-            self.main_frame, text="Transaction Informationen",
+            self.main_frame, text="Transaktions Informationen",
             background=self.bg_color, foreground="black"
         )
         self.transaction_information_frame.grid(
