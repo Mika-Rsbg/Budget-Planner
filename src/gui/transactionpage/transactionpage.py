@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import List, Union
 from gui.basetoplevelwindow import BaseToplevelWindow
+from utils.data.database.account_utils import get_account_data
 
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,8 @@ class TransactionPage(BaseToplevelWindow):
                  geometry="800x600", bg_color="white"):
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         super().__init__(master, plugin_scope, title, geometry, bg_color)
+        self.account_data = get_account_data()
+        logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -33,13 +36,13 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.account_name_label.grid(row=0, column=0)  # , sticky="nsew")
-        self.account_name_dropdown = tk.OptionMenu(
+        self.account_name_var = tk.StringVar(value="Select Account")
+        self.account_name_dropdown = ttk.Combobox(
             self.account_infomation_frame,
-            tk.StringVar(value="Select Account"),
-            "Account 1", "Account 2", "Account 3"
+            textvariable=self.account_name_var,
+            values=["Account 1", "Account 2", "Account 3"],
+            state="readonly"
         )
-        self.account_name_dropdown.config(bg=self.bg_color, fg="black")
-        self.account_name_dropdown["menu"].config(bg=self.bg_color, fg="black")
         self.account_name_dropdown.grid(row=0, column=1, sticky="ew")
 
         # === Padding ===
@@ -172,3 +175,13 @@ class TransactionPage(BaseToplevelWindow):
             tk.StringVar(value="Kategorie auswählen"),
             "Category 1", "Category 2", "Category 3"
         )
+
+        # Equalize column widths in all frames
+        # First configure the main grid so that the frames are equally wide
+        self.main_frame.grid_columnconfigure(0, weight=1)
+
+        # Then distribute the columns evenly in each frame
+        for frame in [self.account_infomation_frame,
+                      self.transaction_information_frame, self.category_frame]:
+            frame.grid_columnconfigure(0, weight=1, uniform="col")
+            frame.grid_columnconfigure(1, weight=2, uniform="col")
