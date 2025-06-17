@@ -491,7 +491,7 @@ def insert_transactions(data: List[Dict],
         rti_amount = entry['Amount']
         rti_purpose = entry['Purpose']
         temp_counterparty_number = entry['CounterpartyAccount']
-        temp_counterparty_name = entry['CounterpartyAccount']
+        temp_counterparty_name = entry['CounterpartyName']
         try:
             rti_counterparty_id = db_counterparty_utils.get_counterparty_id(
                 data=[temp_counterparty_name, temp_counterparty_number],
