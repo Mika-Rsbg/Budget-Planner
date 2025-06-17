@@ -313,6 +313,7 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
             f"Difference between last balance and new balance: {difference}"
         )
         try:
+            print("balance", balance, "record_date", record_date,)
             db_account_utils.update_account(
                 account_id=rti_account_id,
                 new_values=["", "", "", balance, difference,
@@ -495,7 +496,7 @@ def insert_transactions(data: List[Dict],
         try:
             rti_counterparty_id = db_counterparty_utils.get_counterparty_id(
                 data=[temp_counterparty_name, temp_counterparty_number],
-                supplied_data=[True, True]
+                supplied_data=[False, True]
             )
         except db_counterparty_utils.Error:
             logger.warning(
