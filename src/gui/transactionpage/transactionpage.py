@@ -4,6 +4,7 @@ from tkinter import ttk
 from typing import List, Union, cast
 from gui.basetoplevelwindow import BaseToplevelWindow
 from utils.data.database.account_utils import get_account_data
+from utils.data.database.counterparty_utils import get_counterparty_data
 
 
 logger = logging.getLogger(__name__)
@@ -12,13 +13,15 @@ logger = logging.getLogger(__name__)
 class TransactionPage(BaseToplevelWindow):
     def __init__(self, master=None, plugin_scope=None,
                  title="Transaction Page",
-                 geometry="800x600", bg_color="white"):
+                 geometry="500x600", bg_color="white"):
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         self.account_data = get_account_data(
             selected_columns=[True, False, True, True, True,
                               False, False, False]
         )
         """List[Tuple[int, str, str, float]]"""
+        self.counterparty_data = get_counterparty_data()
+        """List[Tuple[int, str, str]]"""
         super().__init__(master, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
@@ -60,6 +63,10 @@ class TransactionPage(BaseToplevelWindow):
                     self.account_number_entry.delete(0, tk.END)
                     self.account_number_entry.insert(0, str(account[2]))
                     self.account_number_entry.config(state="readonly")
+                    self.account_balance_entry.config(state="normal")
+                    self.account_balance_entry.delete(0, tk.END)
+                    self.account_balance_entry.insert(0, str(account[3]))
+                    self.account_balance_entry.config(state="readonly")
                     break
 
         self.account_name_dropdown.bind(
@@ -77,6 +84,18 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.account_number_entry.grid(row=1, column=1, sticky="ew")
+
+        # === Account Balance ===
+        self.account_balance_label = tk.Label(
+            self.account_infomation_frame, text="Account Balance:",
+            background=self.bg_color, foreground="black"
+        )
+        self.account_balance_label.grid(row=2, column=0)
+        self.account_balance_entry = tk.Entry(
+            self.account_infomation_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.account_balance_entry.grid(row=2, column=1, sticky="ew")
 
         # === Padding ===
         for widget in self.account_infomation_frame.winfo_children():
@@ -144,21 +163,24 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.counterparty_label.grid(row=6, column=0)
-        values = ["Gegenpartei 1", "Gegenpartei 2", "Gegenpartei 3"]
+        print("####################Counterparty data:", self.counterparty_data)
+        counterparty_names: List[str] = [
+            cast(str, cp[1]) for cp in self.counterparty_data
+        ]
         self.counterparty_var = tk.StringVar()
         self.counterparty_combo = ttk.Combobox(
             self.transaction_information_frame,
             textvariable=self.counterparty_var,
-            values=values,
+            values=counterparty_names,
             state="normal"
         )
         self.counterparty_combo.grid(row=6, column=1, sticky="ew")
 
         def filter_counterparties(event):
             entered = self.counterparty_var.get().lower()
-            filtered = [v for v in values if entered in v.lower()]
+            filtered = [v for v in counterparty_names if entered in v.lower()]
             self.counterparty_combo['values'] = (filtered if filtered
-                                                 else values)
+                                                 else counterparty_names)
 
         self.counterparty_combo.bind('<KeyRelease>', filter_counterparties)
 
