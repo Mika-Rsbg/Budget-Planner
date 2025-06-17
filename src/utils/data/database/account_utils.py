@@ -217,7 +217,7 @@ def add_account_mt940(number: str, master: BaseWindow,
                       name: Optional[str] = None,
                       balance: Optional[float] = None,
                       difference: Optional[float] = None,
-                      record_date: str = get_iso_date(today=True),
+                      record_date: str = get_iso_date(date="010101"),
                       db_path: Path = config.Database.PATH
                       ) -> None:
     """
