@@ -1,11 +1,9 @@
-from pathlib import Path
 import logging
+import config
 
 
 def setup_logging():
-    # Sicherstellen, dass der log-Ordner existiert (mit pathlib)
-    log_dir = Path(__file__).resolve().parents[3] / 'log'
-    log_dir.mkdir(exist_ok=True)
+    config.Logging.ensure_log_directory_exists()
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -21,13 +19,15 @@ def setup_logging():
     # )
 
     # Output to file (DEBUG level) → app.log
-    debug_handler = logging.FileHandler(log_dir / "app.log", encoding="utf-8")
+    debug_handler = logging.FileHandler(
+        config.Logging.LOG_FILE, encoding="utf-8"
+    )
     debug_handler.setLevel(logging.DEBUG)
     debug_handler.setFormatter(formatter)
 
     # Output to file (INFO level) → app_no_debug.log
     info_handler = logging.FileHandler(
-        log_dir / "app_no_debug.log", encoding="utf-8"
+        config.Logging.LOG_FILE_NO_DEBUG, encoding="utf-8"
     )
     info_handler.setLevel(logging.INFO)
     info_handler.setFormatter(formatter)
