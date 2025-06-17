@@ -60,8 +60,8 @@ class NameInputDialog(BaseToplevelWindow):
                               foreground="red")
             return None
         self.label.config(text="Name:", foreground="black")
-        logger.debug(f"Name input successfully validated: {name}")
-        logger.info(f"Name of the new account is: {name}")
+        logger.info("Name input successfully validated. "
+                    f"The name of the new account: {name}")
         return name
 
     @logg
