@@ -14,7 +14,7 @@ class Error(Exception):
 
 
 @logg
-def create_database(db_path: Path = None) -> None:
+def create_database(db_path: Path = config.Database.PATH) -> None:
     def create_transactions_table(cursor, conn) -> None:
         """
         Create the transactions table in the database.
@@ -308,7 +308,6 @@ def create_database(db_path: Path = None) -> None:
         logger.debug("All indexes created successfully.")
 
     try:
-        db_path = db_path if db_path else config.Database.PATH
         db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
@@ -334,7 +333,7 @@ def create_database(db_path: Path = None) -> None:
 
 
 @logg
-def delete_database(path: Path = None) -> None:
+def delete_database(db_path: Path = config.Database.PATH) -> None:
     """
     Delete the database file.
 
@@ -345,7 +344,6 @@ def delete_database(path: Path = None) -> None:
         FileNotFoundError: If the database file does not exist.
         Exception: If there is an error deleting the database file.
     """
-    db_path = path if path else config.Database.PATH
     try:
         DatabaseConnection.close_connection()
         db_path.unlink()
