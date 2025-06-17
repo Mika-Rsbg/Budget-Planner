@@ -44,4 +44,4 @@ def setup_logging():
     # Add handlers to the logger
     logger.addHandler(debug_handler)
     logger.addHandler(info_handler)
-    logger.addHandler(console_handler)
+    # logger.addHandler(console_handler)
