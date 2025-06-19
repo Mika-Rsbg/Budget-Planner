@@ -119,7 +119,7 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
                           db_path: Path = config.Database.PATH
                           ) -> List[Tuple[Union[str, int], ...]]:
     """
-    Retrieves counterparty data from the database.
+    Retrieves counterparty data from the database based on selected columns.
     Args:
         selected_columns (list): A list of booleans indicating which columns
             to retrieve. The order is:
@@ -130,7 +130,6 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
         (list): A list of tuples containing the counterparty data.
     Raises:
         Error: If there is a database error.
-        NoCounterpartyFoundError: If no counterparty data is found.
     """
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
