@@ -5,6 +5,7 @@ from typing import List, Union, cast
 from gui.basetoplevelwindow import BaseToplevelWindow
 from utils.data.database.account_utils import get_account_data
 from utils.data.database.counterparty_utils import get_counterparty_data
+from utils.data.database.category_utils import get_category_data
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,10 @@ class TransactionPage(BaseToplevelWindow):
         """List[Tuple[int, str, str, float]]"""
         self.counterparty_data = get_counterparty_data()
         """List[Tuple[int, str, str]]"""
+        self.category_data = get_category_data(
+            selected_columns=[True, True, True, False]
+        )
+        """List[Tuple[int, str, float]]"""
         super().__init__(master, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
@@ -37,7 +42,10 @@ class TransactionPage(BaseToplevelWindow):
             self.date_entry.config(foreground="grey")
 
     def init_ui(self) -> None:
-        # region ======= Account Information =======
+        # ======= Account Information =======
+        # region
+        # === Frame ===
+        # region
         self.account_infomation_frame = tk.LabelFrame(
             self.main_frame, text="Account Informationen",
             background=self.bg_color, foreground="black",
@@ -46,8 +54,9 @@ class TransactionPage(BaseToplevelWindow):
             row=0, column=0, padx=10, pady=10, sticky="nsew"
         )
         self.frames.append(self.account_infomation_frame)
-
+        # endregion
         # === Acount Name ===
+        # region
         self.account_name_label = tk.Label(
             self.account_infomation_frame, text="Account Name:",
             background=self.bg_color, foreground="black"
@@ -82,8 +91,9 @@ class TransactionPage(BaseToplevelWindow):
         self.account_name_dropdown.bind(
             '<<ComboboxSelected>>', on_account_selected
         )
-
+        # endregion
         # === Account Number ===
+        # region
         self.account_number_label = tk.Label(
             self.account_infomation_frame, text="Account Nummer:",
             background=self.bg_color, foreground="black"
@@ -94,8 +104,9 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.account_number_entry.grid(row=1, column=1, sticky="ew")
-
+        # endregion
         # === Account Balance ===
+        # region
         self.account_balance_label = tk.Label(
             self.account_infomation_frame, text="Account Balance:",
             background=self.bg_color, foreground="black"
@@ -106,12 +117,17 @@ class TransactionPage(BaseToplevelWindow):
             background=self.bg_color, foreground="black"
         )
         self.account_balance_entry.grid(row=2, column=1, sticky="ew")
-
+        # endregion
         # === Padding ===
+        # region
         for widget in self.account_infomation_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
         # endregion
-        # region ======= Transaction Information =======
+        # endregion
+        # ======= Transaction Information =======
+        # region
+        # === Frame ===
+        # region
         self.transaction_information_frame = tk.LabelFrame(
             self.main_frame, text="Transaktions Informationen",
             background=self.bg_color, foreground="black"
@@ -120,8 +136,9 @@ class TransactionPage(BaseToplevelWindow):
             row=1, column=0, padx=10, pady=10, sticky="nsew"
         )
         self.frames.append(self.transaction_information_frame)
-
+        # endregion
         # === Date ===
+        # region
         self.date_label = tk.Label(
             self.transaction_information_frame, text="Datum:",
             background=self.bg_color, foreground="black"
@@ -142,7 +159,9 @@ class TransactionPage(BaseToplevelWindow):
         # )
         # self.date_warning_label.grid(row=1, column=0, columnspan=2)
         # ========================= Transaction Type is always "manual"
-        # === Amount ===
+        # endregion
+        #  === Amount ===
+        # region
         self.amount_label = tk.Label(
             self.transaction_information_frame, text="Betrag:",
             background=self.bg_color, foreground="black"
@@ -157,7 +176,9 @@ class TransactionPage(BaseToplevelWindow):
         #     background=self.bg_color, foreground="red"
         # )
         # self.amount_warning_label.grid(row=3, column=0, columnspan=2)
+        # endregion
         # === Purpose ===
+        # region
         self.purpose_label = tk.Label(
             self.transaction_information_frame, text="Beschreibung:",
             background=self.bg_color, foreground="black", cursor="xterm"
@@ -172,7 +193,9 @@ class TransactionPage(BaseToplevelWindow):
         #     background=self.bg_color, foreground="red"
         # )
         # self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
+        # endregion
         # === Counterparty ===
+        # region
         self.counterparty_label = tk.Label(
             self.transaction_information_frame, text="Gegenpartei Name:",
             background=self.bg_color, foreground="black"
@@ -211,8 +234,9 @@ class TransactionPage(BaseToplevelWindow):
         self.counterparty_combo.bind(
             '<<ComboboxSelected>>', on_counterparty_selected
         )
-
-        # === Counterparty Account (read-only) ===
+        # endregion
+        # === Counterparty Account Number (read-only) ===
+        # region
         self.counterparty_account_label = tk.Label(
             self.transaction_information_frame, text="Gegenpartei Konto:",
             background=self.bg_color, foreground="black"
@@ -223,12 +247,17 @@ class TransactionPage(BaseToplevelWindow):
             background="gray", foreground="black"
         )
         self.counterparty_account_entry.grid(row=7, column=1, sticky="ew")
-
+        # endregion
         # === Padding ===
+        # region
         for widget in self.transaction_information_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
         # endregion
-        # region ======= Category =======
+        # endregion
+        # ======= Category =======
+        # region
+        # === Frame ===
+        # region
         self.category_frame = tk.LabelFrame(
             self.main_frame, text="Kategorie",
             background=self.bg_color, foreground="black"
@@ -236,20 +265,58 @@ class TransactionPage(BaseToplevelWindow):
         self.category_frame.grid(
             row=2, column=0, padx=10, pady=10, sticky="nsew"
         )
+        # endregion
+        # === Category Name ===
+        # region
         self.category_label = tk.Label(
             self.category_frame, text="Kategorie:",
             background=self.bg_color, foreground="black"
         )
         self.category_label.grid(row=0, column=0)
-        self.category_dropdown = tk.OptionMenu(
+        category_names: List[str] = [
+            cast(str, category[1]) for category in self.category_data
+        ]
+        self.category_name_var = tk.StringVar(value="Select Category")
+        self.category_name_dropdown = ttk.Combobox(
             self.category_frame,
-            tk.StringVar(value="Kategorie auswählen"),
-            "Category 1", "Category 2", "Category 3"
+            textvariable=self.category_name_var,
+            values=category_names,
+            state="readonly"
         )
-        self.category_dropdown.config(
+        self.category_name_dropdown.grid(row=0, column=1, sticky="ew")
+
+        def on_category_selected(event):
+            selected_name = self.category_name_var.get()
+            for category in self.category_data:
+                if category[2] == selected_name:
+                    self.category_budget_entry.config(state="normal")
+                    self.category_budget_entry.delete(0, tk.END)
+                    self.category_budget_entry.insert(0, str(category[2]))
+                    self.category_budget_entry.config(state="readonly")
+                    break
+
+        self.category_name_dropdown.bind(
+            '<<ComboboxSelected>>', on_category_selected
+        )
+        # endregion
+        # === Category Budget ===
+        # region
+        self.category_budget_label = tk.Label(
+            self.category_frame, text="Budget:",
             background=self.bg_color, foreground="black"
         )
-
+        self.category_budget_label.grid(row=1, column=0)
+        self.category_budget_entry = tk.Entry(
+            self.category_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.category_budget_entry.grid(row=1, column=1, sticky="ew")
+        # endregion
+        # === Padding ===
+        # region
+        for widget in self.category_frame.winfo_children():
+            widget.grid_configure(padx=10, pady=5)
+        # endregion
         # endregion
 
         # Equalize column widths in all frames
