@@ -288,7 +288,7 @@ class TransactionPage(BaseToplevelWindow):
         def on_category_selected(event):
             selected_name = self.category_name_var.get()
             for category in self.category_data:
-                if category[2] == selected_name:
+                if category[1] == selected_name:
                     self.category_budget_entry.config(state="normal")
                     self.category_budget_entry.delete(0, tk.END)
                     self.category_budget_entry.insert(0, str(category[2]))
