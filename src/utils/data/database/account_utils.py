@@ -40,7 +40,7 @@ def get_account_data(selected_columns: List[bool] = [True, True, True,
                      db_path: Path = config.Database.PATH
                      ) -> List[Tuple[Union[str, float, int], ...]]:
     """
-    Retrieves account data from the database.
+    Retrieves account data from the database based on selected columns.
     Args:
         selected_columns (List[bool]): List of booleans indicating which
             columns to select. [AccountID(int), WidgetPosition(int),
