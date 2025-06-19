@@ -155,7 +155,7 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
 
     try:
         cursor.execute(query)
-        counterparty_data = cursor.fetchone()
+        counterparty_data = cursor.fetchall()
         logger.debug("Counterparty data retrieved successfully.")
     except sqlite3.Error as e:
         logger.error(f"Error querying data: {e}")
