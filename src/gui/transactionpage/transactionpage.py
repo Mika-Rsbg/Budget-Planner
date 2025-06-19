@@ -26,6 +26,16 @@ class TransactionPage(BaseToplevelWindow):
         logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
 
+    def _clear_placeholder(self, event):
+        if self.date_entry.get() == "YYYY-MM-DD":
+            self.date_entry.delete(0, tk.END)
+            self.date_entry.config(foreground="black")
+
+    def _add_placeholder(self, event):
+        if not self.date_entry.get():
+            self.date_entry.insert(0, "YYYY-MM-DD")
+            self.date_entry.config(foreground="grey")
+
     def init_ui(self) -> None:
         # ======= Account Information =======
         self.account_infomation_frame = tk.LabelFrame(
@@ -118,8 +128,13 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.date_label.grid(row=0, column=0)
         self.date_entry = tk.Entry(
-            self.transaction_information_frame, background=self.bg_color,
-            foreground="black")
+            self.transaction_information_frame,
+            background=self.bg_color,
+            foreground="grey"
+        )
+        self.date_entry.insert(0, "YYYY-MM-DD")
+        self.date_entry.bind("<FocusIn>", self._clear_placeholder)
+        self.date_entry.bind("<FocusOut>", self._add_placeholder)
         self.date_entry.grid(row=0, column=1, sticky="ew")
         # self.date_warning_label = tk.Label(
         #     self.transaction_information_frame, text="",
@@ -159,11 +174,10 @@ class TransactionPage(BaseToplevelWindow):
         # self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
         # === Counterparty ===
         self.counterparty_label = tk.Label(
-            self.transaction_information_frame, text="Gegenpartei:",
+            self.transaction_information_frame, text="Gegenpartei Name:",
             background=self.bg_color, foreground="black"
         )
         self.counterparty_label.grid(row=6, column=0)
-        print("####################Counterparty data:", self.counterparty_data)
         counterparty_names: List[str] = [
             cast(str, cp[1]) for cp in self.counterparty_data
         ]
@@ -184,29 +198,31 @@ class TransactionPage(BaseToplevelWindow):
 
         self.counterparty_combo.bind('<KeyRelease>', filter_counterparties)
 
-        # === Counterparty Name (read-only) ===
-        self.counterparty_name_label = tk.Label(
-            self.transaction_information_frame, text="Gegenpartei Name:",
-            background=self.bg_color, foreground="black"
+        def on_counterparty_selected(event):
+            selected_name = self.counterparty_var.get()
+            for cp in self.counterparty_data:
+                if cp[1] == selected_name:
+                    self.counterparty_account_entry.config(state="normal")
+                    self.counterparty_account_entry.delete(0, tk.END)
+                    self.counterparty_account_entry.insert(0, str(cp[2]))
+                    self.counterparty_account_entry.config(state="readonly")
+                    break
+
+        self.counterparty_combo.bind(
+            '<<ComboboxSelected>>', on_counterparty_selected
         )
-        self.counterparty_name_label.grid(row=7, column=0)
-        self.counterparty_name_entry = tk.Entry(
-            self.transaction_information_frame, state="readonly",
-            background=self.bg_color, foreground="black"
-        )
-        self.counterparty_name_entry.grid(row=7, column=1, sticky="ew")
 
         # === Counterparty Account (read-only) ===
         self.counterparty_account_label = tk.Label(
             self.transaction_information_frame, text="Gegenpartei Konto:",
             background=self.bg_color, foreground="black"
         )
-        self.counterparty_account_label.grid(row=8, column=0)
+        self.counterparty_account_label.grid(row=7, column=0)
         self.counterparty_account_entry = tk.Entry(
             self.transaction_information_frame, state="readonly",
             background="gray", foreground="black"
         )
-        self.counterparty_account_entry.grid(row=8, column=1, sticky="ew")
+        self.counterparty_account_entry.grid(row=7, column=1, sticky="ew")
 
         # === Padding ===
         for widget in self.transaction_information_frame.winfo_children():
