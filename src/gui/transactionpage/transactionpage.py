@@ -37,7 +37,7 @@ class TransactionPage(BaseToplevelWindow):
             self.date_entry.config(foreground="grey")
 
     def init_ui(self) -> None:
-        # ======= Account Information =======
+        # region ======= Account Information =======
         self.account_infomation_frame = tk.LabelFrame(
             self.main_frame, text="Account Informationen",
             background=self.bg_color, foreground="black",
@@ -110,8 +110,8 @@ class TransactionPage(BaseToplevelWindow):
         # === Padding ===
         for widget in self.account_infomation_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
-
-        # ======= Transaction Information =======
+        # endregion
+        # region ======= Transaction Information =======
         self.transaction_information_frame = tk.LabelFrame(
             self.main_frame, text="Transaktions Informationen",
             background=self.bg_color, foreground="black"
@@ -227,8 +227,8 @@ class TransactionPage(BaseToplevelWindow):
         # === Padding ===
         for widget in self.transaction_information_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
-
-        # ======= Category =======
+        # endregion
+        # region ======= Category =======
         self.category_frame = tk.LabelFrame(
             self.main_frame, text="Kategorie",
             background=self.bg_color, foreground="black"
@@ -246,6 +246,11 @@ class TransactionPage(BaseToplevelWindow):
             tk.StringVar(value="Kategorie auswählen"),
             "Category 1", "Category 2", "Category 3"
         )
+        self.category_dropdown.config(
+            background=self.bg_color, foreground="black"
+        )
+
+        # endregion
 
         # Equalize column widths in all frames
         # First configure the main grid so that the frames are equally wide
