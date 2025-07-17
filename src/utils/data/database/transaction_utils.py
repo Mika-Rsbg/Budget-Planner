@@ -30,8 +30,7 @@ def edit_transaction(db_path: Path = config.Database.PATH):
     pass
 
 
-def add_transaction(db_path: Path = config.Database.PATH,
-                    data: tuple = None):
+def add_transaction(data: tuple, db_path: Path = config.Database.PATH) -> None:
     """
     Adds a transaction to the database after checking for duplicates.
 
