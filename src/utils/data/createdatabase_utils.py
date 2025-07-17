@@ -186,6 +186,27 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         except sqlite3.Error as e:
             logger.error(f"Error creating transaction type table: {e}")
 
+    def insert_initial_transaction_types(cursor, conn) -> None:
+        """
+        Insert initial transaction types into the database.
+        """
+        logger.debug("Inserting initial transaction types...")
+        try:
+            cursor.executemany(
+                '''
+                INSERT OR IGNORE INTO tbl_TransactionTyp
+                (str_TransactionTypName, str_TransactionTypNumber)
+                VALUES (?, ?)
+                ''',
+                [
+                    ('Manuelle Transaktion', '1000')
+                ]
+            )
+            conn.commit()
+            logger.debug("Initial transaction types inserted successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error inserting initial transaction types: {e}")
+
     def create_account_table(cursor, conn) -> None:
         """
         Create the account table in the database.
