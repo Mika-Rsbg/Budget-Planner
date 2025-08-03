@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseWindow(tk.Tk):
-    def __init__(self, plugin_scope: str = None, title: str = "Fenster",
+    def __init__(self, plugin_scope: str, title: str = "Fenster",
                  geometry: str = "800x600", bg_color: str = "white",
                  fullscreen: bool = False) -> None:
         """
@@ -101,7 +101,7 @@ class BaseWindow(tk.Tk):
 
     @logg
     def ask_permission(self, message: str,
-                       focus_on: List[bool] = None) -> None:
+                       focus_on: List[bool]) -> None:
         """
         Ask the user for permission to perform an action.
 
