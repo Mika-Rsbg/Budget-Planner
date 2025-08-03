@@ -34,7 +34,7 @@ def main_test() -> None:
     Test function to run the application in test mode.
     It creates the database and runs the homepage application in test mode.
     """
-    import tkinter as tk
+    from gui.basewindow import BaseWindow
     from gui.transactionpage.transactionpage import TransactionPage
     from utils.data.createdatabase_utils import create_database
 
@@ -42,9 +42,14 @@ def main_test() -> None:
     logger.info("################### TEST MODE STARTED #####################")
     logger.info("")
     create_database()
-    app = tk.Tk()
+    app = BaseWindow(
+        title="Test Transaction Page",
+        geometry="500x600",
+        bg_color="white",
+        plugin_scope="test"
+    )
     app.withdraw()  # Hide the root window
-    transaction_page = TransactionPage(master=app, plugin_scope="test_scope")
+    transaction_page = TransactionPage(parent=app, plugin_scope="test")
     print(transaction_page)
     app.mainloop()
 
