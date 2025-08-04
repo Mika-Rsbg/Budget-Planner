@@ -1,7 +1,7 @@
 from pathlib import Path
 import sqlite3
 import logging
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from utils.data.database_connection import DatabaseConnection
 import config
 
@@ -13,7 +13,7 @@ class Error(Exception):
     pass
 
 
-@logg
+@log_fn
 def create_database(db_path: Path = config.Database.PATH) -> None:
     def create_transactions_table(cursor, conn) -> None:
         """
@@ -353,7 +353,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         DatabaseConnection.close_cursor()
 
 
-@logg
+@log_fn
 def delete_database(db_path: Path = config.Database.PATH) -> None:
     """
     Delete the database file.

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 from gui.basewindow import BaseWindow
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from gui.plugins.__init__ import load_plugins
 
 
@@ -63,7 +63,7 @@ class BaseToplevelWindow(tk.Toplevel):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
-    @logg
+    @log_fn
     def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
@@ -76,7 +76,7 @@ class BaseToplevelWindow(tk.Toplevel):
             "init_ui() needs to be implemented in subclasses"
         )
 
-    @logg
+    @log_fn
     def show_message(self, message: str) -> None:
         """
         Helpmethod that shows a message in a popup window.
@@ -96,7 +96,7 @@ class BaseToplevelWindow(tk.Toplevel):
         popup.grab_set()
         popup.transient(self)
 
-    @logg
+    @log_fn
     def reload(self) -> None:
         """
         Destroys all widgets in the main frame and reinitializes the UI.

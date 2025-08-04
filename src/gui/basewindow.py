@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 from gui.plugins.__init__ import load_plugins
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class BaseWindow(tk.Tk):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
-    @logg
+    @log_fn
     def init_ui(self) -> None:
         """
         Methode to initialize the user interface.
@@ -79,7 +79,7 @@ class BaseWindow(tk.Tk):
             "init_ui() needs to be implemented in subclasses"
         )
 
-    @logg
+    @log_fn
     def show_message(self, message: str) -> None:
         """
         Helpmethod that shows a message in a popup window.
@@ -99,7 +99,7 @@ class BaseWindow(tk.Tk):
         popup.grab_set()
         popup.transient(self)
 
-    @logg
+    @log_fn
     def ask_permission(self, message: str,
                        focus_on: List[bool]) -> None:
         """
@@ -160,13 +160,13 @@ class BaseWindow(tk.Tk):
         logger.debug(f"Permission set to {permission}.")
         popup.destroy()
 
-    @logg
+    @log_fn
     def run(self) -> None:
         """Starts the main loop of the application."""
         logger.info("Starting main loop.")
         self.mainloop()
 
-    @logg
+    @log_fn
     def reload(self) -> None:
         """
         Destroys all widgets in the main frame and reinitializes the UI.

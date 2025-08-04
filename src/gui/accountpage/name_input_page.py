@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 from typing import Optional
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from gui.basetoplevelwindow import BaseToplevelWindow
 
 
@@ -49,7 +49,7 @@ class NameInputDialog(BaseToplevelWindow):
         # Set the default focus to the entry widget
         self.entry.focus_set()
 
-    @logg
+    @log_fn
     def validate_name_input(self) -> Optional[str]:
         """
         Validates the name input from the entry widget.
@@ -64,7 +64,7 @@ class NameInputDialog(BaseToplevelWindow):
                     f"The name of the new account: {name}")
         return name
 
-    @logg
+    @log_fn
     def on_ok(self):
         self.name = self.validate_name_input()
         if self.name is None:
@@ -72,7 +72,7 @@ class NameInputDialog(BaseToplevelWindow):
             return
         self.destroy()
 
-    @logg
+    @log_fn
     def on_cancel(self):
         logger.debug("Canceled name input.")
         self.name = None

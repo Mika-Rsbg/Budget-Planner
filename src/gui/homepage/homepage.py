@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import locale
 import logging
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
 from utils.data.database.account_utils import get_account_data
@@ -124,7 +124,7 @@ class Homepage(BaseWindow):
         self.heading_frame.grid_configure(columnspan=total_columns)
         self.budget_frame.grid_configure(columnspan=total_columns)
 
-    @logg
+    @log_fn
     def create_account_widget(self, row: int, column: int, account_name: str,
                               current_value: float = 0.0,
                               difference_value: float = 0.0) -> None:
@@ -163,7 +163,7 @@ class Homepage(BaseWindow):
         }
         self.update_account_values(column, current_value, difference_value)
 
-    @logg
+    @log_fn
     def update_account_values(self, widget_position: int, current_value: float,
                               difference_value: float) -> None:
         try:
@@ -200,7 +200,7 @@ class Homepage(BaseWindow):
         except Exception as e:
             logger.error(f"Error updating widget {widget_position}: {e}")
 
-    @logg
+    @log_fn
     def set_budget(self, amount: float) -> None:
         self.budget_value = amount
         self.budget_label.config(text=f"{amount:.2f} €")
@@ -216,7 +216,7 @@ class Homepage(BaseWindow):
         self.budget_frame.config(bg=bg_color)
         logger.info(f"Budget set to {amount:.2f} €")
 
-    @logg
+    @log_fn
     def open_budget_suggestions(self):
         """Open the budget suggestions dialog."""
         logger.info("Opening budget suggestions dialog.")

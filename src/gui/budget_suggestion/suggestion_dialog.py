@@ -4,7 +4,7 @@ import locale
 from typing import cast, Dict, List, Union
 import logging
 from gui.basetoplevelwindow import BaseToplevelWindow
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from utils.ai.budget_suggestions import BudgetSuggestionEngine
 
 
@@ -121,7 +121,7 @@ class BudgetSuggestionDialog(BaseToplevelWindow):
         # Set focus to income entry
         self.income_entry.focus_set()
 
-    @logg
+    @log_fn
     def _generate_suggestions(self):
         """Generate and display budget suggestions based on user input."""
         logger.debug("Generate Suggestions button clicked")
