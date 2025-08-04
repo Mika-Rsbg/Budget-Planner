@@ -118,7 +118,7 @@ def add_account_history(account_id: int, balance: float, record_date: str,
             ''',
             (account_id, record_date)
         )
-        if cursor.fetchone() is not None and not manuel_entry:
+        if cursor.fetchone() is not None and not manual_entry:
             logger.error(
                 f"Account history already exists for account ID {account_id} "
                 f"on date {record_date}."
