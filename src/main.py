@@ -1,12 +1,12 @@
 import logging
 from utils.logging.logger_config import setup_logging
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)
 
 
-@logg
+@log_fn
 def main() -> None:
     """
     Main function to run the application.
