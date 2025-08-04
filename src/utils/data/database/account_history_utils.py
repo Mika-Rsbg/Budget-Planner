@@ -91,7 +91,7 @@ def add_account_history(account_id: int, balance: float, record_date: str,
                            (YYYY-MM-DD).
         change_date (str): Date of the change in ISO format (YYYY-MM-DD).
                            If empty, it will be set to the current date.
-        manuel_entry (bool, optional): For Manuel Transaction adding, allows
+        manual_entry (bool, optional): For Manual Transaction adding, allows
                                        manual entry without checking for
                                        existing records.
         db_path (Path, optional): Path to the SQLite database file.
