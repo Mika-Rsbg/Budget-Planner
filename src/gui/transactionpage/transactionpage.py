@@ -70,7 +70,7 @@ class TransactionPage(BaseToplevelWindow):
         temp_counterparty_account = self.counterparty_account_entry.get()
         for cp in self.counterparty_data:
             if cp[2] == temp_counterparty_account:
-                rti_counterparty_id = account[0]
+                rti_counterparty_id = cp[0]
                 break
         temp_category_name = self.category_name_var.get()
         for category in self.category_data:
