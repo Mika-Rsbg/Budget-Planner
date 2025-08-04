@@ -1,8 +1,13 @@
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
+from logging import getLogger
 from utils.data.database_connection import DatabaseConnection
+from utils.data.date_utils import get_iso_date
 import config
+
+
+logger = getLogger(__name__)
 
 
 class Error(Exception):
@@ -20,12 +25,10 @@ class NoAccountHistoryFoundError(Exception):
     pass
 
 
-def get_last_balance(db_path: Path = config.Database.PATH,
-                     account_id: int = None) -> float:
+def get_last_balance(account_id: int,
+                     db_path: Path = config.Database.PATH) -> float:
     """
-    Retrieves the balance of the specified account from the last month.
-    If no record is found in the last month, it checks for one within the
-    period of one year before. Raises an error if neither is found.
+    Retrieves the last balance of the specified account.
 
     Args:
         db_path (Path, optional): Path to the SQLite database file.
@@ -35,8 +38,7 @@ def get_last_balance(db_path: Path = config.Database.PATH,
         float: The balance found.
 
     Raises:
-        AccountHistoryNotFoundError: If no balance record is found for the
-            last month or within the previous year.
+        AccountHistoryNotFoundError: If no balance record is found.
         Error: If an error occurs during the database
             query or connection.
     """
@@ -44,70 +46,55 @@ def get_last_balance(db_path: Path = config.Database.PATH,
     today = date.today()
     first_day_this_month = date(today.year, today.month, 1)
     last_day_last_month = first_day_this_month - timedelta(days=1)
-    first_day_last_month = date(last_day_last_month.year,
-                                last_day_last_month.month, 1)
 
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
-    query = """
-        SELECT real_Balance FROM tbl_AccountHistory
-        WHERE i8_AccountID = ?
-            AND str_RecordDate BETWEEN ? AND ?
-        ORDER BY str_RecordDate DESC LIMIT 1
-    """
-
     try:
-        # Try to get balance from last month
-        cursor.execute(query, (
+        cursor.execute("""
+            SELECT real_Balance FROM tbl_AccountHistory
+            WHERE i8_AccountID = ?
+            AND str_RecordDate < ?
+            ORDER BY str_RecordDate DESC LIMIT 1
+        """, (
             account_id,
-            first_day_last_month.isoformat(),
             last_day_last_month.isoformat()
         ))
         result = cursor.fetchone()
         if result is not None:
+            logger.debug("Last balance found.")
             return result[0]
 
-        # If not found, check within the period of one year before
-        # (from one year ago up to last month)
-        start_date_year_before = first_day_last_month - timedelta(days=365)
-        cursor.execute(query, (
-            account_id,
-            start_date_year_before.isoformat(),
-            last_day_last_month.isoformat()
-        ))
-        result = cursor.fetchone()
-        if result is not None:
-            return result[0]
-
-        raise NoAccountHistoryFoundError(
-            "No balance record found for the last month or within the"
-            "previous year."
-        )
+        logger.warning("No balance found.")
+        raise NoAccountHistoryFoundError("No balance found.")
     except sqlite3.Error as e:
+        logger.error(f"Error retrieving balance: {e}")
         raise Error(f"Error retrieving balance: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
-def add_account_history(db_path: Path = config.Database.PATH,
-                        account_id: int = None,
-                        balance: float = None,
-                        record_date: str = None,
-                        change_date: str = None) -> None:
+def add_account_history(account_id: int, balance: float, record_date: str,
+                        change_date: str = "", manuel_entry: bool = False,
+                        db_path: Path = config.Database.PATH) -> None:
     """
     Adds a new account history record to the database for the specified
     account. If the record already exists, raises an error.
 
     Args:
-        db_path (Path, optional): Path to the SQLite database file.
         account_id (int): ID of the account.
         balance (float): The amount to be recorded.
         record_date (str): Date of the balance record in ISO format
                            (YYYY-MM-DD).
         change_date (str): Date of the change in ISO format (YYYY-MM-DD).
+                           If empty, it will be set to the current date.
+        manuel_entry (bool, optional): For Manuel Transaction adding, allows
+                                       manual entry without checking for
+                                       existing records.
+        db_path (Path, optional): Path to the SQLite database file.
 
     Raises:
         ExistingAccountHistoryError: If an account history record already
@@ -120,6 +107,9 @@ def add_account_history(db_path: Path = config.Database.PATH,
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
+    if change_date == "":
+        change_date = get_iso_date(today=True)
+
     try:
         cursor.execute(
             '''
@@ -128,7 +118,11 @@ def add_account_history(db_path: Path = config.Database.PATH,
             ''',
             (account_id, record_date)
         )
-        if cursor.fetchone() is not None:
+        if cursor.fetchone() is not None and not manuel_entry:
+            logger.error(
+                f"Account history already exists for account ID {account_id} "
+                f"on date {record_date}."
+            )
             raise ExistingAccountHistoryError(
                 "Account history already exists for this date."
             )
@@ -142,7 +136,7 @@ def add_account_history(db_path: Path = config.Database.PATH,
             (account_id, balance, record_date, change_date)
         )
         conn.commit()
-        print("Account history record created successfully.")
+        logger.debug("Account history record created successfully.")
     except sqlite3.Error as e:
         raise Error(f"Error creating account history record: {e}")
     finally:
