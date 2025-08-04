@@ -51,6 +51,7 @@ class DatabaseConnection:
             ).cursor()
         return DatabaseConnection._cursor
 
+    @staticmethod
     def close_cursor() -> None:
         """
         Closes the database cursor if it exists.

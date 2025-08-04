@@ -1,13 +1,13 @@
 import os
 import importlib
 import logging
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)
 
 
-@logg
+@log_fn
 def load_plugins(plugin_type: str, plugin_scope: str):
     """
     Load plugins from the specified directory based on their type and scope.

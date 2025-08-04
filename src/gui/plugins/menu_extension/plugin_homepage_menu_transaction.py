@@ -1,5 +1,5 @@
 import tkinter as tk
-# from gui.transactionpage.transactionpage import TransactionPage
+from gui.transactionpage.transactionpage import TransactionPage
 from utils.data.mt940import_utils import import_mt940_file
 
 menu_id = 20
@@ -10,8 +10,9 @@ def add_to_menu(window, menu_bar):
 
     # Transaktion manuell hinzufügen
     transaction_menu.add_command(
-        label="Manuelle Transaktion hinzufügen",
-        command=lambda: open_transaction_page(window, 0)
+        label="Manuelle Transaktion hinzufügen (Beta)",
+        command=lambda: open_transaction_page
+        (window)
     )
 
     # Transaktion aus Datei importieren
@@ -24,21 +25,21 @@ def add_to_menu(window, menu_bar):
 
     # Transaktion bearbeiten
     transaction_menu.add_command(
-        label="Transaktion bearbeiten",
-        command=lambda: open_transaction_page(window, 1)
+        label="Transaktion bearbeiten (WIP)",
+        command=lambda: open_transaction_page_1(window, 1)
     )
 
     # Transaktion löschen
     transaction_menu.add_command(
-        label="Transaktion löschen",
-        command=lambda: open_transaction_page(window, 2)
+        label="Transaktion löschen (WIP)",
+        command=lambda: open_transaction_page_1(window, 2)
     )
 
     transaction_menu.add_separator()
 
     # Übersicht anzeigen
     transaction_menu.add_command(
-        label="Transaktionsübersicht",
+        label="Transaktionsübersicht (WIP)",
         command=lambda: window.show_message(
             "Hier sind alle Transaktionen aufgelistet."
         )
@@ -48,7 +49,7 @@ def add_to_menu(window, menu_bar):
     menu_bar.add_cascade(label="Transaktionen", menu=transaction_menu)
 
 
-def open_transaction_page(window, opening_mode: int) -> None:
+def open_transaction_page_1(window, opening_mode: int) -> None:
     """Open the transaction page.
 
     Args:
@@ -59,3 +60,13 @@ def open_transaction_page(window, opening_mode: int) -> None:
     window.show_message(
         "Feature not implemented yet!"
     )
+
+
+def open_transaction_page(window) -> None:
+    """Open the transaction page.
+
+    Args:
+        window: parent window
+        opening_mode (int): 0 = add, 1 = edit, 2 = delete
+    """
+    TransactionPage(parent=window, plugin_scope="transaction-page")

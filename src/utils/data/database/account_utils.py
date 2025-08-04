@@ -1,10 +1,10 @@
-import tkinter as tk
 import random
 import string
 import sqlite3
 from pathlib import Path
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, cast
 import logging
+from gui.basewindow import BaseWindow
 from gui.accountpage.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
 from utils.data.date_utils import get_iso_date
@@ -34,26 +34,25 @@ class RecordTooOldError(Exception):
     pass
 
 
-def get_account_data(db_path: Path = config.Database.PATH,
-                     selected_columns: List[bool] = [True, True, True,
+def get_account_data(selected_columns: List[bool] = [True, True, True,
                                                      True, True, True,
-                                                     True, True]
-                     ) -> List[Tuple[int, str]]:
+                                                     True, True],
+                     db_path: Path = config.Database.PATH
+                     ) -> List[Tuple[Union[str, float, int], ...]]:
     """
-    Retrieves account data from the database.
+    Retrieves account data from the database based on selected columns.
     Args:
-        db_path (Path): Path to the SQLite database file.
         selected_columns (List[bool]): List of booleans indicating which
-                                       columns to select.
-                                       [AccountID, WidgetPosition, AccountName,
-                                       AccountNumber, AccountBalance,
-                                       AccountDifference, RecordDate,
-                                       ChangeDate]
+            columns to select. [AccountID(int), WidgetPosition(int),
+            AccountName(str), AccountNumber(str), AccountBalance(float),
+            AccountDifference(float), RecordDate(str), ChangeDate(str)]
+        db_path (Path): Path to the SQLite database file.
     Return:
         List of tuples containing account data (AccountID, AccountName).
     Raises:
         Error: If the number of selected columns does not match the expected
                number of columns.
+        NoAccountFoundError: If no account data is found in the database.
     """
     cursor = DatabaseConnection.get_cursor(db_path)
     columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
@@ -72,21 +71,27 @@ def get_account_data(db_path: Path = config.Database.PATH,
             query += f'{col}, '
     query = query[:-2] + ' FROM tbl_Account'
 
-    cursor.execute(query)
-    account_data = cursor.fetchall()
-    DatabaseConnection.close_cursor()
-    logger.debug("Account data retrieved successfully.")
-    logger.debug(f"Account data: {account_data}")
+    try:
+        cursor.execute(query)
+        account_data = cursor.fetchall()
+        logger.debug("Account data retrieved successfully.")
+    except sqlite3.Error as e:
+        logger.error(f"Error querying data: {e}")
+        raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
+    if not account_data:
+        logger.warning("No account data found.")
     return account_data
 
 
-def delete_account(db_path: Path = config.Database.PATH,
-                   account_id: Optional[int] = None) -> None:
+def delete_account(account_id: int,
+                   db_path: Path = config.Database.PATH) -> None:
     """
     Deletes an account from the database.
     Args:
-        db_path (Path): Path to the SQLite database file.
         account_id (int): Account ID of the account to delete.
+        db_path (Path): Path to the SQLite database file.
     Raises:
         Error: If the account ID is not provided or if any database error
                occurs.
@@ -114,22 +119,20 @@ def delete_account(db_path: Path = config.Database.PATH,
         DatabaseConnection.close_cursor()
 
 
-def update_account(db_path: Path = config.Database.PATH,
-                   account_id: int | None = None,
-                   new_values: List[Union[str, float]] = []) -> None:
+def update_account(account_id: int,
+                   new_values: List[Union[str, float]],
+                   db_path: Path = config.Database.PATH) -> None:
     """
     Edits an account in the database after verifying that at least one of the
     values is different from the current database values.
     Args:
-        db_path (Path): Path to the SQLite database file.
         account_id (int): Account ID of the account to edit.
         new_values (List[str]): List of new values for the columns in the order
-                                [new_WidgetPosition, new_AccountName,
-                                new_AccountNumber, new_AccountBalance,
-                                new_AccountDifference, new_RecordDate,
-                                newChangeDate].
-                                If an element is an empty string (""), that
-                                column will not be updated.
+            [new_WidgetPosition, new_AccountName, new_AccountNumber,
+            new_AccountBalance, new_AccountDifference, new_RecordDate,
+            newChangeDate]. If an element is an empty string (""),
+            that column will not be updated.
+        db_path (Path): Path to the SQLite database file.
     Raises:
         Error: If no update is needed or if any database error occurs.
     """
@@ -174,7 +177,7 @@ def update_account(db_path: Path = config.Database.PATH,
 
     # Build the SET part of the SQL query dynamically only for changed values.
     updates: List[str] = []
-    parameters: List[str] = []
+    parameters: List[Union[str, int, float]] = []
     for col, new_val, current_val in zip(columns, new_values, current_record):
         if new_val != "":
             try:
@@ -196,7 +199,7 @@ def update_account(db_path: Path = config.Database.PATH,
 
     query = (f"UPDATE tbl_Account SET {', '.join(updates)} "
              "WHERE i8_AccountID = ?")
-    parameters.append(account_id)
+    parameters.append(cast(int, account_id))
 
     try:
         cursor.execute(query, parameters)
@@ -210,22 +213,25 @@ def update_account(db_path: Path = config.Database.PATH,
         DatabaseConnection.close_cursor()
 
 
-def add_account_mt940(db_path: Path = config.Database.PATH,
-                      name: Optional[str] = None, number: Optional[str] = None,
+def add_account_mt940(number: str, master: BaseWindow,
+                      name: Optional[str] = None,
                       balance: Optional[float] = None,
                       difference: Optional[float] = None,
-                      master: Optional[tk.Tk] = None
+                      record_date: str = get_iso_date(date="010101"),
+                      db_path: Path = config.Database.PATH
                       ) -> None:
     """
-    Adds an account to the database while importing an MT940 file.
+    Adds a new account to the database, is used for MT940 import.
+    If the name is not provided, it prompts the user to input a name.
 
     Args:
-        db_path (Path, optional): Path to the SQLite database file.
-        name (str, optional): Name of the account.
         number (str): Number of the account.
-        balance (float): Balance of the account.
-        difference (float, optional): Difference of the account.
-        master (tk.Tk, optional): The parent Tkinter window for the dialog.
+        master (Basewindow): The parent Tkinter window for the dialog.
+        name (str, Optional): Name of the account.
+        balance (float, Optional): Balance of the account.
+        difference (float, Optional): Difference of the account.
+        record_date (str): Date of the record in ISO format.
+        db_path (Path, Optional): Path to the SQLite database file.
     Raises:
         Error: If the account number is not provided or if any database error
                occurs.
@@ -248,26 +254,26 @@ def add_account_mt940(db_path: Path = config.Database.PATH,
     if difference is None:
         logger.debug("No difference provided. Setting difference to 0.0.")
         difference = 0.0
-    add_account(db_path, name=name, number=number, balance=balance,
-                difference=difference)
+    add_account(db_path=db_path, name=name, number=number, balance=balance,
+                difference=difference, record_date=record_date)
 
 
-def add_account(db_path: Path = config.Database.PATH,
-                position: int = None, name: str = None, number: str = None,
-                balance: float = None, difference: float = None,
-                record_date: str = None, change_date: str = None) -> None:
+def add_account(name: str, number: str, balance: float, difference: float,
+                record_date: str, position: Optional[int] = None,
+                change_date: Optional[str] = None,
+                db_path: Path = config.Database.PATH) -> None:
     """
     Adds an account to the database.
 
     Args:
-        db_path (Path, optional): Path to the SQLite database file.
+        name (str): Name of the account.
+        number (str): Number of the account.
+        balance (float): Balance of the account.
+        difference (float): Difference of the account.
+        record_date (str): Date of the record in ISO format.
         position (int, optional): Position of the account in the widget.
-        name (str, optional): Name of the account.
-        number (str, optional): Number of the account.
-        balance (float, optional): Balance of the account.
-        difference (float, optional): Difference of the account.
-        record_date (str, optional): Date of the record in ISO format.
         change_date (str, optional): Date of the change in ISO format.
+        db_path (Path, optional): Path to the SQLite database file.
     Raises:
         Error: If any of the required parameters are missing or if an error
               occurs during the database operation.
@@ -310,22 +316,20 @@ def add_account(db_path: Path = config.Database.PATH,
         DatabaseConnection.close_cursor()
 
 
-def get_account_id(db_path: Path = config.Database.PATH,
-                   data: List = None,
-                   supplied_data=[False, False, False, False]) -> int:
+def get_account_id(data: List, supplied_data=[False, False, False, False],
+                   db_path: Path = config.Database.PATH) -> int:
     """
     Retrieves the account ID from the database based on the provided filtering
     criteria.
 
     Args:
-        db_path (Path, optional): Path to the SQLite database file.
         data (List): A list of 4 elements in the order [AccountName,
                      AccountNumber, AccountBalance, AccountDifference].
         supplied_data (List of bool): A list of booleans indicating which
-                                      corresponding elements of 'data' to use
-                                      as filter criteria. Each True value
-                                      corresponds to applying an equality
-                                      filter for the respective column.
+            corresponding elements of 'data' to use as filter criteria.
+            Each True value corresponds to applying an equality filter
+            for the respective column.
+        db_path (Path, optional): Path to the SQLite database file.
     Returns:
         int: The account ID (i8_AccountID) of the account matching the
              provided criteria.
@@ -373,20 +377,23 @@ def get_account_id(db_path: Path = config.Database.PATH,
         DatabaseConnection.close_cursor()
 
 
-def shift_widget_positions(db_path: Path = config.Database.PATH,
-                           account_id: int = None, old_pos: int = None,
-                           new_pos: int = None) -> None:
+def shift_widget_positions(account_id: int, old_pos: int, new_pos: int,
+                           db_path: Path = config.Database.PATH) -> None:
     """
     Shifts the widget positions of accounts in the database to make room
     for a new account or to reorder existing accounts.
 
     Args:
-        db_path (Path): Path to the SQLite database file.
+        account_id (int): The ID of the account
+            whose position is being changed.
         old_pos (int): The current position of the account to be moved.
         new_pos (int): The new position for the account.
+        db_path (Path): Path to the SQLite database file.
 
     Raises:
         Error: If the old position is invalid or if any database error occurs.
+        NoChangesDetectedError: If the old position is the same as the new
+            position, indicating no changes are needed.
     """
     if old_pos is None or new_pos is None:
         logger.error("Both old_pos and new_pos must be provided.")

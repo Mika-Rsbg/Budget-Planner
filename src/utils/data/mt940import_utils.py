@@ -2,7 +2,7 @@ from tkinter import filedialog
 import logging
 from typing import List, Dict, Tuple
 from gui.basewindow import BaseWindow
-from utils.logging.logging_tools import logg
+from utils.logging.logging_tools import log_fn
 from .database import account_utils as db_account_utils
 from .database import account_history_utils as db_account_history_utils
 from .database import counterparty_utils as db_counterparty_utils
@@ -19,7 +19,7 @@ class DatabaseMT940Error(Exception):
     pass
 
 
-@logg
+@log_fn
 def split_toblocks_mt940(file_content: str) -> list:
     """
     Split the file content into blocks based on the ":" character at the
@@ -55,7 +55,7 @@ def split_toblocks_mt940(file_content: str) -> list:
     return blocks
 
 
-@logg
+@log_fn
 def parse_block(blocks: list) -> list:
     """Parse the blocks and extract the data.
 
@@ -248,7 +248,7 @@ def parse_block(blocks: list) -> list:
     return parsed_data
 
 
-@logg
+@log_fn
 def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
     """Insert the transactions and everything else, like account history and
         stuff, into the database. Using database utils.
@@ -302,9 +302,6 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
                 account_id=rti_account_id
             )
         except db_account_history_utils.NoAccountHistoryFoundError:
-            logger.debug(
-                "No balance found within the previous year."
-            )
             last_balance = 0.0
         logger.debug(
             f"Last balance: {last_balance} and new balance: {balance}")
@@ -313,6 +310,7 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
             f"Difference between last balance and new balance: {difference}"
         )
         try:
+            print("balance", balance, "record_date", record_date,)
             db_account_utils.update_account(
                 account_id=rti_account_id,
                 new_values=["", "", "", balance, difference,
@@ -491,11 +489,11 @@ def insert_transactions(data: List[Dict],
         rti_amount = entry['Amount']
         rti_purpose = entry['Purpose']
         temp_counterparty_number = entry['CounterpartyAccount']
-        temp_counterparty_name = entry['CounterpartyAccount']
+        temp_counterparty_name = entry['CounterpartyName']
         try:
             rti_counterparty_id = db_counterparty_utils.get_counterparty_id(
                 data=[temp_counterparty_name, temp_counterparty_number],
-                supplied_data=[True, True]
+                supplied_data=[False, True]
             )
         except db_counterparty_utils.Error:
             logger.warning(
@@ -542,7 +540,7 @@ def insert_transactions(data: List[Dict],
     return closing_balance
 
 
-@logg
+@log_fn
 def import_mt940_file(master: BaseWindow) -> None:
     """
     Import an MT940 formatted file using a file dialog and process its

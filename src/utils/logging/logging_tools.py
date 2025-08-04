@@ -7,7 +7,7 @@ from typing import Callable, Any
 logger = logging.getLogger(__name__)
 
 
-def logg(func: Callable[..., Any]) -> Callable[..., Any]:
+def log_fn(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator to log the start and end of a function call,
     including its duration.
