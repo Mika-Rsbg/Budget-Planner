@@ -62,7 +62,7 @@ def get_category_data(selected_columns: List[bool] = [True, True, True, True],
     finally:
         DatabaseConnection.close_cursor()
     if not category_data:
-        logger.warning("No counterparty data found.")
+        logger.warning("No category data found.")
     return category_data
 
 # region
