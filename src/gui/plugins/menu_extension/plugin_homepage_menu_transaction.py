@@ -10,7 +10,7 @@ def add_to_menu(window, menu_bar):
 
     # Transaktion manuell hinzufügen
     transaction_menu.add_command(
-        label="Manuelle Transaktion hinzufügen",
+        label="Manuelle Transaktion hinzufügen (Beta)",
         command=lambda: open_transaction_page
         (window)
     )
@@ -25,13 +25,13 @@ def add_to_menu(window, menu_bar):
 
     # Transaktion bearbeiten
     transaction_menu.add_command(
-        label="Transaktion bearbeiten",
+        label="Transaktion bearbeiten (WIP)",
         command=lambda: open_transaction_page_1(window, 1)
     )
 
     # Transaktion löschen
     transaction_menu.add_command(
-        label="Transaktion löschen",
+        label="Transaktion löschen (WIP)",
         command=lambda: open_transaction_page_1(window, 2)
     )
 
@@ -39,7 +39,7 @@ def add_to_menu(window, menu_bar):
 
     # Übersicht anzeigen
     transaction_menu.add_command(
-        label="Transaktionsübersicht",
+        label="Transaktionsübersicht (WIP)",
         command=lambda: window.show_message(
             "Hier sind alle Transaktionen aufgelistet."
         )
@@ -69,4 +69,4 @@ def open_transaction_page(window) -> None:
         window: parent window
         opening_mode (int): 0 = add, 1 = edit, 2 = delete
     """
-    TransactionPage(master=window, plugin_scope="transaction-page")
+    TransactionPage(parent=window, plugin_scope="transaction-page")
