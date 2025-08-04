@@ -95,7 +95,7 @@ class Homepage(BaseWindow):
             text="Get AI Budget Suggestions",
             command=self.open_budget_suggestions
         )
-        self.suggestion_button.pack(side=tk.BOTTOM, pady=5)
+        # self.suggestion_button.pack(side=tk.BOTTOM, pady=5)
 
         # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
         # Get the account data from the database
