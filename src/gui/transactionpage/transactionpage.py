@@ -2,19 +2,26 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Union, cast
+from functools import partial
+from gui.basewindow import BaseWindow
 from gui.basetoplevelwindow import BaseToplevelWindow
 from utils.data.database.account_utils import get_account_data
 from utils.data.database.counterparty_utils import get_counterparty_data
 from utils.data.database.category_utils import get_category_data
+from utils.data.database.transaction_utils import add_transaction
+from utils.data.database.account_history_utils import (
+    add_account_history
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 class TransactionPage(BaseToplevelWindow):
-    def __init__(self, master=None, plugin_scope=None,
+    def __init__(self, parent: BaseWindow, plugin_scope: str,
                  title="Transaction Page",
                  geometry="500x600", bg_color="white"):
+        self.parent = parent
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         self.account_data = get_account_data(
             selected_columns=[True, False, True, True, True,
@@ -27,19 +34,71 @@ class TransactionPage(BaseToplevelWindow):
             selected_columns=[True, True, True, False]
         )
         """List[Tuple[int, str, float]]"""
-        super().__init__(master, plugin_scope, title, geometry, bg_color)
+        super().__init__(parent, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
         self.init_ui()
 
-    def _clear_placeholder(self, event):
-        if self.date_entry.get() == "YYYY-MM-DD":
-            self.date_entry.delete(0, tk.END)
-            self.date_entry.config(foreground="black")
+    def _clear_placeholder(self, event, placeholder: str):
+        """
+        Clears the placeholder text when the tk.Entry gains focus.
+        """
+        widget: tk.Entry = event.widget
+        if widget.get() == placeholder:
+            widget.delete(0, tk.END)
+            widget.config(foreground="black")
 
-    def _add_placeholder(self, event):
-        if not self.date_entry.get():
-            self.date_entry.insert(0, "YYYY-MM-DD")
+    def _add_placeholder(self, event, placeholder: str):
+        """
+        Adds a placeholder text if the tk.Entry is empty when focus is lost.
+        """
+        widget: tk.Entry = event.widget
+        if not widget.get():
+            self.date_entry.insert(0, placeholder)
             self.date_entry.config(foreground="grey")
+
+    def save_transaction(self):
+        temp_account_name = self.account_name_var.get()
+        for account in self.account_data:
+            if account[1] == temp_account_name:
+                rti_account_id = cast(int, account[0])
+                break
+        rti_date = self.date_entry.get()
+        rti_bookingdate = rti_date
+        rti_amount = self.amount_entry.get()
+        rti_tt_id = 1  # ================================================
+        rti_purpose = self.purpose_entry.get()
+        temp_counterparty_account = self.counterparty_account_entry.get()
+        for cp in self.counterparty_data:
+            if cp[2] == temp_counterparty_account:
+                rti_counterparty_id = account[0]
+                break
+        temp_category_name = self.category_name_var.get()
+        for category in self.category_data:
+            if category[1] == temp_category_name:
+                rti_category_id = category[0]
+                break
+        rti_user_comments = None
+        rti_displayed_name = None
+
+        rti_data = (rti_account_id, rti_date, rti_bookingdate, rti_tt_id,
+                    rti_amount, rti_purpose, rti_counterparty_id,
+                    rti_category_id, rti_user_comments, rti_displayed_name)
+
+        try:
+            add_transaction(
+                data=rti_data
+            )
+            logger.info("Transaction saved successfully.")
+            add_account_history(
+                account_id=rti_account_id,
+                balance=float(self.future_balance_entry.get()),
+                record_date=rti_date
+            )
+            logger.info("Account history add successfully.")
+            self.destroy()  # Close the window after saving
+            self.parent.reload()
+        except Exception as e:
+            logger.error(f"Error saving transaction: {e}")
 
     def init_ui(self) -> None:
         # ======= Account Information =======
@@ -126,6 +185,7 @@ class TransactionPage(BaseToplevelWindow):
         # endregion
         # ======= Transaction Information =======
         # region
+
         # === Frame ===
         # region
         self.transaction_information_frame = tk.LabelFrame(
@@ -137,10 +197,11 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.frames.append(self.transaction_information_frame)
         # endregion
+
         # === Date ===
         # region
         self.date_label = tk.Label(
-            self.transaction_information_frame, text="Datum:",
+            self.transaction_information_frame, text="Datum (YYYY-MM-DD):",
             background=self.bg_color, foreground="black"
         )
         self.date_label.grid(row=0, column=0)
@@ -150,8 +211,14 @@ class TransactionPage(BaseToplevelWindow):
             foreground="grey"
         )
         self.date_entry.insert(0, "YYYY-MM-DD")
-        self.date_entry.bind("<FocusIn>", self._clear_placeholder)
-        self.date_entry.bind("<FocusOut>", self._add_placeholder)
+        self.date_entry.bind(
+            "<FocusIn>",
+            partial(self._clear_placeholder, placeholder="YYYY-MM-DD")
+        )
+        self.date_entry.bind(
+            "<FocusOut>",
+            partial(self._add_placeholder, placeholder="YYYY-MM-DD")
+        )
         self.date_entry.grid(row=0, column=1, sticky="ew")
         # self.date_warning_label = tk.Label(
         #     self.transaction_information_frame, text="",
@@ -160,8 +227,31 @@ class TransactionPage(BaseToplevelWindow):
         # self.date_warning_label.grid(row=1, column=0, columnspan=2)
         # ========================= Transaction Type is always "manual"
         # endregion
+
         #  === Amount ===
         # region
+        def refresh_future_balance(*args):
+            try:
+                account_name = self.account_name_var.get()
+                for account in self.account_data:
+                    if account[1] == account_name:
+                        current_balance = float(account[3])
+                        amount = float(self.amount_entry.get())
+                        future_balance = round(
+                            current_balance + amount, 2
+                        )
+                        self.future_balance_entry.config(state="normal")
+                        self.future_balance_entry.delete(0, tk.END)
+                        self.future_balance_entry.insert(
+                            0, str(future_balance))
+                        self.future_balance_entry.config(state="readonly")
+                        break
+            except ValueError:
+                self.future_balance_entry.config(state="normal")
+                self.future_balance_entry.delete(0, tk.END)
+                self.future_balance_entry.insert(0, "Invalid Amount")
+                self.future_balance_entry.config(state="readonly")
+
         self.amount_label = tk.Label(
             self.transaction_information_frame, text="Betrag:",
             background=self.bg_color, foreground="black"
@@ -171,12 +261,23 @@ class TransactionPage(BaseToplevelWindow):
             self.transaction_information_frame, background=self.bg_color,
             foreground="black")
         self.amount_entry.grid(row=2, column=1, sticky="ew")
-        # self.amount_warning_label = tk.Label(
-        #     self.transaction_information_frame, text="",
-        #     background=self.bg_color, foreground="red"
-        # )
-        # self.amount_warning_label.grid(row=3, column=0, columnspan=2)
+        self.amount_entry.bind("<KeyRelease>", refresh_future_balance)
         # endregion
+
+        #  === Future Balance === (read-only)
+        # region
+        self.future_balance_label = tk.Label(
+            self.transaction_information_frame, text="Zukünftiger Kontostand:",
+            background=self.bg_color, foreground="black"
+        )
+        self.future_balance_label.grid(row=3, column=0)
+        self.future_balance_entry = tk.Entry(
+            self.transaction_information_frame, state="readonly",
+            background="gray", foreground="black"
+        )
+        self.future_balance_entry.grid(row=3, column=1, sticky="ew")
+        # endregion
+
         # === Purpose ===
         # region
         self.purpose_label = tk.Label(
@@ -194,6 +295,7 @@ class TransactionPage(BaseToplevelWindow):
         # )
         # self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
         # endregion
+
         # === Counterparty ===
         # region
         self.counterparty_label = tk.Label(
@@ -235,6 +337,7 @@ class TransactionPage(BaseToplevelWindow):
             '<<ComboboxSelected>>', on_counterparty_selected
         )
         # endregion
+
         # === Counterparty Account Number (read-only) ===
         # region
         self.counterparty_account_label = tk.Label(
@@ -248,14 +351,17 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.counterparty_account_entry.grid(row=7, column=1, sticky="ew")
         # endregion
+
         # === Padding ===
         # region
         for widget in self.transaction_information_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
         # endregion
-        # endregion
+
+        # endregion ==============
         # ======= Category =======
         # region
+
         # === Frame ===
         # region
         self.category_frame = tk.LabelFrame(
@@ -266,6 +372,7 @@ class TransactionPage(BaseToplevelWindow):
             row=2, column=0, padx=10, pady=10, sticky="nsew"
         )
         # endregion
+
         # === Category Name ===
         # region
         self.category_label = tk.Label(
@@ -299,6 +406,7 @@ class TransactionPage(BaseToplevelWindow):
             '<<ComboboxSelected>>', on_category_selected
         )
         # endregion
+
         # === Category Budget ===
         # region
         self.category_budget_label = tk.Label(
@@ -312,11 +420,35 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.category_budget_entry.grid(row=1, column=1, sticky="ew")
         # endregion
+
         # === Padding ===
         # region
         for widget in self.category_frame.winfo_children():
             widget.grid_configure(padx=10, pady=5)
         # endregion
+
+        # endregion ========================
+        # ======= Buttons and Layout =======
+        # region
+
+        # === Cancel Button ===
+        # region
+        self.cancel_button = ttk.Button(
+            self.main_frame, text="Abbrechen", command=self.destroy
+        )
+        self.cancel_button.grid(row=3, column=0, padx=10, pady=10,
+                                sticky="ew")
+        # endregion
+
+        # === Save Button ===
+        # region
+        self.save_button = ttk.Button(
+            self.main_frame, text="Speichern", command=self.save_transaction
+        )
+        self.save_button.grid(row=4, column=0, padx=10, pady=10,
+                              sticky="ew")
+        # endregion
+
         # endregion
 
         # Equalize column widths in all frames
