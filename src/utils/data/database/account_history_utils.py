@@ -78,7 +78,7 @@ def get_last_balance(account_id: int,
 
 
 def add_account_history(account_id: int, balance: float, record_date: str,
-                        change_date: str = "", manuel_entry: bool = False,
+                        change_date: str = "", manual_entry: bool = False,
                         db_path: Path = config.Database.PATH) -> None:
     """
     Adds a new account history record to the database for the specified
