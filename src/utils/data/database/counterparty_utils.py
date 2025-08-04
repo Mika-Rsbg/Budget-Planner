@@ -143,7 +143,7 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
     if len(columns) != len(selected_columns):
         logger.error("Wrong number of selected columns provided."
                      f"Expected {len(columns)}, got {len(selected_columns)}.")
-        raise Error("Wrong number of  values provided."
+        raise Error("Wrong number of values provided."
                     f"Expected {len(columns)}, got {len(selected_columns)}.")
 
     query = 'SELECT '
