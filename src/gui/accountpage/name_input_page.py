@@ -1,7 +1,7 @@
-import tkinter as tk
 from tkinter import ttk
 import logging
 from typing import Optional
+from gui.basewindow import BaseWindow
 from utils.logging.logging_tools import log_fn
 from gui.basetoplevelwindow import BaseToplevelWindow
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class NameInputDialog(BaseToplevelWindow):
-    def __init__(self, master: tk.Tk, number: str = "") -> None:
+    def __init__(self, master: BaseWindow, number: str = "") -> None:
         """
         Init an instance of the NameInputDialog class.
 
@@ -20,7 +20,8 @@ class NameInputDialog(BaseToplevelWindow):
         """
         logger.debug("Initializing NameInputDialog")
         self.number = number
-        super().__init__(master, title="Name eingeben", geometry="250x200")
+        super().__init__(master, title="Name eingeben", geometry="250x200",
+                         plugin_scope="")
         self.name = None
 
     def init_ui(self) -> None:
