@@ -97,7 +97,7 @@ def get_total_cash(db_path: Path = config.Database.PATH) -> float:
             sqlite3.Error: If there is an error
                            executing the query on the database.
     """
-    cursor = DatabaseConnection.get_cursor()
+    cursor = DatabaseConnection.get_cursor(db_path)
 
     try:
         cursor.execute(
