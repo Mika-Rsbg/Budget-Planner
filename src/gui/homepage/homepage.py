@@ -5,7 +5,7 @@ import logging
 from utils.logging.logging_tools import log_fn
 from gui.basewindow import BaseWindow
 from utils.data.date_utils import get_month_literal
-from utils.data.database.account_utils import get_account_data
+from utils.data.database.account_utils import get_account_data, get_total_cash
 from gui.budget_suggestion.suggestion_dialog import BudgetSuggestionDialog
 
 logger = logging.getLogger(__name__)
@@ -55,9 +55,13 @@ class Homepage(BaseWindow):
         Returns:
             tk.Label: The created label.
         """
-        label = tk.Label(parent, text=text, font=font, **kwargs)
+        label = tk.Label(parent, text=text, font=font, **kwargs)  # type:ignore
         label.pack(pady=kwargs.get('pady', 0))
         return label
+
+    def _get_total_cash(self):
+        self.total_cash: float = get_total_cash()
+        self.set_budget(self.total_cash)
 
     def init_ui(self):
         """
@@ -87,7 +91,7 @@ class Homepage(BaseWindow):
             pady=10
         )
         self.budget_label.pack(expand=True)
-        self.set_budget(0.0)
+        self._get_total_cash()
 
         # ============= AI Suggestion Button =============
         self.suggestion_button = ttk.Button(
