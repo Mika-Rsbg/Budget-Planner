@@ -107,7 +107,6 @@ def get_total_cash(db_path: Path = config.Database.PATH) -> float:
             """
         )
         total_cash = cast(float, cursor.fetchall()[0][0])
-        print(total_cash)
     except sqlite3.Error as e:
         logger.error(f"Error querying data: {e}")
         raise Error(f"Error querying data: {e}")
