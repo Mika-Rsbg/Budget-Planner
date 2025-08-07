@@ -40,19 +40,19 @@ def get_account_data(selected_columns: List[bool] = [True, True, True,
                      db_path: Path = config.Database.PATH
                      ) -> List[Tuple[Union[str, float, int], ...]]:
     """
-    Retrieves account data from the database based on selected columns.
-    Args:
-        selected_columns (List[bool]): List of booleans indicating which
-            columns to select. [AccountID(int), WidgetPosition(int),
-            AccountName(str), AccountNumber(str), AccountBalance(float),
-            AccountDifference(float), RecordDate(str), ChangeDate(str)]
-        db_path (Path): Path to the SQLite database file.
-    Return:
-        List of tuples containing account data (AccountID, AccountName).
-    Raises:
-        Error: If the number of selected columns does not match the expected
-               number of columns.
-        NoAccountFoundError: If no account data is found in the database.
+        Retrieves account data from the database based on selected columns.
+        Args:
+            selected_columns (List[bool]): List of booleans indicating which
+                columns to select. [AccountID(int), WidgetPosition(int),
+                AccountName(str), AccountNumber(str), AccountBalance(float),
+                AccountDifference(float), RecordDate(str), ChangeDate(str)]
+            db_path (Path): Path to the SQLite database file.
+        Return:
+            List of tuples containing account data (AccountID, AccountName).
+        Raises:
+            Error: If the number of selected columns does not match the
+                expected number of columns.
+            NoAccountFoundError: If no account data is found in the database.
     """
     cursor = DatabaseConnection.get_cursor(db_path)
     columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
@@ -83,6 +83,40 @@ def get_account_data(selected_columns: List[bool] = [True, True, True,
     if not account_data:
         logger.warning("No account data found.")
     return account_data
+
+
+def get_total_cash(db_path: Path = config.Database.PATH) -> float:
+    """
+        Retrieve and calculate the total cash balance
+        by summing all real account balances.
+        Args:
+            db_path (Path): Path to the SQLite database file.
+        Return:
+            float: The total cash balance. Returns 0.0 if no data is found.
+        Raises:
+            sqlite3.Error: If there is an error
+                           executing the query on the database.
+    """
+    cursor = DatabaseConnection.get_cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT SUM(real_AccountBalance)
+            FROM tbl_Account
+            """
+        )
+        total_cash = cast(float, cursor.fetchall()[0][0])
+        print(total_cash)
+    except sqlite3.Error as e:
+        logger.error(f"Error querying data: {e}")
+        raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
+    if not total_cash:
+        logger.warning("No account data found. total_cash set to 0.0.")
+        total_cash = 0.0
+    return total_cash
 
 
 def delete_account(account_id: int,
