@@ -33,6 +33,7 @@ def main_test() -> None:
     """
     Test function to run the application in test mode.
     It creates the database and runs the homepage application in test mode.
+    Logs in a test log file.
     """
     from gui.basewindow import BaseWindow
     from gui.transactionpage.transactionpage import TransactionPage
@@ -54,13 +55,38 @@ def main_test() -> None:
     app.mainloop()
 
 
+def main_fn_test() -> None:
+    """
+    Test function to run a function of the code.
+    It creates the database.
+    Logs in a test log file.
+    """
+    from utils.data.createdatabase_utils import create_database
+
+    logger.info("")
+    logger.info(
+        "################### FUNCTION TEST MODE STARTED #####################"
+    )
+    logger.info("")
+    create_database()
+
+
 if __name__ == "__main__":
+    import config
+    TEST_MODE: bool = True
+    if TEST_MODE:
+        config.Logging.log_file_name = 'test_log.log'
+        config.Logging.log_file_name_no_debug = 'test_log_no_debug.log'
+    else:
+        pass
     setup_logging()
+
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
     main()
-    # main_test()
+    main_test()
+    main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
     logger.info("")
