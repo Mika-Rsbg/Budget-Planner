@@ -2,6 +2,7 @@ import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
 from logging import getLogger
+from typing import List
 from utils.data.database_connection import DatabaseConnection
 from utils.data.date_utils import get_iso_date
 import config
@@ -23,6 +24,36 @@ class ExistingAccountHistoryError(Exception):
 class NoAccountHistoryFoundError(Exception):
     """Exception raised when no account history is found."""
     pass
+
+
+def get_balance_history(account_id: int,
+                        db_path: Path = config.Database.PATH) -> List[float]:
+    try:
+        cursor = DatabaseConnection.get_cursor(db_path)
+    except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise Error(f"Error connecting to database: {e}")
+
+    try:
+        cursor.execute("""
+            SELECT real_Balance, str_RecordDate FROM tbl_AccountHistory
+            WHERE i8_AccountID = ?
+            ORDER BY str_RecordDate
+        """, (
+            account_id,
+        ))
+        result = cursor.fetchall()
+        if result is not None:
+            logger.debug("Balance history found.")
+            print(result)
+            return result
+        logger.warning("No balance found.")
+        raise NoAccountHistoryFoundError("No balance found.")
+    except sqlite3.Error as e:
+        logger.error(f"Error retrieving balance: {e}")
+        raise Error(f"Error retrieving balance: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
 
 
 def get_last_balance(account_id: int,
