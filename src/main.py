@@ -62,6 +62,7 @@ def main_fn_test() -> None:
     Logs in a test log file.
     """
     from utils.data.createdatabase_utils import create_database
+    from utils.data.database.account_history_utils import get_balance_history
 
     logger.info("")
     logger.info(
@@ -69,6 +70,7 @@ def main_fn_test() -> None:
     )
     logger.info("")
     create_database()
+    print(get_balance_history(1))
 
 
 if __name__ == "__main__":
@@ -84,8 +86,8 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    main()
-    main_test()
+    # main()
+    # main_test()
     main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
