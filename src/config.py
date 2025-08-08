@@ -7,8 +7,10 @@ class Database:
 
 class Logging:
     LOG_DIR = Path(__file__).resolve().parent.parent / 'log'
-    LOG_FILE = LOG_DIR / 'app.log'
-    LOG_FILE_NO_DEBUG = LOG_DIR / 'app_no_debug.log'
+    log_file_name = 'app.log'
+    log_file_name_no_debug = 'app_no_debug.log'
+    LOG_FILE = LOG_DIR / log_file_name
+    LOG_FILE_NO_DEBUG = LOG_DIR / log_file_name_no_debug
 
     @staticmethod
     def ensure_log_directory_exists():
