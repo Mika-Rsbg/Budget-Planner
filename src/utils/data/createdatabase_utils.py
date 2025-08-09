@@ -185,6 +185,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
             logger.debug("Transaction type table created successfully.")
         except sqlite3.Error as e:
             logger.error(f"Error creating transaction type table: {e}")
+        insert_initial_transaction_types(cursor, conn)
 
     def insert_initial_transaction_types(cursor, conn) -> None:
         """
