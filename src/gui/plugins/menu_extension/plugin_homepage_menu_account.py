@@ -12,15 +12,15 @@ def add_to_menu(window, menu_bar):
     account_menu = tk.Menu(menu_bar, tearoff=0)
 
     # Konto hinzufügen
-    account_menu.add_command(label="Konto hinzufügen", command=lambda:
+    account_menu.add_command(label="Konto hinzufügen (Beta)", command=lambda:
                              open_account_page(window, False))
 
     # Konto bearbeiten
-    account_menu.add_command(label="Konto bearbeiten", command=lambda:
+    account_menu.add_command(label="Konto bearbeiten (Beta)", command=lambda:
                              open_account_page(window, True))
 
     # Konto löschen
-    account_menu.add_command(label="Konto löschen", command=lambda:
+    account_menu.add_command(label="Konto löschen (Beta)", command=lambda:
                              open_account_page(window, True))
 
     account_menu.add_separator()
@@ -31,7 +31,7 @@ def add_to_menu(window, menu_bar):
     account_menu.add_separator()
 
     # Übersicht anzeigen
-    account_menu.add_command(label="Kontenübersicht", command=lambda:
+    account_menu.add_command(label="Kontenübersicht(WIP)", command=lambda:
                              window.show_message
                              ("Feature in Arbeit."))
 
