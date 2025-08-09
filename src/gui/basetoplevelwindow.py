@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseToplevelWindow(tk.Toplevel):
-    def __init__(self, master: BaseWindow, plugin_scope: str,
+    def __init__(self, master: BaseWindow, plugin_scope: str = "",
                  title: str = "Fenster", geometry: str = "600x400",
                  bg_color: str = "white") -> None:
         """
