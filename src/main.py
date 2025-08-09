@@ -62,7 +62,9 @@ def main_fn_test() -> None:
     Logs in a test log file.
     """
     from utils.data.createdatabase_utils import create_database
-    from utils.data.database.account_history_utils import get_balance_history
+    from utils.data.database.account_history_utils import (
+        get_total_cash_history
+    )
 
     logger.info("")
     logger.info(
@@ -70,12 +72,12 @@ def main_fn_test() -> None:
     )
     logger.info("")
     create_database()
-    print(get_balance_history(1))
+    print(get_total_cash_history("2024-12-01", ""))
 
 
 if __name__ == "__main__":
     import config
-    TEST_MODE: bool = True
+    TEST_MODE: bool = False
     if TEST_MODE:
         config.Logging.log_file_name = 'test_log.log'
         config.Logging.log_file_name_no_debug = 'test_log_no_debug.log'
@@ -86,9 +88,9 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    # main()
+    main()
     # main_test()
-    main_fn_test()
+    # main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
     logger.info("")
