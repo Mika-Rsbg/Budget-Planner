@@ -1,6 +1,5 @@
 import tkinter as tk
-from gui.transactionpage.transactionpage import TransactionPage
-from utils.data.mt940import_utils import import_mt940_file
+from gui.overview.in_out.inout_overview_page import InOutOverviewPage
 
 menu_id = 25
 
@@ -11,14 +10,16 @@ def add_to_menu(window, menu_bar):
     # Eingaben und Ausgaben
     overview_menu.add_command(
         label="Eingaben und Ausgaben (WIP)",
-        command=lambda: open_transaction_page
+        command=lambda: open_inout_overview_page
         (window)
     )
 
     # Konto Historie
     overview_menu.add_command(
         label="Konto Historie (WIP)",
-        command=lambda: import_mt940_file(window)
+        command=lambda: window.show_message(
+            "WIP."
+        )
     )
 
     overview_menu.add_separator()
@@ -49,6 +50,15 @@ def add_to_menu(window, menu_bar):
     menu_bar.add_cascade(label="Übersicht", menu=overview_menu)
 
 
+def open_inout_overview_page(window) -> None:
+    """Open the InOutOverviewPage.
+
+    Args:
+        window: parent window
+    """
+    InOutOverviewPage(parent=window)
+
+
 def open_transaction_page_1(window, opening_mode: int) -> None:
     """Open the transaction page.
 
@@ -69,4 +79,4 @@ def open_transaction_page(window) -> None:
         window: parent window
         opening_mode (int): 0 = add, 1 = edit, 2 = delete
     """
-    TransactionPage(parent=window, plugin_scope="transaction-page")
+    pass
