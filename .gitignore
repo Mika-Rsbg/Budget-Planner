@@ -167,5 +167,9 @@ temp/
 .vscode
 
 
+# New Relic
+newrelic.ini
+
+
 # Mac files
 .DB_Store
