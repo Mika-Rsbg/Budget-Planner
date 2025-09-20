@@ -165,6 +165,7 @@ temp/
 # Database files
 *.db
 .vscode
+.idea
 
 
 # New Relic
