@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 import locale
+from gui.basewindow import BaseWindow
 from gui.basetoplevelwindow import BaseToplevelWindow
 import utils.data.database.account_utils as db_account_utils
 
 
 class ReorderAccountWidgetsWindow(BaseToplevelWindow):
-    def __init__(self, master: tk.Tk = None) -> None:
+    def __init__(self, master: BaseWindow) -> None:
         """
         Init an instance of the ReorderAccountWidgetsWindow class.
         This class is used to reorder account widgets in the GUI.
@@ -179,3 +180,4 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
                 print(f"Info: {e}")
                 continue
         self.reload()
+        self.destroy()
