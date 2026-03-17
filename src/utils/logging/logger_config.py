@@ -1,9 +1,16 @@
+# from pathlib import Path
 import logging
 import config
+# import newrelic.agent
 
 
 def setup_logging():
     config.Logging.ensure_log_directory_exists()
+
+    # Pfad zur newrelic.ini automatisch relativ zum Projekt-Root (src/)
+    # ini_path = Path(__file__).resolve().parent.parent.parent / "newrelic.ini"
+    # print(str(ini_path))
+    # newrelic.agent.initialize(str(ini_path))
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -32,6 +39,13 @@ def setup_logging():
     info_handler.setLevel(logging.INFO)
     info_handler.setFormatter(formatter)
 
+    # Output to file (DEBUG level) → last.log
+    last_handler = logging.FileHandler(
+        config.Logging.LOG_FILE_LAST, mode="w", encoding="utf-8"
+    )
+    last_handler.setLevel(logging.DEBUG)
+    last_handler.setFormatter(formatter)
+
     # Output to console (DEBUG level)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)  # Change back to DEBUG
@@ -44,4 +58,5 @@ def setup_logging():
     # Add handlers to the logger
     logger.addHandler(debug_handler)
     logger.addHandler(info_handler)
+    logger.addHandler(last_handler)
     # logger.addHandler(console_handler)

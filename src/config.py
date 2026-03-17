@@ -9,8 +9,10 @@ class Logging:
     LOG_DIR = Path(__file__).resolve().parent.parent / 'log'
     log_file_name = 'app.log'
     log_file_name_no_debug = 'app_no_debug.log'
+    log_file_name_last = 'last.log'
     LOG_FILE = LOG_DIR / log_file_name
     LOG_FILE_NO_DEBUG = LOG_DIR / log_file_name_no_debug
+    LOG_FILE_LAST = LOG_DIR / log_file_name_last
 
     @staticmethod
     def ensure_log_directory_exists():
