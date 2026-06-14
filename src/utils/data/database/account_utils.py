@@ -253,6 +253,7 @@ def add_account_mt940(number: str, master: BaseWindow,
                       record_date: str = get_iso_date(date="010101"),
                       db_path: Path = config.Database.PATH
                       ) -> None:
+    # FIXME: remove default None
     """
     Adds a new account to the database, is used for MT940 import.
     If the name is not provided, it prompts the user to input a name.
@@ -295,6 +296,7 @@ def add_account(name: str, number: str, balance: float, difference: float,
                 record_date: str, position: Optional[int] = None,
                 change_date: Optional[str] = None,
                 db_path: Path = config.Database.PATH) -> None:
+    # FIXME: remove default None
     """
     Adds an account to the database.
 

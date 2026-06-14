@@ -16,6 +16,8 @@ from utils.data.database.account_history_utils import (
 
 logger = logging.getLogger(__name__)
 
+# TODO: evaluate usage
+
 
 class TransactionPage(BaseToplevelWindow):
     def __init__(self, parent: BaseWindow, plugin_scope: str,

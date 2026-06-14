@@ -15,6 +15,7 @@ class Error(Exception):
 
 def add_transaction_typ(db_path: Path = config.Database.PATH,
                         name: str = None, number: str = None) -> None:
+    # FIXME: remove default None
     """
     Adds a transaction type to the database.
 

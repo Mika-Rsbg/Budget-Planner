@@ -377,3 +377,5 @@ def delete_database(db_path: Path = config.Database.PATH) -> None:
     except Exception as e:
         logger.error(f"Database couldn't be deleted: {e}")
         raise Error(f"Database couldn't be deleted: {e}")
+# TODO: implement reset_database
+# (delete_database -> create_database)
