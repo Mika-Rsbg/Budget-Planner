@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_month_literal(month: int = None, en: bool = False) -> str:
+def get_month_literal(month: int = 0, en: bool = False) -> str:
     """
     Returns the month name for a given month number.
 
@@ -15,18 +15,19 @@ def get_month_literal(month: int = None, en: bool = False) -> str:
     When 'en' is True, the month name is returned in English.
 
     Args:
-        month (int, optional): Month number (1-12). Defaults to None.
+        month (int, optional): Month number (1-12). Defaults to 0.
         en (bool, optional): If True, returns the month name in English.
                              Defaults to False (returns German month name).
 
     Returns:
         str: Month name in the selected language.
     """
-    if month is None:
+    if month == 0:
         month = datetime.datetime.now().month
 
     if en:
         return calendar.month_name[month]
+
     else:
         # German month names:
         # Index 0 is kept empty for convenient indexing (1-12)
@@ -36,7 +37,7 @@ def get_month_literal(month: int = None, en: bool = False) -> str:
         return german_months[month]
 
 
-def get_iso_date(date: str = None, today: bool = False) -> str:
+def get_iso_date(date: str = "", today: bool = False) -> str:
     """
     Converts a date string in the format YYMMDD to ISO format YYYY-MM-DD.
     If 'today' is True, returns today's date in ISO format.
@@ -51,7 +52,7 @@ def get_iso_date(date: str = None, today: bool = False) -> str:
     if today:
         return datetime.datetime.now().strftime("%Y-%m-%d")
 
-    if date is None or len(date) != 6 or not date.isdigit():
+    if len(date) != 6 or not date.isdigit():
         logger.error("Invalid date format. Expected YYMMDD.")
         raise ValueError("Date must be a string in the format YYMMDD.")
 
