@@ -1,5 +1,5 @@
 import tkinter as tk
-from gui.overview.in_out.inout_overview_page import InOutOverviewPage
+# from gui.overview.in_out.inout_overview_page import InOutOverviewPage
 
 menu_id = 25
 
@@ -56,7 +56,10 @@ def open_inout_overview_page(window) -> None:
     Args:
         window: parent window
     """
-    InOutOverviewPage(parent=window)
+    # InOutOverviewPage(parent=window)
+    window.show_message(
+        "Feature not implemented yet!"
+    )
 
 
 def open_transaction_page_1(window, opening_mode: int) -> None:
