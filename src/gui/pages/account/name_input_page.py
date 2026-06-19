@@ -2,7 +2,7 @@ from tkinter import ttk
 import logging
 from typing import Optional
 from gui.app.basewindow import BaseWindow
-from utils.logging.logging_tools import log_fn
+from chore.logging.logging_tools import log_fn
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 
 

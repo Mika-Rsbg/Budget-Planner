@@ -1,6 +1,6 @@
 import logging
-from utils.logging.logger_config import setup_logging
-from utils.logging.logging_tools import log_fn
+from chore.logging.logger_config import setup_logging
+from chore.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)

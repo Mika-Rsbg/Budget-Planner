@@ -1,7 +1,7 @@
 from pathlib import Path
 import sqlite3
 import logging
-from utils.logging.logging_tools import log_fn
+from chore.logging.logging_tools import log_fn
 from chore.database.connection import DatabaseConnection
 import config
 

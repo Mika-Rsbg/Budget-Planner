@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import locale
 import logging
-from utils.logging.logging_tools import log_fn
+from chore.logging.logging_tools import log_fn
 from gui.app.basewindow import BaseWindow
 from shared.date_utils import get_month_literal
 from utils.data.database.account_utils import get_account_data, get_total_cash
