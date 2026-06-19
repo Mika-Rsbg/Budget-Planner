@@ -1,5 +1,5 @@
 import tkinter as tk
-from gui.transactionpage.transactionpage import TransactionPage
+from gui.pages.transaction.transactionpage import TransactionPage
 from utils.data.mt940import_utils import import_mt940_file
 
 menu_id = 20

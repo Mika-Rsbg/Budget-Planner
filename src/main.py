@@ -36,7 +36,7 @@ def main_test() -> None:
     Logs in a test log file.
     """
     from gui.app.basewindow import BaseWindow
-    from gui.transactionpage.transactionpage import TransactionPage
+    from gui.pages.transaction.transactionpage import TransactionPage
     from utils.data.createdatabase_utils import create_database
 
     logger.info("")
