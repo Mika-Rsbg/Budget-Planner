@@ -13,7 +13,7 @@ def main() -> None:
     It creates the database and runs the homepage application.
     """
     from gui.pages.home.homepage import Homepage
-    from utils.data.createdatabase_utils import create_database
+    from chore.database.schema import create_database
 
     logger.info("")
     logger.info("################### APPLICATION STARTED ###################")
@@ -37,7 +37,7 @@ def main_test() -> None:
     """
     from gui.app.basewindow import BaseWindow
     from gui.pages.transaction.transactionpage import TransactionPage
-    from utils.data.createdatabase_utils import create_database
+    from chore.database.schema import create_database
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -61,7 +61,7 @@ def main_fn_test() -> None:
     It creates the database.
     Logs in a test log file.
     """
-    from utils.data.createdatabase_utils import create_database
+    from chore.database.schema import create_database
     from utils.data.database.account_history_utils import (
         get_total_cash_history
     )

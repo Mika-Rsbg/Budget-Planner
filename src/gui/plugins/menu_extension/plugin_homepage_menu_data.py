@@ -1,5 +1,5 @@
 import tkinter as tk
-import utils.data.createdatabase_utils as db_utils
+import chore.database.schema as db_utils
 from gui.app.basewindow import BaseWindow
 
 menu_id = 30

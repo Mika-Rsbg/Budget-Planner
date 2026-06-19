@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 from typing import List, Tuple, Union
 import logging
-from utils.data.database_connection import DatabaseConnection
+from chore.database.connection import DatabaseConnection
 import config
 
 
