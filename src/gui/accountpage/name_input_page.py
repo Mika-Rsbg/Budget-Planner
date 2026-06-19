@@ -1,9 +1,9 @@
 from tkinter import ttk
 import logging
 from typing import Optional
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 from utils.logging.logging_tools import log_fn
-from gui.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basetoplevelwindow import BaseToplevelWindow
 
 
 logger = logging.getLogger(__name__)

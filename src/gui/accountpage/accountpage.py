@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from utils.data.date_utils import get_iso_date
-from gui.basetoplevelwindow import BaseToplevelWindow
-from gui.basewindow import BaseWindow
+from gui.app.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
 import utils.data.database.account_utils as db_account_utils
 import utils.data.value_utils as value_utils
 

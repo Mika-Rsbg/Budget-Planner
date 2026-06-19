@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 from typing import List, Tuple, Optional, Union, cast
 import logging
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 from gui.accountpage.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
 from utils.data.date_utils import get_iso_date

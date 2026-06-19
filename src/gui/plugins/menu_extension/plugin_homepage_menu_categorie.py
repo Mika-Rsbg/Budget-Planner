@@ -1,6 +1,6 @@
 import tkinter as tk
 from gui.categoriepage.categoriepage import CategoryPage
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 
 menu_id = 10
 

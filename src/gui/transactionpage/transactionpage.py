@@ -3,8 +3,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import List, Union, cast
 from functools import partial
-from gui.basewindow import BaseWindow
-from gui.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
+from gui.app.basetoplevelwindow import BaseToplevelWindow
 from utils.data.database.account_utils import get_account_data
 from utils.data.database.counterparty_utils import get_counterparty_data
 from utils.data.database.category_utils import get_category_data

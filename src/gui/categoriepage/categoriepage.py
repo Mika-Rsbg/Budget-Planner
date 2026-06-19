@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Union
-from gui.basetoplevelwindow import BaseToplevelWindow
-from gui.basewindow import BaseWindow
+from gui.app.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
 
 
 class CategoryPage(BaseToplevelWindow):

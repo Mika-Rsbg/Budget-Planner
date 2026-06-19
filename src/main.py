@@ -35,7 +35,7 @@ def main_test() -> None:
     It creates the database and runs the homepage application in test mode.
     Logs in a test log file.
     """
-    from gui.basewindow import BaseWindow
+    from gui.app.basewindow import BaseWindow
     from gui.transactionpage.transactionpage import TransactionPage
     from utils.data.createdatabase_utils import create_database
 

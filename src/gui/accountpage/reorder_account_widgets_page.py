@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import locale
-from gui.basewindow import BaseWindow
-from gui.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
+from gui.app.basetoplevelwindow import BaseToplevelWindow
 import utils.data.database.account_utils as db_account_utils
 
 

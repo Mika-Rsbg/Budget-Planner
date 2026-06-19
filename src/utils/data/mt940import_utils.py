@@ -1,7 +1,7 @@
 from tkinter import filedialog
 import logging
 from typing import List, Dict, Tuple
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 from utils.logging.logging_tools import log_fn
 from .database import account_utils as db_account_utils
 from .database import account_history_utils as db_account_history_utils
