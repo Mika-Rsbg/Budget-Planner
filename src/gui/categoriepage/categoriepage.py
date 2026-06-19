@@ -1,12 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import List, Union, cast
-from functools import partial
+from typing import List, Union
 from gui.basetoplevelwindow import BaseToplevelWindow
 from gui.basewindow import BaseWindow
 
 
-class CategoriePage(BaseToplevelWindow):
+class CategoryPage(BaseToplevelWindow):
     def __init__(self, parent: BaseWindow, plugin_scope: str,
                  title="Categorie Page",
                  geometry="500x600", bg_color="white"):
@@ -30,8 +29,8 @@ class CategoriePage(BaseToplevelWindow):
         """
         widget: tk.Entry = event.widget
         if not widget.get():
-            self.date_entry.insert(0, placeholder)
-            self.date_entry.config(foreground="grey")
+            widget.insert(0, placeholder)
+            widget.config(foreground="grey")
 
     def save_categorie(self):
         pass
@@ -63,339 +62,23 @@ class CategoriePage(BaseToplevelWindow):
             self.categorie_infomation_frame, background=self.bg_color,
             foreground="black")
         self.category_name_entry.grid(row=4, column=1, sticky="ew")
+        # Placeholder handling for the category name entry
+        self._category_name_placeholder = "Name eingeben"
+        # Insert initial placeholder
+        self.category_name_entry.insert(0, self._category_name_placeholder)
+        self.category_name_entry.config(foreground="grey")
+        # Bind focus events to clear/add placeholder
+        self.category_name_entry.bind(
+            "<FocusIn>", lambda e,
+            p=self._category_name_placeholder: self._clear_placeholder(e, p)
+        )
+        self.category_name_entry.bind(
+            "<FocusOut>", lambda e,
+            p=self._category_name_placeholder: self._add_placeholder(e, p)
+        )
         # endregion
 
         # endregion
-
-        # # ======= Account Information =======
-        # # region
-        # # === Frame ===
-        # # region
-        # self.categorie_infomation_frame = tk.LabelFrame(
-        #     self.main_frame, text="Account Informationen",
-        #     background=self.bg_color, foreground="black",
-        # )
-        # self.categorie_infomation_frame.grid(
-        #     row=0, column=0, padx=10, pady=10, sticky="nsew"
-        # )
-        # self.frames.append(self.categorie_infomation_frame)
-        # # endregion
-        # # === Acount Name ===
-        # # region
-        # self.account_name_label = tk.Label(
-        #     self.categorie_infomation_frame, text="Account Name:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.account_name_label.grid(row=0, column=0)  # , sticky="nsew")
-        # account_names: List[str] = [
-        #     cast(str, account[1]) for account in []
-        # ]
-        # self.account_name_var = tk.StringVar(value="Select Account")
-        # self.account_name_dropdown = ttk.Combobox(
-        #     self.categorie_infomation_frame,
-        #     textvariable=self.account_name_var,
-        #     values=account_names,
-        #     state="readonly"
-        # )
-        # self.account_name_dropdown.grid(row=0, column=1, sticky="ew")
-
-        # def on_account_selected(event):
-        #     selected_name = self.account_name_var.get()
-        #     for account in []:
-        #         if account[1] == selected_name:
-        #             self.account_number_entry.config(state="normal")
-        #             self.account_number_entry.delete(0, tk.END)
-        #             self.account_number_entry.insert(0, str(account[2]))
-        #             self.account_number_entry.config(state="readonly")
-        #             self.account_balance_entry.config(state="normal")
-        #             self.account_balance_entry.delete(0, tk.END)
-        #             self.account_balance_entry.insert(0, str(account[3]))
-        #             self.account_balance_entry.config(state="readonly")
-        #             break
-
-        # self.account_name_dropdown.bind(
-        #     '<<ComboboxSelected>>', on_account_selected
-        # )
-        # # endregion
-        # # === Account Number ===
-        # # region
-        # self.account_number_label = tk.Label(
-        #     self.categorie_infomation_frame, text="Account Nummer:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.account_number_label.grid(row=1, column=0)
-        # self.account_number_entry = tk.Entry(
-        #     self.categorie_infomation_frame, state="readonly",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.account_number_entry.grid(row=1, column=1, sticky="ew")
-        # # endregion
-        # # === Account Balance ===
-        # # region
-        # self.account_balance_label = tk.Label(
-        #     self.categorie_infomation_frame, text="Account Balance:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.account_balance_label.grid(row=2, column=0)
-        # self.account_balance_entry = tk.Entry(
-        #     self.categorie_infomation_frame, state="readonly",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.account_balance_entry.grid(row=2, column=1, sticky="ew")
-        # # endregion
-        # # === Padding ===
-        # # region
-        # for widget in self.categorie_infomation_frame.winfo_children():
-        #     widget.grid_configure(padx=10, pady=5)
-        # # endregion
-        # # endregion
-        # # ======= Transaction Information =======
-        # # region
-
-        # # === Frame ===
-        # # region
-        # self.transaction_information_frame = tk.LabelFrame(
-        #     self.main_frame, text="Transaktions Informationen",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.transaction_information_frame.grid(
-        #     row=1, column=0, padx=10, pady=10, sticky="nsew"
-        # )
-        # self.frames.append(self.transaction_information_frame)
-        # # endregion
-
-        # # === Date ===
-        # # region
-        # self.date_label = tk.Label(
-        #     self.transaction_information_frame, text="Datum (YYYY-MM-DD):",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.date_label.grid(row=0, column=0)
-        # self.date_entry = tk.Entry(
-        #     self.transaction_information_frame,
-        #     background=self.bg_color,
-        #     foreground="grey"
-        # )
-        # self.date_entry.insert(0, "YYYY-MM-DD")
-        # self.date_entry.bind(
-        #     "<FocusIn>",
-        #     partial(self._clear_placeholder, placeholder="YYYY-MM-DD")
-        # )
-        # self.date_entry.bind(
-        #     "<FocusOut>",
-        #     partial(self._add_placeholder, placeholder="YYYY-MM-DD")
-        # )
-        # self.date_entry.grid(row=0, column=1, sticky="ew")
-        # # self.date_warning_label = tk.Label(
-        # #     self.transaction_information_frame, text="",
-        # #     background=self.bg_color, foreground="red"
-        # # )
-        # # self.date_warning_label.grid(row=1, column=0, columnspan=2)
-        # # ========================= Transaction Type is always "manual"
-        # # endregion
-
-        # #  === Amount ===
-        # # region
-        # def refresh_future_balance(*args):
-        #     try:
-        #         account_name = self.account_name_var.get()
-        #         for account in []:
-        #             if account[1] == account_name:
-        #                 current_balance = float(account[3])
-        #                 amount = float(self.amount_entry.get())
-        #                 future_balance = round(
-        #                     current_balance + amount, 2
-        #                 )
-        #                 self.future_balance_entry.config(state="normal")
-        #                 self.future_balance_entry.delete(0, tk.END)
-        #                 self.future_balance_entry.insert(
-        #                     0, str(future_balance))
-        #                 self.future_balance_entry.config(state="readonly")
-        #                 break
-        #     except ValueError:
-        #         self.future_balance_entry.config(state="normal")
-        #         self.future_balance_entry.delete(0, tk.END)
-        #         self.future_balance_entry.insert(0, "Invalid Amount")
-        #         self.future_balance_entry.config(state="readonly")
-
-        # self.amount_label = tk.Label(
-        #     self.transaction_information_frame, text="Betrag:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.amount_label.grid(row=2, column=0)
-        # self.amount_entry = tk.Entry(
-        #     self.transaction_information_frame, background=self.bg_color,
-        #     foreground="black")
-        # self.amount_entry.grid(row=2, column=1, sticky="ew")
-        # self.amount_entry.bind("<KeyRelease>", refresh_future_balance)
-        # # endregion
-
-        # #  === Future Balance === (read-only)
-        # # region
-        # self.future_balance_label = tk.Label(
-        #     self.transaction_information_frame, text="Zukünftiger Kontostand:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.future_balance_label.grid(row=3, column=0)
-        # self.future_balance_entry = tk.Entry(
-        #     self.transaction_information_frame, state="readonly",
-        #     background="gray", foreground="black"
-        # )
-        # self.future_balance_entry.grid(row=3, column=1, sticky="ew")
-        # # endregion
-
-        # # === Purpose ===
-        # # region
-        # self.category_name_label = tk.Label(
-        #     self.transaction_information_frame, text="Beschreibung:",
-        #     background=self.bg_color, foreground="black", cursor="xterm"
-        # )
-        # self.category_name_label.grid(row=4, column=0)
-        # self.category_name_entry = tk.Entry(
-        #     self.transaction_information_frame, background=self.bg_color,
-        #     foreground="black")
-        # self.category_name_entry.grid(row=4, column=1, sticky="ew")
-        # # self.purpose_warning_label = tk.Label(
-        # #     self.transaction_information_frame, text="",
-        # #     background=self.bg_color, foreground="red"
-        # # )
-        # # self.purpose_warning_label.grid(row=5, column=0, columnspan=2)
-        # # endregion
-
-        # # === Counterparty ===
-        # # region
-        # self.counterparty_label = tk.Label(
-        #     self.transaction_information_frame, text="Gegenpartei Name:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.counterparty_label.grid(row=6, column=0)
-        # counterparty_names: List[str] = [
-        #     cast(str, cp[1]) for cp in []
-        # ]
-        # self.counterparty_var = tk.StringVar()
-        # self.counterparty_combo = ttk.Combobox(
-        #     self.transaction_information_frame,
-        #     textvariable=self.counterparty_var,
-        #     values=counterparty_names,
-        #     state="normal"
-        # )
-        # self.counterparty_combo.grid(row=6, column=1, sticky="ew")
-
-        # def filter_counterparties(event):
-        #     entered = self.counterparty_var.get().lower()
-        #     filtered = [v for v in counterparty_names if entered in v.lower()]
-        #     self.counterparty_combo['values'] = (filtered if filtered
-        #                                          else counterparty_names)
-
-        # self.counterparty_combo.bind('<KeyRelease>', filter_counterparties)
-
-        # def on_counterparty_selected(event):
-        #     selected_name = self.counterparty_var.get()
-        #     for cp in []:
-        #         if cp[1] == selected_name:
-        #             self.counterparty_account_entry.config(state="normal")
-        #             self.counterparty_account_entry.delete(0, tk.END)
-        #             self.counterparty_account_entry.insert(0, str(cp[2]))
-        #             self.counterparty_account_entry.config(state="readonly")
-        #             break
-
-        # self.counterparty_combo.bind(
-        #     '<<ComboboxSelected>>', on_counterparty_selected
-        # )
-        # # endregion
-
-        # # === Counterparty Account Number (read-only) ===
-        # # region
-        # self.counterparty_account_label = tk.Label(
-        #     self.transaction_information_frame, text="Gegenpartei Konto:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.counterparty_account_label.grid(row=7, column=0)
-        # self.counterparty_account_entry = tk.Entry(
-        #     self.transaction_information_frame, state="readonly",
-        #     background="gray", foreground="black"
-        # )
-        # self.counterparty_account_entry.grid(row=7, column=1, sticky="ew")
-        # # endregion
-
-        # # === Padding ===
-        # # region
-        # for widget in self.transaction_information_frame.winfo_children():
-        #     widget.grid_configure(padx=10, pady=5)
-        # # endregion
-
-        # # endregion ==============
-        # # ======= Category =======
-        # # region
-
-        # # === Frame ===
-        # # region
-        # self.category_frame = tk.LabelFrame(
-        #     self.main_frame, text="Kategorie",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.category_frame.grid(
-        #     row=2, column=0, padx=10, pady=10, sticky="nsew"
-        # )
-        # # endregion
-
-        # # === Category Name ===
-        # # region
-        # self.category_label = tk.Label(
-        #     self.category_frame, text="Kategorie:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.category_label.grid(row=0, column=0)
-        # category_names: List[str] = [
-        #     cast(str, category[1]) for category in []
-        # ]
-        # self.category_name_var = tk.StringVar(value="Select Category")
-        # self.category_name_dropdown = ttk.Combobox(
-        #     self.category_frame,
-        #     textvariable=self.category_name_var,
-        #     values=category_names,
-        #     state="readonly"
-        # )
-        # self.category_name_dropdown.grid(row=0, column=1, sticky="ew")
-
-        # def on_category_selected(event):
-        #     selected_name = self.category_name_var.get()
-        #     for category in []:
-        #         if category[1] == selected_name:
-        #             self.category_budget_entry.config(state="normal")
-        #             self.category_budget_entry.delete(0, tk.END)
-        #             self.category_budget_entry.insert(0, str(category[2]))
-        #             self.category_budget_entry.config(state="readonly")
-        #             break
-
-        # self.category_name_dropdown.bind(
-        #     '<<ComboboxSelected>>', on_category_selected
-        # )
-        # # endregion
-
-        # # === Category Budget ===
-        # # region
-        # self.category_budget_label = tk.Label(
-        #     self.category_frame, text="Budget:",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.category_budget_label.grid(row=1, column=0)
-        # self.category_budget_entry = tk.Entry(
-        #     self.category_frame, state="readonly",
-        #     background=self.bg_color, foreground="black"
-        # )
-        # self.category_budget_entry.grid(row=1, column=1, sticky="ew")
-        # # endregion
-
-        # # === Padding ===
-        # # region
-        # for widget in self.category_frame.winfo_children():
-        #     widget.grid_configure(padx=10, pady=5)
-        # # endregion
-
-        # # endregion ========================
-        # # ======= Buttons and Layout =======
-        # # region
 
         # === Cancel Button ===
         # region
@@ -415,14 +98,11 @@ class CategoriePage(BaseToplevelWindow):
                               sticky="ew")
         # endregion
 
-        # endregion
-
         # Equalize column widths in all frames
         # First configure the main grid so that the frames are equally wide
         self.main_frame.grid_columnconfigure(0, weight=1)
 
         # Then distribute the columns evenly in each frame
-        for frame in [self.categorie_infomation_frame,
-                      self.transaction_information_frame, self.category_frame]:
+        for frame in self.frames:
             frame.grid_columnconfigure(0, weight=1, uniform="col")
             frame.grid_columnconfigure(1, weight=2, uniform="col")
