@@ -12,7 +12,7 @@ def main() -> None:
     Main function to run the application.
     It creates the database and runs the homepage application.
     """
-    from gui.homepage.homepage import Homepage
+    from gui.pages.home.homepage import Homepage
     from utils.data.createdatabase_utils import create_database
 
     logger.info("")
