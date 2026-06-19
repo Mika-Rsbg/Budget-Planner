@@ -8,7 +8,7 @@ from .database import account_history_utils as db_account_history_utils
 from .database import counterparty_utils as db_counterparty_utils
 from .database import transaction_typ_utils as db_transaction_typ_utils
 from .database import transaction_utils as db_transaction_utils
-from .date_utils import get_iso_date
+from ...shared.date_utils import get_iso_date
 
 
 logger = logging.getLogger(__name__)

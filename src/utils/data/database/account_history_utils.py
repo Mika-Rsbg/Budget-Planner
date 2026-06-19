@@ -8,7 +8,7 @@ from utils.data.database_connection import DatabaseConnection
 from utils.data.database.account_utils import (
     get_account_data, NoAccountFoundError
 )
-from utils.data.date_utils import get_iso_date
+from shared.date_utils import get_iso_date
 import config
 
 
