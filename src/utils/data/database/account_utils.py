@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Union, cast
 import logging
 from gui.app.basewindow import BaseWindow
-from gui.accountpage.name_input_page import NameInputDialog
+from gui.pages.account.name_input_page import NameInputDialog
 from utils.data.database_connection import DatabaseConnection
 from utils.data.date_utils import get_iso_date
 import config
