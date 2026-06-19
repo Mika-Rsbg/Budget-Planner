@@ -3,12 +3,12 @@ import logging
 from typing import List, Dict, Tuple
 from gui.app.basewindow import BaseWindow
 from chore.logging.logging_tools import log_fn
-from .database import account_utils as db_account_utils
-from .database import account_history_utils as db_account_history_utils
-from .database import counterparty_utils as db_counterparty_utils
-from .database import transaction_typ_utils as db_transaction_typ_utils
-from .database import transaction_utils as db_transaction_utils
-from ...shared.date_utils import get_iso_date
+from utils.data.database import account_utils as db_account_utils
+from utils.data.database import account_history_utils as db_account_history_utils
+from utils.data.database import counterparty_utils as db_counterparty_utils
+from utils.data.database import transaction_typ_utils as db_transaction_typ_utils
+from utils.data.database import transaction_utils as db_transaction_utils
+from shared.date_utils import get_iso_date
 
 
 logger = logging.getLogger(__name__)
@@ -333,7 +333,7 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
         except db_account_utils.NoChangesDetectedError:
             logger.debug(
                 f"Account {account_number} already has the same values. "
-                "Skipping..."
+                "Skipping"
             )
         except db_account_utils.RecordTooOldError:
             logger.info(
