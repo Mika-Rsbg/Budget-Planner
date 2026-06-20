@@ -5,7 +5,7 @@ from logging import getLogger
 from collections import defaultdict
 from typing import List, Tuple, cast
 from chore.database.connection import DatabaseConnection
-from utils.data.database.account_utils import (
+from features.account.account_utils import (
     get_account_data, NoAccountFoundError
 )
 from shared.date_utils import get_iso_date

@@ -3,7 +3,7 @@ from tkinter import ttk
 import locale
 from gui.app.basewindow import BaseWindow
 from gui.app.basetoplevelwindow import BaseToplevelWindow
-import utils.data.database.account_utils as db_account_utils
+import features.account.account_utils as db_account_utils
 
 
 class ReorderAccountWidgetsWindow(BaseToplevelWindow):

@@ -3,7 +3,7 @@ from tkinter import ttk
 from shared.date_utils import get_iso_date
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-import utils.data.database.account_utils as db_account_utils
+import features.account.account_utils as db_account_utils
 import shared.value_utils as value_utils
 
 # FIXME: does not work

@@ -3,11 +3,11 @@ import logging
 from typing import List, Dict, Tuple
 from gui.app.basewindow import BaseWindow
 from chore.logging.logging_tools import log_fn
-from utils.data.database import account_utils as db_account_utils
-from utils.data.database import account_history_utils as db_account_history_utils
-from utils.data.database import counterparty_utils as db_counterparty_utils
-from utils.data.database import transaction_typ_utils as db_transaction_typ_utils
-from utils.data.database import transaction_utils as db_transaction_utils
+from features.account import account_utils as db_account_utils
+from features.account import account_history_utils as db_account_history_utils
+from features.counterparty import counterparty_utils as db_counterparty_utils
+from features.transaction import transaction_typ_utils as db_transaction_typ_utils
+from features.transaction import transaction_utils as db_transaction_utils
 from shared.date_utils import get_iso_date
 
 
