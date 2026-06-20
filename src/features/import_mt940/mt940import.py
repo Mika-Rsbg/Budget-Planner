@@ -7,7 +7,8 @@ from features.account import account_repository as account_repository
 from features.account import account_service as account_service
 from features.account import (account_history_repository
                               as account_history_repository)
-from features.counterparty import counterparty_utils as counterparty_repository
+from features.counterparty import (counterparty_repository
+                                   as counterparty_repository)
 from features.transaction import (transaction_typ_utils
                                   as transaction_typ_repository)
 from features.transaction import transaction_utils as transaction_repository
