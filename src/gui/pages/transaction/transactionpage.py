@@ -8,7 +8,7 @@ from gui.app.basetoplevelwindow import BaseToplevelWindow
 from features.account.account_repository import get_account_data
 from features.counterparty.counterparty_repository import get_counterparty_data
 from features.category.category_repository import get_category_data
-from features.transaction.transaction_utils import add_transaction
+from features.transaction.transaction_repository import add_transaction
 from features.account.account_history_repository import (
     add_account_history
 )
