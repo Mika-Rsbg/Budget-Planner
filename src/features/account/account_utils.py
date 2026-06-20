@@ -6,7 +6,7 @@ from typing import List, Tuple, Optional, Union, cast
 import logging
 from gui.app.basewindow import BaseWindow
 from gui.pages.account.name_input_page import NameInputDialog
-from chore.database.connection import DatabaseConnection
+from core.database.connection import DatabaseConnection
 from shared.date_utils import get_iso_date
 import config
 

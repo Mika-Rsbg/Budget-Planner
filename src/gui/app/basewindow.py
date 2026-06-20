@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 from gui.plugins.__init__ import load_plugins
-from chore.logging.logging_tools import log_fn
+from core.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)

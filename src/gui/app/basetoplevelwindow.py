@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 from gui.app.basewindow import BaseWindow
-from chore.logging.logging_tools import log_fn
+from core.logging.logging_tools import log_fn
 from gui.plugins.__init__ import load_plugins
 
 

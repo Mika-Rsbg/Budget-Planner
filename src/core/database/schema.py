@@ -1,8 +1,8 @@
 from pathlib import Path
 import sqlite3
 import logging
-from chore.logging.logging_tools import log_fn
-from chore.database.connection import DatabaseConnection
+from core.logging.logging_tools import log_fn
+from core.database.connection import DatabaseConnection
 import config
 
 logger = logging.getLogger(__name__)

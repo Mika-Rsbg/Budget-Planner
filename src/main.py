@@ -1,6 +1,6 @@
 import logging
-from chore.logging.logger_config import setup_logging
-from chore.logging.logging_tools import log_fn
+from core.logging.logger_config import setup_logging
+from core.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ def main() -> None:
     It creates the database and runs the homepage application.
     """
     from gui.pages.home.homepage import Homepage
-    from chore.database.schema import create_database
+    from core.database.schema import create_database
 
     logger.info("")
     logger.info("################### APPLICATION STARTED ###################")
@@ -37,7 +37,7 @@ def main_test() -> None:
     """
     from gui.app.basewindow import BaseWindow
     from gui.pages.transaction.transactionpage import TransactionPage
-    from chore.database.schema import create_database
+    from core.database.schema import create_database
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -61,7 +61,7 @@ def main_fn_test() -> None:
     It creates the database.
     Logs in a test log file.
     """
-    from chore.database.schema import create_database
+    from core.database.schema import create_database
     from features.account.account_history_utils import (
         get_total_cash_history
     )

@@ -2,7 +2,7 @@ from tkinter import filedialog
 import logging
 from typing import List, Dict, Tuple
 from gui.app.basewindow import BaseWindow
-from chore.logging.logging_tools import log_fn
+from core.logging.logging_tools import log_fn
 from features.account import account_utils as db_account_utils
 from features.account import account_history_utils as db_account_history_utils
 from features.counterparty import counterparty_utils as db_counterparty_utils

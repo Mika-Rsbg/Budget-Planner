@@ -4,7 +4,7 @@ from pathlib import Path
 from logging import getLogger
 from collections import defaultdict
 from typing import List, Tuple, cast
-from chore.database.connection import DatabaseConnection
+from core.database.connection import DatabaseConnection
 from features.account.account_utils import (
     get_account_data, NoAccountFoundError
 )
