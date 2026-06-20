@@ -5,7 +5,7 @@ import logging
 from core.logging.logging_tools import log_fn
 from gui.app.basewindow import BaseWindow
 from shared.date_utils import get_month_literal
-from features.account.account_utils import get_account_data, get_total_cash
+from features.account.account_repository import get_account_data, get_total_cash
 
 logger = logging.getLogger(__name__)
 

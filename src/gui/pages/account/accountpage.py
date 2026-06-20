@@ -3,7 +3,8 @@ from tkinter import ttk
 from shared.date_utils import get_iso_date
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-import features.account.account_utils as db_account_utils
+import features.account.account_repository as account_repository
+import features.account.account_service as account_service
 import shared.value_utils as value_utils
 
 # FIXME: does not work
@@ -51,7 +52,7 @@ class AccountPage(BaseToplevelWindow):
             self.account_data = [(0, "Bitte wählen...")]
         else:
             self.account_data = [(0, "")]
-        self.account_data.extend(db_account_utils.get_account_data(
+        self.account_data.extend(account_repository.get_account_data(
             selected_columns=[True, True, False, False, False]
         ))
         print(self.account_data)
@@ -148,7 +149,7 @@ class AccountPage(BaseToplevelWindow):
                 return True
             else:
                 return False
-        data = db_account_utils.get_account_data()
+        data = account_repository.get_account_data()
         data = list(filter(filter_list, data))
         print(data)
         self.account_name_entry.delete(0, "end")
@@ -188,7 +189,7 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und"
                               "Differenz eingeben.")
             return
-        db_account_utils.update_account(
+        account_service.update_account(
             account_id=account_id,
             new_values=[name, number, balance, difference, "",
                         get_iso_date(today=True)]
@@ -212,7 +213,7 @@ class AccountPage(BaseToplevelWindow):
             self.show_message("Bitte gültige Zahlen für Saldo und/oder"
                               "Differenz eingeben.")
 
-        db_account_utils.add_account(
+        account_repository.add_account(
             name=name,
             number=number,
             balance=balance,
@@ -240,8 +241,8 @@ class AccountPage(BaseToplevelWindow):
         selected_account = self.account_selection_combobox.get()
         selected_account_id = self.account_data_dict.get(selected_account)
         try:
-            db_account_utils.delete_account(account_id=selected_account_id)
-        except db_account_utils.NoAccountFoundError as e:
+            account_repository.delete_account(account_id=selected_account_id)
+        except account_repository.NoAccountFoundError as e:
             self.show_message(f"Fehler: {e}, Konto id: {selected_account_id}")
-        except db_account_utils.Error as e:
+        except account_repository.Error as e:
             self.show_message(f"Fehler: {e}, Konto id: {selected_account_id}")

@@ -3,7 +3,8 @@ from tkinter import ttk
 import locale
 from gui.app.basewindow import BaseWindow
 from gui.app.basetoplevelwindow import BaseToplevelWindow
-import features.account.account_utils as db_account_utils
+import features.account.account_repository as account_repository
+import features.account.account_service as account_service
 
 
 class ReorderAccountWidgetsWindow(BaseToplevelWindow):
@@ -27,7 +28,7 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         save_btn = ttk.Button(self.main_frame, text="Speichern",
                               command=self.save_order)
         save_btn.grid(row=1, column=0, sticky="nswe", padx=10, pady=10)
-        account_list = list(db_account_utils.get_account_data())
+        account_list = list(account_repository.get_account_data())
         print(account_list)
 
         # ============= Konto-Widgets (Row 1) =============
@@ -171,12 +172,12 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
                   f" - Old Position: "
                   f"{self.account_widgets[widget]['old_position']}")
             try:
-                db_account_utils.shift_widget_positions(
+                account_service.shift_widget_positions(
                     account_id=self.account_widgets[widget]["account_id"],
                     old_pos=self.account_widgets[widget]['old_position'],
                     new_pos=widget
                 )
-            except db_account_utils.NoChangesDetectedError as e:
+            except account_service.NoChangesDetectedError as e:
                 print(f"Info: {e}")
                 continue
         self.reload()

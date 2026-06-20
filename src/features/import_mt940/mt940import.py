@@ -3,11 +3,14 @@ import logging
 from typing import List, Dict, Tuple
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
-from features.account import account_utils as db_account_utils
-from features.account import account_history_utils as db_account_history_utils
-from features.counterparty import counterparty_utils as db_counterparty_utils
-from features.transaction import transaction_typ_utils as db_transaction_typ_utils
-from features.transaction import transaction_utils as db_transaction_utils
+from features.account import account_repository as account_repository
+from features.account import account_service as account_service
+from features.account import (account_history_repository
+                              as account_history_repository)
+from features.counterparty import counterparty_utils as counterparty_repository
+from features.transaction import (transaction_typ_utils
+                                  as transaction_typ_repository)
+from features.transaction import transaction_utils as transaction_repository
 from shared.date_utils import get_iso_date
 
 
@@ -291,17 +294,16 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
                     "987654321": ("2023-10-02", -500.50, 2)
                 }
     Raises:
-        DatabaseMT940Error: If an account is not found in the database or if
-            there is an error updating the account.
+        DatabaseMT940Error: If there is an error updating the account.
     """
     today = get_iso_date(today=True)
     for account_number, (record_date, balance,
                          rti_account_id) in latest.items():
         try:
-            last_balance = db_account_history_utils.get_last_balance(
+            last_balance = account_history_repository.get_last_balance(
                 account_id=rti_account_id
             )
-        except db_account_history_utils.NoAccountHistoryFoundError:
+        except account_history_repository.NoAccountHistoryFoundError:
             last_balance = 0.0
         logger.debug(
             f"Last balance: {last_balance} and new balance: {balance}")
@@ -311,7 +313,7 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
         )
         try:
             print("balance", balance, "record_date", record_date,)
-            db_account_utils.update_account(
+            account_service.update_account(
                 account_id=rti_account_id,
                 new_values=["", "", "", balance, difference,
                             get_iso_date(record_date), today]
@@ -321,21 +323,12 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
             )
             logger.debug("Account balances successfully updated in the "
                          "database.")
-        except db_account_utils.NoAccountFoundError:
-            logger.warning(
-                f"Account {account_number} not found in database."
-            )
-            raise DatabaseMT940Error(
-                f"Account {account_number} not found in database.",
-                " Even though it was in the MT940 file.",
-                " And should therefore be in the database."
-            )
-        except db_account_utils.NoChangesDetectedError:
+        except account_service.NoChangesDetectedError:
             logger.debug(
                 f"Account {account_number} already has the same values. "
                 "Skipping"
             )
-        except db_account_utils.RecordTooOldError:
+        except account_service.RecordTooOldError:
             logger.info(
                 f"Account {account_number} has a balance with a record date "
                 "newer than the latest in this bank statement. "
@@ -371,11 +364,11 @@ def insert_account_history_entries(
     number_added_ac_his_entries = 0
     for (account_number, record_date, balance) in closing_balance:
         try:
-            rti_account_id = db_account_utils.get_account_id(
+            rti_account_id = account_repository.get_account_id(
                 data=[None, account_number, None, None],
                 supplied_data=[False, True, False, False]
             )
-        except db_account_utils.NoAccountFoundError:
+        except account_repository.NoAccountFoundError:
             logger.warning(
                 f"Account {account_number} not found in database."
             )
@@ -390,15 +383,15 @@ def insert_account_history_entries(
         elif record_date > latest[account_number][0]:
             latest[account_number] = (record_date, balance, rti_account_id)
         try:
-            db_account_history_utils.add_account_history(
+            account_history_repository.add_account_history(
                 account_id=rti_account_id,
                 balance=balance, record_date=get_iso_date(record_date),
                 change_date=today
             )
             number_added_ac_his_entries += 1
-        except db_account_history_utils.ExistingAccountHistoryError:
+        except account_history_repository.ExistingAccountHistoryError:
             number_skipped_ac_his_entries += 1
-        except db_account_history_utils.Error:
+        except account_history_repository.Error:
             logger.error("Error inserting account history entry.")
             raise DatabaseMT940Error("Error inserting account history entry.")
 
@@ -448,19 +441,19 @@ def insert_transactions(data: List[Dict],
         # rti: ready to insert
         temp_account_number = entry['Account']
         try:
-            rti_account_id = db_account_utils.get_account_id(
+            rti_account_id = account_repository.get_account_id(
                 data=[None, temp_account_number, None, None],
                 supplied_data=[False, True, False, False]
             )
-        except db_account_utils.NoAccountFoundError:
+        except account_repository.NoAccountFoundError:
             logger.warning(
                 f"Account {temp_account_number} not found in database."
             )
-            db_account_utils.add_account_mt940(
+            account_service.add_account_mt940(
                 master=window,
                 number=temp_account_number, balance=entry['OpeningBalance']
             )
-            rti_account_id = db_account_utils.get_account_id(
+            rti_account_id = account_repository.get_account_id(
                 data=[None, temp_account_number, None, None],
                 supplied_data=[False, True, False, False]
             )
@@ -471,18 +464,18 @@ def insert_transactions(data: List[Dict],
         temp_tt_number = entry['TransactionTypeNumber']
         temp_tt_name = entry['TransactionTypeName']
         try:
-            rti_tt_id = db_transaction_typ_utils.get_transaction_typ_id(
+            rti_tt_id = transaction_typ_repository.get_transaction_typ_id(
                 data=[temp_tt_name, temp_tt_number],
                 supplied_data=[True, True]
             )
-        except db_transaction_typ_utils.Error:
+        except transaction_typ_repository.Error:
             logger.warning(
                 f"Transaction type {temp_tt_name} not found in database."
             )
-            db_transaction_typ_utils.add_transaction_typ(
+            transaction_typ_repository.add_transaction_typ(
                 name=temp_tt_name, number=temp_tt_number
             )
-            rti_tt_id = db_transaction_typ_utils.get_transaction_typ_id(
+            rti_tt_id = transaction_typ_repository.get_transaction_typ_id(
                 data=[temp_tt_name, temp_tt_number],
                 supplied_data=[True, True]
             )
@@ -491,19 +484,19 @@ def insert_transactions(data: List[Dict],
         temp_counterparty_number = entry['CounterpartyAccount']
         temp_counterparty_name = entry['CounterpartyName']
         try:
-            rti_counterparty_id = db_counterparty_utils.get_counterparty_id(
+            rti_counterparty_id = counterparty_repository.get_counterparty_id(
                 data=[temp_counterparty_name, temp_counterparty_number],
                 supplied_data=[False, True]
             )
-        except db_counterparty_utils.Error:
+        except counterparty_repository.Error:
             logger.warning(
                 f"Counterparty {temp_counterparty_name} not found in "
                 "database."
             )
-            db_counterparty_utils.add_counterparty(
+            counterparty_repository.add_counterparty(
                 name=temp_counterparty_name, number=temp_counterparty_number
             )
-            rti_counterparty_id = db_counterparty_utils.get_counterparty_id(
+            rti_counterparty_id = counterparty_repository.get_counterparty_id(
                 data=[temp_counterparty_name, temp_counterparty_number],
                 supplied_data=[True, True]
             )
@@ -518,13 +511,13 @@ def insert_transactions(data: List[Dict],
                     rti_amount, rti_purpose, rti_counterparty_id,
                     rti_category_id, rti_user_comments, rti_displayed_name)
         try:
-            db_transaction_utils.add_transaction(
+            transaction_repository.add_transaction(
                 data=rti_data
             )
             number_inserted_transactions += 1
-        except db_transaction_utils.AlreadyExistsError:
+        except transaction_repository.AlreadyExistsError:
             number_skipped_transactions += 1
-        except db_transaction_utils.Error:
+        except transaction_repository.Error:
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")
 

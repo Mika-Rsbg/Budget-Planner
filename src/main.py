@@ -62,7 +62,7 @@ def main_fn_test() -> None:
     Logs in a test log file.
     """
     from core.database.schema import create_database
-    from features.account.account_history_utils import (
+    from features.account.account_history_repository import (
         get_total_cash_history
     )
 

@@ -5,11 +5,11 @@ from typing import List, Union, cast
 from functools import partial
 from gui.app.basewindow import BaseWindow
 from gui.app.basetoplevelwindow import BaseToplevelWindow
-from features.account.account_utils import get_account_data
+from features.account.account_repository import get_account_data
 from features.counterparty.counterparty_utils import get_counterparty_data
 from features.categories.category_utils import get_category_data
 from features.transaction.transaction_utils import add_transaction
-from features.account.account_history_utils import (
+from features.account.account_history_repository import (
     add_account_history
 )
 
