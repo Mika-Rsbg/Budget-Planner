@@ -50,12 +50,22 @@ class BaseToplevelWindow(tk.Toplevel):
         self.main_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
     def _setup_status_bar(self) -> None:
+        """
+        Sets up the status bar at the bottom of the window.
+        A tkk.Label is used to display the status message, which can be updated
+        by changing the value of the StringVar `self.status_var`.
+        """
         self.status_var = tk.StringVar(value="Bereit")
         self.status_bar = ttk.Label(self, textvariable=self.status_var,
                                     relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     def _setup_menu(self) -> None:
+        """
+        Sets up the menu bar at the top of the window.
+        It loads all plugins with the scope "menu" and
+        calls their `add_to_menu`
+        """
         menu_bar = tk.Menu(self)
         self.config(menu=menu_bar)
 
