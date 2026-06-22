@@ -27,21 +27,21 @@ def setup_logging():
 
     # Output to file (DEBUG level) → app.log
     debug_handler = logging.FileHandler(
-        config.Logging.LOG_FILE, encoding="utf-8"
+        config.Logging.get_log_file(), encoding="utf-8"
     )
     debug_handler.setLevel(logging.DEBUG)
     debug_handler.setFormatter(formatter)
 
     # Output to file (INFO level) → app_no_debug.log
     info_handler = logging.FileHandler(
-        config.Logging.LOG_FILE_NO_DEBUG, encoding="utf-8"
+        config.Logging.get_log_file_no_debug(), encoding="utf-8"
     )
     info_handler.setLevel(logging.INFO)
     info_handler.setFormatter(formatter)
 
     # Output to file (DEBUG level) → last.log
     last_handler = logging.FileHandler(
-        config.Logging.LOG_FILE_LAST, mode="w", encoding="utf-8"
+        config.Logging.get_log_file_last(), mode="w", encoding="utf-8"
     )
     last_handler.setLevel(logging.DEBUG)
     last_handler.setFormatter(formatter)

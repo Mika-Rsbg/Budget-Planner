@@ -79,8 +79,7 @@ def main_fn_test() -> None:
 if __name__ == "__main__":
     TEST_MODE: bool = False
     if TEST_MODE:
-        config.Logging.log_file_name = "test_log.log"
-        config.Logging.log_file_name_no_debug = "test_log_no_debug.log"
+        config.Logging.set_to_test_mode()
     setup_logging()
 
     logger.info("")
