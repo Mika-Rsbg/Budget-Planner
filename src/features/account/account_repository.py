@@ -81,7 +81,7 @@ def get_account_data(selected_columns: List[bool] = [True, True, True,
     return account_data
 
 
-def get_total_cash(db_path: Path = config.Database.PATH) -> float:
+def get_total_account_balance(db_path: Path = config.Database.PATH) -> float:
     """
         Retrieve and calculate the total cash balance
         by summing all real account balances.

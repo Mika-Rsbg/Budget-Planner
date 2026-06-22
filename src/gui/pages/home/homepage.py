@@ -5,7 +5,8 @@ import logging
 from core.logging.logging_tools import log_fn
 from gui.app.basewindow import BaseWindow
 from shared.date_utils import get_month_literal
-from features.account.account_repository import get_account_data, get_total_cash
+from features.account.account_repository import (get_account_data,
+                                                 get_total_account_balance)
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class Homepage(BaseWindow):
     def _create_account_widget_frame(self, row: int, column: int) -> tk.Frame:
         """
         Create a frame for the account widget.
+        And place it in the main frame at the specified row and column.
 
         Args:
             row (int): The row of the frame.
@@ -43,6 +45,7 @@ class Homepage(BaseWindow):
     def _make_account_widget_label(self, parent: tk.Widget, text: str = "",
                                    font: tuple | None = None,
                                    **kwargs) -> tk.Label:
+        # TODO: check if default None is needed
         """
         Create a label for the account widget.
 
@@ -58,9 +61,9 @@ class Homepage(BaseWindow):
         label.pack(pady=kwargs.get('pady', 0))
         return label
 
-    def _get_total_cash(self):
-        self.total_cash: float = get_total_cash()
-        self.set_budget(self.total_cash)
+    def _get_total_balance(self):
+        self.total_balance: float = get_total_account_balance()
+        self.set_total_balance(self.total_balance)
 
     def init_ui(self):
         """
@@ -76,21 +79,22 @@ class Homepage(BaseWindow):
             padding=10
         )
         self.homepage_heading_label.grid(row=0, column=0, sticky="nsew")
+        # Update the heading with the current month
         self.homepage_heading_label.config(text=get_month_literal())
 
-        # ============= Budget Frame (Row 1, Column 0) =============
-        self.budget_frame = tk.Frame(self.main_frame, width=80, height=150)
-        self.budget_frame.configure(padx=10, pady=10)
-        self.budget_frame.grid_propagate(False)
-        self.budget_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-        self.budget_label = tk.Label(
-            self.budget_frame,
+        # ============= Balance Frame (Row 1, Column 0) =============
+        self.balance_frame = tk.Frame(self.main_frame, width=80, height=150)
+        self.balance_frame.configure(padx=10, pady=10)
+        self.balance_frame.grid_propagate(False)
+        self.balance_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        self.balance_label = tk.Label(
+            self.balance_frame,
             text="0.00 €",
             font=("Helvetica", 28, "bold"),
             pady=10
         )
-        self.budget_label.pack(expand=True)
-        self._get_total_cash()
+        self.balance_label.pack(expand=True)
+        self._get_total_balance()
 
         # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
         # Get the account data from the database
@@ -117,7 +121,18 @@ class Homepage(BaseWindow):
 
         # Set columnspan for heading and buttons
         self.heading_frame.grid_configure(columnspan=total_columns)
-        self.budget_frame.grid_configure(columnspan=total_columns)
+        self.balance_frame.grid_configure(columnspan=total_columns)
+
+        # TODO: Add Quick Access Buttons:
+        # Importing Transactions
+        # Adding Cash Transactions
+
+        # TODO: Add Buget Overview:
+        # Total Budget for the month vs. Total Expenses
+        # Category Budgets vs. Category Expenses
+
+        # TODO: Add Transaction Overview:
+        # List of recent transactions with amount, category and date
 
     @log_fn
     def create_account_widget(self, row: int, column: int, account_name: str,
@@ -196,9 +211,9 @@ class Homepage(BaseWindow):
             logger.error(f"Error updating widget {widget_position}: {e}")
 
     @log_fn
-    def set_budget(self, amount: float) -> None:
-        self.budget_value = amount
-        self.budget_label.config(text=f"{amount:.2f} €")
+    def set_total_balance(self, amount: float) -> None:
+        self.balance_value = amount
+        self.balance_label.config(text=f"{amount:.2f} €")
 
         if amount >= 0:
             bg_color = "#ccffcc"
@@ -207,6 +222,6 @@ class Homepage(BaseWindow):
             bg_color = "#ffcccc"
             fg_color = "#990000"
 
-        self.budget_label.config(bg=bg_color, fg=fg_color)
-        self.budget_frame.config(bg=bg_color)
-        logger.info(f"Budget set to {amount:.2f} €")
+        self.balance_label.config(bg=bg_color, fg=fg_color)
+        self.balance_frame.config(bg=bg_color)
+        logger.info(f"Total Balance set to {amount:.2f} €")
