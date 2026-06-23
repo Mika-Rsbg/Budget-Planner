@@ -1,7 +1,7 @@
 import os
 import importlib
 import logging
-from utils.logging.logging_tools import log_fn
+from core.logging.logging_tools import log_fn
 
 
 logger = logging.getLogger(__name__)

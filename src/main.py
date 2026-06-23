@@ -1,6 +1,7 @@
 import logging
-from utils.logging.logger_config import setup_logging
-from utils.logging.logging_tools import log_fn
+from core.logging.logger_config import setup_logging
+from core.logging.logging_tools import log_fn
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -12,8 +13,8 @@ def main() -> None:
     Main function to run the application.
     It creates the database and runs the homepage application.
     """
-    from gui.homepage.homepage import Homepage
-    from utils.data.createdatabase_utils import create_database
+    from gui.pages.home.homepage import Homepage
+    from core.database.schema import create_database
 
     logger.info("")
     logger.info("################### APPLICATION STARTED ###################")
@@ -35,9 +36,9 @@ def main_test() -> None:
     It creates the database and runs the homepage application in test mode.
     Logs in a test log file.
     """
-    from gui.basewindow import BaseWindow
-    from gui.transactionpage.transactionpage import TransactionPage
-    from utils.data.createdatabase_utils import create_database
+    from gui.app.basewindow import BaseWindow
+    from gui.pages.transaction.transactionpage import TransactionPage
+    from core.database.schema import create_database
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -61,8 +62,8 @@ def main_fn_test() -> None:
     It creates the database.
     Logs in a test log file.
     """
-    from utils.data.createdatabase_utils import create_database
-    from utils.data.database.account_history_utils import (
+    from core.database.schema import create_database
+    from features.account.account_history_repository import (
         get_total_cash_history
     )
 
@@ -76,13 +77,9 @@ def main_fn_test() -> None:
 
 
 if __name__ == "__main__":
-    import config
     TEST_MODE: bool = False
     if TEST_MODE:
-        config.Logging.log_file_name = 'test_log.log'
-        config.Logging.log_file_name_no_debug = 'test_log_no_debug.log'
-    else:
-        pass
+        config.Logging.set_to_test_mode()
     setup_logging()
 
     logger.info("")

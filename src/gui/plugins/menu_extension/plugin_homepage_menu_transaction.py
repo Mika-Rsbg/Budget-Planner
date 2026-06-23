@@ -1,6 +1,6 @@
 import tkinter as tk
-from gui.transactionpage.transactionpage import TransactionPage
-from utils.data.mt940import_utils import import_mt940_file
+from gui.pages.transaction.transactionpage import TransactionPage
+from features.import_mt940.mt940import import import_mt940_file
 
 menu_id = 20
 

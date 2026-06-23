@@ -1,5 +1,5 @@
 import tkinter as tk
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 
 menu_id = 40
 

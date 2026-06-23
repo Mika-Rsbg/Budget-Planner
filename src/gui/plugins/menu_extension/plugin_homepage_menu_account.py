@@ -1,9 +1,9 @@
 import tkinter as tk
-from gui.accountpage.accountpage import AccountPage
-from gui.accountpage.reorder_account_widgets_page import (
+from gui.pages.account.accountpage import AccountPage
+from gui.pages.account.reorder_account_widgets_page import (
     ReorderAccountWidgetsWindow,
 )
-from gui.basewindow import BaseWindow
+from gui.app.basewindow import BaseWindow
 
 menu_id = 10
 

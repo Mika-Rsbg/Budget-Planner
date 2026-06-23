@@ -1,6 +1,6 @@
 import tkinter as tk
-import utils.data.createdatabase_utils as db_utils
-from gui.basewindow import BaseWindow
+import core.database.schema as db_utils
+from gui.app.basewindow import BaseWindow
 
 menu_id = 30
 
