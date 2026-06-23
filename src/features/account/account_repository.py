@@ -177,6 +177,9 @@ def add_account(
         Error: If any of the required parameters are missing or if an error
               occurs during the database operation.
     """
+    if not record_date:
+        record_date = get_iso_date(today=True)
+
     try:
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
