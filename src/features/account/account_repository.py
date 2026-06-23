@@ -30,11 +30,10 @@ class RecordTooOldError(Exception):
     pass
 
 
-def get_account_data(selected_columns: List[bool] = [True, True, True,
-                                                     True, True, True,
-                                                     True, True],
-                     db_path: Path = config.Database.PATH
-                     ) -> List[Tuple[Union[str, float, int], ...]]:
+def get_account_data(
+        selected_columns: Optional[List[bool]] = None,
+        db_path: Path = config.Database.PATH,
+) -> List[Tuple[Union[str, float, int], ...]]:
     """
         Retrieves account data from the database based on selected columns.
         Args:
@@ -50,6 +49,9 @@ def get_account_data(selected_columns: List[bool] = [True, True, True,
                 expected number of columns.
             NoAccountFoundError: If no account data is found in the database.
     """
+    if selected_columns is None:
+        selected_columns = [True, True, True, True, True, True, True, True]
+
     cursor = DatabaseConnection.get_cursor(db_path)
     columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
                "str_AccountNumber", "real_AccountBalance",
