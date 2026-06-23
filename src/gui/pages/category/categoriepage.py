@@ -6,9 +6,14 @@ from gui.app.basewindow import BaseWindow
 
 
 class CategoryPage(BaseToplevelWindow):
-    def __init__(self, parent: BaseWindow, plugin_scope: str,
-                 title="Categorie Page",
-                 geometry="500x600", bg_color="white"):
+    def __init__(
+            self,
+            parent: BaseWindow,
+            plugin_scope: str,
+            title: str = "Category Page",
+            geometry: str = "500x600",
+            bg_color: str = "white",
+    ) -> None:
         self.parent = parent
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         super().__init__(parent, plugin_scope, title, geometry, bg_color)
