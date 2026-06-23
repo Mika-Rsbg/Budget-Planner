@@ -150,10 +150,16 @@ def delete_account(account_id: int,
         DatabaseConnection.close_cursor()
 
 
-def add_account(name: str, number: str, balance: float, difference: float,
-                record_date: str, position: Optional[int] = None,
-                change_date: Optional[str] = None,
-                db_path: Path = config.Database.PATH) -> None:
+def add_account(
+        name: str,
+        number: str,
+        balance: float,
+        difference: float,
+        record_date: Optional[str] = None,
+        position: Optional[int] = None,
+        change_date: Optional[str] = None,
+        db_path: Path = config.Database.PATH,
+) -> None:
     # FIXME: remove default None
     """
     Adds an account to the database.
