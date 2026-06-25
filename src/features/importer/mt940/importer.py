@@ -18,16 +18,26 @@ class DatabaseMT940Error(Exception):
 
 @log_fn
 def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
-    """Insert the transactions and everything else, like account history and
-        stuff, into the database. Using database utils.
+    """
+    Process parsed MT940 data and insert all related
+    information into the database.
+
+    This function orchestrates the full import pipeline for MT940 data:
+        1. Interprets raw transaction data into database-ready structures.
+        2. Inserts transactions into the database.
+        3. Processes account history (closing balances).
+        4. Inserts account history entries.
+        5. Updates account balances with the latest values.
 
     Args:
-        data (List): A List of dictionaries containing the transactions.
-        window (BaseWindow): The main window of the application.
+        data (List):
+            List of dictionaries containing parsed MT940 transaction data.
+        window (BaseWindow):
+            Main application window used for context during interpretation.
 
     Raises:
-        DatabaseMT940Error: If there is an error inserting the transactions
-            into the database.
+        DatabaseMT940Error:
+            If any database insertion or processing step fails.
     """
     (interpreted_data,
      closing_balance) = mt940_interpreter.interpret_transactions(data, window)
@@ -46,25 +56,22 @@ def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
 @log_fn
 def import_mt940_file(master: BaseWindow) -> None:
     """
-    Import an MT940 formatted file using a file dialog and process its
-    contents.
+    Import an MT940 formatted text file via a GUI file dialog and process it.
 
-    This function opens a file dialog attached to the provided master window,
-    prompting the user
-    to select a text file (typically containing MT940 formatted data).
-    If a file is selected, the function:
-        - Reads the content of the file using UTF-8 encoding.
-        - Splits the content into blocks using split_toblocks_mt940.
-        - Parses the blocks with parse_block.
-        - Inserts the parsed transactions into the program by calling
-          insert_transactions, using the provided master window for context.
+    This function:
+        1. Opens a file selection dialog.
+        2. Reads the selected file using UTF-8 encoding.
+        3. Parses the MT940 file content into structured data.
+        4. Passes the parsed data to the database import pipeline.
+        5. Refreshes the UI after successful import.
 
-    If no file is selected, the function loggs a message indicating that no
-    file was chosen.
+    If no file is selected, the function logs this event and exits without
+    further processing.
 
     Args:
-        master: The parent window (or main window) used to anchor the file
-                dialog and interact with the user.
+        master (BaseWindow):
+            Main application window used as parent for the file dialog
+            and to trigger UI refresh after import.
 
     Returns:
         None
@@ -92,15 +99,22 @@ def format_data(
     filtered_columns: List[str]
 ) -> List[List[Union[str, Tuple[str], int, float]]]:
     """
-    Format the parsed data into a List of Lists, which can be used for tksheet.
+    Convert parsed transaction dictionaries into a tabular list format.
+
+    This function extracts only the specified columns from each transaction
+    dictionary and converts the data into a list-of-lists structure suitable
+    for table widgets such as tksheet.
 
     Args:
-        data (List[Dict[str, Union[str, Tuple[str], int, float]]]): A List of
-            dictionaries containing the parsed data.
+        data (List[Dict[str, Union[str, Tuple[str], int, float]]]):
+            List of transaction dictionaries containing parsed MT940 data.
+        filtered_columns (List[str]):
+            List of keys to include in the output table.
 
     Returns:
-        List[List[Union[str, Tuple[str], int, float]]]: A List
-            of Lists containing the formatted data.
+        List[List[Union[str, Tuple[str], int, float]]]:
+            Tabular representation of the filtered transaction data.
+            Each inner list represents one row.
     """
     formatted_data: List[
         List[Union[str, Tuple[str], int, float]]
@@ -118,24 +132,6 @@ def format_data(
     return formatted_data
 
 
-def get_headers(
-    data: List[Dict[str, Union[str, Tuple[str], int, float]]]
-) -> List[str]:
-    """
-    Get the headers from the parsed data.
-
-    Args:
-        data (List[Dict[str, Union[str, Tuple[str], int, float]]]): A List of
-            dictionaries containing the parsed data.
-    Returns:
-        List[str]: A List of strings containing the headers.
-    """
-    if not data:
-        return []
-    headers = list(data[0].keys())
-    return headers
-
-
 @log_fn
 def import_mt940_file_gui(
         master: BaseWindow, columns: List[str] = [
@@ -146,47 +142,42 @@ def import_mt940_file_gui(
             List[str], List[List[Union[str, Tuple[str], int, float]]]
         ]:
     """
-    Import an MT940 formatted file using a file dialog and process its
-    contents.
+    Open a file dialog to import an MT940 text file and parse its content.
 
-    This function opens a file dialog attached to the provided master window,
-    prompting the user
-    to select a text file (typically containing MT940 formatted data).
-    If a file is selected, the function:
-        - Reads the content of the file using UTF-8 encoding.
-        - Splits the content into blocks using split_toblocks_mt940.
-        - Parses the blocks with parse_block.
-        - Inserts the parsed transactions into the program by calling
-          insert_transactions, using the provided master window for context.
+    This function allows the user to select a text file via a GUI file dialog.
+    If a file is selected, it reads and parses the MT940 content, converts it
+    into a structured format, and returns headers together with formatted data
+    ready for further processing or display.
 
-    If no file is selected, the function loggs a message indicating that no
-    file was chosen.
+    Workflow:
+        1. Open file selection dialog.
+        2. Read selected file using UTF-8 encoding.
+        3. Parse MT940 content into structured blocks.
+        4. Convert parsed data into tabular format.
+
+    If no file is selected, an empty result is returned.
 
     Args:
-        master: The parent window (or main window) used to anchor the file
-                dialog and interact with the user.
+        master (BaseWindow):
+            Parent window used to attach the file dialog.
+        columns (List[str], optional):
+            Column names used for formatting the parsed data.
+            Defaults to:
+            [
+                "Account", "OpeningBalance", "Date", "Bookingdate",
+                "Amount", "TransactionTypeName", "Purpose",
+                "CounterpartyAccount", "CounterpartyName"
+            ]
 
     Returns:
-        None
+        Tuple[List[str], List[List[Union[str, Tuple[str], int, float]]]]:
+            A tuple containing:
+            - headers: List of column names
+            - formatted_data: Table-like list of rows containing parsed values
+
+            If no file is selected, returns ([], []).
     """
-
-    # Reference STARTUMSE
-    # Account 0000000000
-    # OpeningBalance 0000.00
-    # Date 010122
-    # Bookingdate 0101
-    # Amount 000.00
-    # TransactionTypeNumber 000
-    # TransactionTypeName UEBERTRAG (GUTSCHR. UEBERW)
-    # PurposeAddition SVWZ
-    # Purpose Spareinlagen
-    # CounterpartyAccount DE00000000000000000000
-    # CounterpartyName Mika Rosenberge
-    # ClosingBalance ('0000000000', '010100', '0000.00')
-
-    # TODO: Update docu
     # TODO: Typ annotation
-    # TODO: Add datatyp Transaction and clear mess
     file_path = filedialog.askopenfilename(
         parent=master,
         title="Select MT940 Text File",
