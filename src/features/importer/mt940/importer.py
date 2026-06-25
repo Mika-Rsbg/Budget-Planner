@@ -11,11 +11,6 @@ from features.importer.mt940.parser import pars_file
 logger = logging.getLogger(__name__)
 
 
-class DatabaseMT940Error(Exception):
-    """General exception class for database errors."""
-    pass
-
-
 @log_fn
 def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
     """

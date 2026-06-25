@@ -7,7 +7,7 @@ from features.counterparty import (counterparty_repository
                                    as counterparty_repository)
 from features.transaction import (transaction_typ_repository
                                   as transaction_typ_repository)
-from features.importer.mt940.importer import DatabaseMT940Error
+from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
 
 
@@ -31,18 +31,27 @@ RTIData: TypeAlias = tuple[
 def get_account_id(account_number: str,
                    entry: Dict, window: BaseWindow) -> int:
     """
-    Retrieve the account ID from the database based on the
-    provided account number. If the account is not found, it will
-    be added to the database.
+    Retrieve the account ID for a given account number.
+
+    If the account does not exist in the database, it will be created
+    using MT940 account information and then retrieved again.
+
     Args:
-        account_number (str): The account number to look up.
-        entry (dict): The entry containing the account information.
-        window (BaseWindow): The main application window, used for context.
+        account_number (str):
+            Account number to look up.
+        entry (Dict):
+            Parsed MT940 entry containing account metadata
+            (e.g. opening balance).
+        window (BaseWindow):
+            Main application window used for context and account creation flow.
+
     Returns:
-        int: The account ID from the database.
+        int:
+            Database ID of the account.
+
     Raises:
-        Error: If the account is not found
-            and cannot be added to the database.
+        Error:
+            If the account cannot be retrieved or created successfully.
     """
     try:
         rti_account_id = account_repository.get_account_id(
@@ -65,6 +74,22 @@ def get_account_id(account_number: str,
 
 
 def get_tt_id(tt_name: str, tt_number: str) -> int:
+    """
+    Retrieve the transaction type ID from the database.
+
+    If the transaction type does not exist, it will be created
+    and then retrieved again.
+
+    Args:
+        tt_name (str):
+            Name of the transaction type.
+        tt_number (str):
+            Identifier number of the transaction type.
+
+    Returns:
+        int:
+            Database ID of the transaction type.
+    """
     try:
         rti_tt_id = transaction_typ_repository.get_transaction_typ_id(
             data=[tt_name, tt_number],
@@ -86,6 +111,22 @@ def get_tt_id(tt_name: str, tt_number: str) -> int:
 
 def get_counterparty_id(counterparty_name: str,
                         counterparty_number: str) -> int:
+    """
+    Retrieve the counterparty ID from the database.
+
+    If the counterparty does not exist, it will be created
+    and then retrieved again.
+
+    Args:
+        counterparty_name (str):
+            Name of the counterparty.
+        counterparty_number (str):
+            Account number or identifier of the counterparty.
+
+    Returns:
+        int:
+            Database ID of the counterparty.
+    """
     try:
         rti_counterparty_id = counterparty_repository.get_counterparty_id(
             data=[counterparty_name, counterparty_number],
@@ -115,21 +156,28 @@ def interpret_transactions(
         ) -> Tuple[List[RTIData],
                    List[Tuple[str, str, str]]]:
     """
-    Process the parsed MT940 data and insert it into the database.
-    This function iterates through the provided data, retrieves or creates
-    necessary database entries for accounts, transaction types, and
-    counterparties, and inserts transactions into the database.
-    It also collects closing balances for each transaction.
+    Convert parsed MT940 transactions into database-ready structures.
+
+    This function:
+        - Resolves or creates accounts, transaction types, and counterparties
+        - Converts raw MT940 fields into normalized database IDs
+        - Builds RTI (Ready-To-Insert) transaction tuples
+        - Collects closing balance entries for account history processing
+
     Args:
-        data (List[Dict]): A List of dictionaries containing parsed MT940 data.
-        window (BaseWindow): The main application window, used for context.
+        data (List[Dict[str, Union[str, Tuple[str], int, float]]]):
+            Parsed MT940 transaction data.
+        window (BaseWindow):
+            Main application window used for account creation
+            and context handling.
+
     Returns:
-        List[Tuple[str, str, float]]: A List of tuples containing closing
-            balances for each transaction in the format
-            (account_number, record_date, balance).
-    Raises:
-        DatabaseMT940Error: If there is an error inserting transactions into
-            the database.
+        Tuple containing:
+            - List[RTIData]:
+                Normalized transaction data ready for database insertion.
+            - List[Tuple[str, str, str]]:
+                Closing balance entries in format:
+                (account_number, record_date, balance)
     """
     closing_balance: List[Tuple[str, str, str]] = []
 
@@ -184,22 +232,27 @@ def interpret_account_history_entries(
 ) -> Tuple[List[Tuple[int, float, str, str]],
            Dict[str, Tuple[str, float, int]]]:
     """
-    Convert closing balances into a format ready for database insertion.
+    Convert closing balance entries into database-ready account history data.
+
+    This function:
+        - Resolves account IDs for each closing balance entry
+        - Converts balances and dates into normalized formats
+        - Builds a list of account history records for insertion
+        - Tracks the latest balance per account
 
     Args:
         closing_balance (List[Tuple[str, str, str]]):
-            List containing:
+            List of closing balance entries in format:
             (account_number, record_date, balance)
 
     Returns:
-        List[Tuple[int, float, str, str]]:
-            List containing:
-            (
-                account_id,
-                balance,
-                record_date,
-                change_date
-            )
+        Tuple containing:
+            - List[Tuple[int, float, str, str]]:
+                Account history entries in format:
+                (account_id, balance, record_date, change_date)
+            - Dict[str, Tuple[str, float, int]]:
+                Latest entry per account:
+                account_number -> (record_date, balance, account_id)
     """
     latest: Dict = {}
     interpreted_data: List[Tuple[int, float, str, str]] = []

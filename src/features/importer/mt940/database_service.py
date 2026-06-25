@@ -5,7 +5,7 @@ from features.account import (account_history_repository
 from features.transaction import (transaction_repository
                                   as transaction_repository)
 import features.account.account_service as account_service
-from features.importer.mt940.importer import DatabaseMT940Error
+from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
 
 
