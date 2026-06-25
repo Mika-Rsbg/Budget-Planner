@@ -37,7 +37,7 @@ def main_test() -> None:
     Logs in a test log file.
     """
     from gui.app.basewindow import BaseWindow
-    from gui.pages.transaction.transactionpage import TransactionPage
+    from gui.pages.transaction.import_overview import ImportOverview
     from core.database.schema import create_database
 
     logger.info("")
@@ -48,10 +48,11 @@ def main_test() -> None:
         title="Test Transaction Page",
         geometry="500x600",
         bg_color="white",
-        plugin_scope="test"
+        plugin_scope="test",
+        auto_ui_init=False
     )
     app.withdraw()  # Hide the root window
-    transaction_page = TransactionPage(parent=app, plugin_scope="test")
+    transaction_page = ImportOverview(parent=app, plugin_scope="test")
     print(transaction_page)
     app.mainloop()
 
@@ -77,7 +78,7 @@ def main_fn_test() -> None:
 
 
 if __name__ == "__main__":
-    TEST_MODE: bool = False
+    TEST_MODE: bool = True
     if TEST_MODE:
         config.Logging.set_to_test_mode()
     setup_logging()
@@ -85,8 +86,8 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    main()
-    # main_test()
+    # main()
+    main_test()
     # main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")

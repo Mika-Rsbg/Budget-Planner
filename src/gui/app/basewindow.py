@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class BaseWindow(tk.Tk):
     def __init__(self, plugin_scope: str, title: str = "Fenster",
                  geometry: str = "800x600", bg_color: str = "white",
-                 fullscreen: bool = False) -> None:
+                 fullscreen: bool = False, auto_ui_init: bool = True) -> None:
         """
         Base class for all windows in the application.
         Initializes the main window and sets up the menu, status bar,
@@ -37,7 +37,8 @@ class BaseWindow(tk.Tk):
         self._setup_main_frame()
         self._setup_status_bar()
         self._setup_menu()
-        self.init_ui()
+        if auto_ui_init:
+            self.init_ui()
 
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
