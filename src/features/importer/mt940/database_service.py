@@ -27,6 +27,21 @@ RTIData: TypeAlias = tuple[
 
 
 def add_transactions(data: List[RTIData]):
+    """
+    Insert transaction data into the database.
+
+    This function iterates over prepared RTIData entries and attempts
+    to insert each transaction into the database. It tracks successful
+    inserts and skipped entries (already existing records).
+
+    Args:
+        data (List[RTIData]):
+            List of transaction objects ready for database insertion.
+
+    Raises:
+        DatabaseMT940Error:
+            If an unexpected database error occurs during insertion.
+    """
     # Initialize counters
     number_skipped_transactions = 0
     number_inserted_transactions = 0
@@ -54,6 +69,22 @@ def add_transactions(data: List[RTIData]):
 
 
 def add_account_history_entries(data: List[Tuple[int, float, str, str]]):
+    """
+    Insert account history entries into the database.
+
+    This function processes prepared account history data and inserts
+    each entry into the database. It tracks how many entries were
+    inserted or skipped due to existing records.
+
+    Args:
+        data (List[Tuple[int, float, str, str]]):
+            List of account history entries in format:
+            (account_id, balance, record_date, change_date)
+
+    Raises:
+        DatabaseMT940Error:
+            If an unexpected database error occurs during insertion.
+    """
     number_skipped_ac_his_entries = 0
     number_added_ac_his_entries = 0
     for (account_id, balance, record_date, change_date) in data:
@@ -89,26 +120,28 @@ def add_account_history_entries(data: List[Tuple[int, float, str, str]]):
 
 def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
     """
-    Update the account balances in the database based on the latest
-    account history entries.
-    This function retrieves the last balance for each account from the
-    database, calculates the difference between the last balance and the
-    new balance, and updates the account with the new balance and the
-    calculated difference. It also handles cases where the account is not
-    found in the database, raising a DatabaseMT940Error if necessary.
+    Update account balances based on the latest account history data.
+
+    This function:
+        - Retrieves the last known balance from the database
+        - Calculates the difference between old and new balances
+        - Updates the account with the new balance and delta value
+        - Handles cases where no previous balance exists
+
     Args:
-        latest (Dict[str, Tuple[str, float, int]]): A dictionary containing
-            the latest account history entries, where the key is the account
-            number and the value is a tuple of (record_date, balance,
-            rti_account_id).
+        latest (Dict[str, Tuple[str, float, int]]):
+            Dictionary mapping account numbers to:
+            (record_date, balance, account_id)
 
             Example:
                 {
                     "123456789": ("2023-10-01", 1500.75, 1),
                     "987654321": ("2023-10-02", -500.50, 2)
                 }
+
     Raises:
-        DatabaseMT940Error: If there is an error updating the account.
+        DatabaseMT940Error:
+            If updating the account fails due to database issues.
     """
     today = get_iso_date(today=True)
     for account_number, (record_date, balance,
