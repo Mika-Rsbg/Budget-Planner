@@ -53,8 +53,8 @@ def main_test() -> None:
     )
     app.withdraw()  # Hide the root window
     transaction_page = ImportOverview(parent=app, plugin_scope="test")
-    print(transaction_page)
-    app.mainloop()
+    app.wait_window(transaction_page)
+    app.destroy()
 
 
 def main_fn_test() -> None:
