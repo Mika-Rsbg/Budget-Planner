@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class BaseToplevelWindow(tk.Toplevel):
     def __init__(self, master: BaseWindow, plugin_scope: str = "",
                  title: str = "Fenster", geometry: str = "600x400",
-                 bg_color: str = "white") -> None:
+                 bg_color: str = "white", fullscreen: bool = False) -> None:
         """
         Init an instance of the BaseToplevelWindow class.
 
@@ -29,6 +29,8 @@ class BaseToplevelWindow(tk.Toplevel):
         self.title(title)
         self.geometry(geometry)
         self.bg_color = bg_color
+        if fullscreen:
+            self.state("zoomed")
         self.configure(bg=bg_color)
         self._apply_styles()
         self._setup_main_frame()
