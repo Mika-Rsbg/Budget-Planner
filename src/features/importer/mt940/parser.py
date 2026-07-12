@@ -169,6 +169,7 @@ def pars_block(
                     end = next_qmark if next_qmark != -1 else len(block)
                     purpose_fields.append(block[start:end])
             temp_purpose = ' '.join(purpose_fields)
+            # TODO: remove " "
 
             if temp_purpose.startswith("SVWZ+"):
                 temp_purpose_addition = "SVWZ"
