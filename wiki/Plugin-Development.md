@@ -7,6 +7,7 @@ This guide covers how to develop plugins for the Budget Planner application, inc
 The Budget Planner uses a **dynamic plugin system** that allows extending functionality without modifying core code. Plugins are automatically discovered and loaded based on naming conventions and scope.
 
 ### Core Benefits
+
 - **Extensibility**: Add features without touching core code
 - **Modularity**: Each plugin is self-contained
 - **Maintainability**: Easy to enable/disable features
@@ -15,7 +16,8 @@ The Budget Planner uses a **dynamic plugin system** that allows extending functi
 ## 📁 Plugin Architecture
 
 ### Directory Structure
-```
+
+``` text
 src/gui/plugins/
 ├── __init__.py                    # Plugin loader
 ├── menu_extension/                # Menu plugins
@@ -31,18 +33,19 @@ src/gui/plugins/
 
 **Critical**: Plugin files must follow this exact naming pattern:
 
-```
+``` text
 plugin_{scope}_{type}_{name}.py
 ```
 
 | Component | Description | Examples |
-|-----------|-------------|----------|
+| ----------- | ------------- | ---------- |
 | `plugin` | Fixed prefix for all plugins | `plugin` |
 | `{scope}` | Where the plugin applies | `all`, `homepage`, `transactionpage` |
 | `{type}` | Plugin functionality type | `menu`, `widget`, `toolbar` |
 | `{name}` | Brief functionality description | `account`, `help`, `data` |
 
 **Examples:**
+
 - `plugin_all_menu_help.py` - Global help menu for all windows
 - `plugin_homepage_menu_account.py` - Account menu for homepage
 - `plugin_transactionpage_widget_calculator.py` - Calculator widget for transaction page
@@ -94,6 +97,7 @@ def load_plugins(plugin_type: str, plugin_scope: str):
 ```
 
 **Key Points:**
+
 - Plugins matching `scope = "all"` load in every window
 - Plugins matching the window's specific scope load only there
 - `menu_id` controls display order (10, 20, 30, etc.)
@@ -169,17 +173,20 @@ menu_id = 90   # Help and about (use 'all' scope)
 Before coding, consider:
 
 **Scope Decision:**
+
 - `all` - Should this feature be available everywhere?
 - `homepage` - Only on the main window?
 - `transactionpage` - Only when editing transactions?
 - Custom scope - For specialized windows?
 
 **Type Decision:**
+
 - `menu` - Menu items and commands
 - `widget` - UI components (future)
 - `toolbar` - Toolbar buttons (future)
 
 **Name Decision:**
+
 - Keep it short and descriptive
 - Use existing names as reference
 - Avoid special characters or spaces
@@ -204,6 +211,7 @@ tail -f log/app.log | grep plugin
 #### Required Interface Methods
 
 **For Menu Plugins:**
+
 ```python
 def add_to_menu(window: BaseWindow, menu_bar: tk.Menu):
     """Required method for menu plugins"""
@@ -211,6 +219,7 @@ def add_to_menu(window: BaseWindow, menu_bar: tk.Menu):
 ```
 
 **For Future Plugin Types:**
+
 ```python
 def add_to_toolbar(window: BaseWindow, toolbar: tk.Frame):
     """For toolbar plugins"""
@@ -235,6 +244,7 @@ plugin_description = "Brief description of functionality"
 ### 4. Testing Your Plugin
 
 #### Basic Testing
+
 ```python
 # Add debug output to your plugin
 def add_to_menu(window, menu_bar):
@@ -243,12 +253,14 @@ def add_to_menu(window, menu_bar):
 ```
 
 #### Integration Testing
+
 1. **Menu Loading**: Verify menu items appear in correct order
 2. **Functionality**: Test all menu commands work properly
 3. **Error Handling**: Test with invalid inputs or edge cases
 4. **Window Scope**: Verify plugin loads only in intended windows
 
 #### Plugin-Specific Testing
+
 ```python
 # Test in main.py or create dedicated test
 def test_my_plugin():
@@ -452,13 +464,16 @@ def show_spending_chart(parent_window):
 ### Common Issues
 
 #### Plugin Not Loading
+
 **Symptoms**: Plugin doesn't appear in menus
 **Causes**:
+
 - Incorrect naming convention
 - File not in correct directory
 - Import errors in plugin code
 
 **Debug Steps**:
+
 ```bash
 # Check plugin discovery logs
 grep "Loading plugin" log/app.log
@@ -471,13 +486,16 @@ ls -la src/gui/plugins/menu_extension/plugin_*
 ```
 
 #### Menu Items Not Appearing
+
 **Symptoms**: Plugin loads but menu items missing
 **Causes**:
+
 - Missing `add_to_menu` method
 - Errors in menu creation code
 - Incorrect scope matching
 
 **Debug Steps**:
+
 ```python
 # Add debug prints to your plugin
 def add_to_menu(window, menu_bar):
@@ -487,13 +505,16 @@ def add_to_menu(window, menu_bar):
 ```
 
 #### Runtime Errors
+
 **Symptoms**: Plugin loads but crashes when used
 **Causes**:
+
 - Missing imports
 - Incorrect function signatures
 - Database connection issues
 
 **Debug Strategy**:
+
 ```python
 def safe_plugin_function(window):
     """Wrapper with error handling"""
@@ -510,6 +531,7 @@ def safe_plugin_function(window):
 ### Testing Strategies
 
 #### Unit Testing
+
 ```python
 # test_my_plugin.py
 import unittest
@@ -529,6 +551,7 @@ class TestMyPlugin(unittest.TestCase):
 ```
 
 #### Integration Testing
+
 ```python
 # Manual integration test
 if __name__ == "__main__":
@@ -547,24 +570,28 @@ if __name__ == "__main__":
 ## 📚 Plugin Best Practices
 
 ### Code Quality
+
 - **Follow PEP 8** style guidelines
 - **Use type hints** for function parameters
 - **Add docstrings** for all public functions
 - **Handle exceptions** gracefully
 
 ### User Experience  
+
 - **Consistent naming** with existing menus
 - **Logical menu placement** using appropriate menu_id
 - **Clear error messages** for user actions
 - **Confirmation dialogs** for destructive actions
 
 ### Performance
+
 - **Lazy loading** for expensive operations
 - **Efficient database queries** using utilities
 - **Memory management** for large datasets
 - **Progress indicators** for long operations
 
 ### Maintainability
+
 - **Minimal dependencies** on core code
 - **Clear separation** between plugin and core
 - **Configuration externalization** when possible
@@ -575,6 +602,7 @@ if __name__ == "__main__":
 The plugin system is designed for expansion beyond menu plugins:
 
 ### Widget Plugins
+
 ```python
 # plugin_homepage_widget_calculator.py
 def create_widget(parent) -> tk.Widget:
@@ -583,6 +611,7 @@ def create_widget(parent) -> tk.Widget:
 ```
 
 ### Toolbar Plugins
+
 ```python
 # plugin_all_toolbar_quickactions.py  
 def add_to_toolbar(window, toolbar):
@@ -591,6 +620,7 @@ def add_to_toolbar(window, toolbar):
 ```
 
 ### Data Plugins
+
 ```python
 # plugin_all_data_csvexport.py
 def register_export_format():
