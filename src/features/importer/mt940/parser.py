@@ -1,5 +1,7 @@
-from typing import List, Dict, Union, Tuple
+from typing import List, Tuple
+from decimal import Decimal
 import logging
+from models.transaction.imported import ImportedTransaction
 from core.logging.logging_tools import log_fn
 
 
@@ -45,7 +47,7 @@ def split_toblocks(file_content: str) -> List[str]:
 @log_fn
 def pars_block(
         blocks: List[str]
-        ) -> List[Dict[str, Union[str, Tuple[str], int, float]]]:
+        ) -> List[ImportedTransaction]:
     """Parse a List of "blocks" (aka a Line from the .txt) from a mt940 file.
 
     Args:
@@ -53,23 +55,24 @@ def pars_block(
             from the Transactions
 
     Returns:
-        List: A List of dictionaries containing the parsed data.
+        List: A List of ImportedTransaction objects containing the parsed data.
     """
-    parsed_data = []
+    parsed_data: List[ImportedTransaction] = []
     number_parsed_transactions: int = 0
     last_block_86: bool = False
+
     # Temporary variables to store data
     temp_transaction_type_number: str = ""
     temp_transaction_type_name: str = ""
     temp_reference: str = ""
     temp_account_number: str = ""
-    temp_opening_balance: float = 0
+    temp_opening_balance: Decimal = Decimal(0)
     temp_date: str = ""
-    temp_bookingdate: str = ""
+    temp_booking_date: str = ""
     temp_amount_type: int
     temp_currency: str = ""
-    temp_amount: float = 0
-    temp_purpose_adition: str = ""
+    temp_amount: Decimal = Decimal(0)
+    temp_purpose_addition: str = ""
     temp_purpose: str = ""
     temp_counterparty_name: str = ""
     temp_counterparty_account: str = ""
@@ -88,7 +91,7 @@ def pars_block(
         # =========== Opening balance ===========
         elif block.startswith(":60F:"):
             # Opening balance of the account
-            temp_opening_balance = float(block[15:].replace(',', '.'))
+            temp_opening_balance = Decimal(block[15:].replace(',', '.'))
             if block[6] == "D":
                 temp_opening_balance *= -1
         #  =========== (Booking-)Date and Amount of the transaction ===========
@@ -96,29 +99,30 @@ def pars_block(
             if last_block_86:
                 last_block_86 = False
                 # =========== Gathering all data ===========
-                transaction['Reference'] = temp_reference
-                transaction['Account'] = temp_account_number
-                transaction['OpeningBalance'] = temp_opening_balance
-                transaction['Date'] = temp_date
-                transaction['Bookingdate'] = temp_bookingdate
-                transaction['Currency'] = temp_currency
-                transaction['Amount'] = temp_amount
-                transaction['TransactionTypeNumber'] = (
-                    temp_transaction_type_number
+                transaction = ImportedTransaction(
+                    reference=temp_reference,
+                    account_number=temp_account_number,
+                    opening_balance=temp_opening_balance,
+                    closing_balance=temp_closing_balance,
+                    date=temp_date,
+                    booking_date=temp_booking_date,
+                    currency=temp_currency,
+                    amount=temp_amount,
+                    transaction_type_number=temp_transaction_type_number,
+                    transaction_type_name=temp_transaction_type_name,
+                    purpose_addition=temp_purpose_addition,
+                    purpose=temp_purpose,
+                    counterparty_account_number=temp_counterparty_account,
+                    counterparty_name=temp_counterparty_name,
                 )
-                transaction['TransactionTypeName'] = temp_transaction_type_name
-                transaction['PurposeAddition'] = temp_purpose_adition
-                transaction['Purpose'] = temp_purpose
-                transaction['CounterpartyAccount'] = temp_counterparty_account
-                transaction['CounterpartyName'] = temp_counterparty_name
-                transaction['ClosingBalance'] = temp_closing_balance
 
                 # Add the transaction to the parsed data
                 parsed_data.append(transaction)
+                number_parsed_transactions += 1
             block = block[4:]
             # =========== Date ===========
             temp_date = block[:6]
-            temp_bookingdate = block[6:10]
+            temp_booking_date = block[6:10]
             # =========== Amount-Type (+/-) ===========
             # 1 => +; 0 => -
             temp_amount_type = (1 if block[10] == 'C' or
@@ -147,7 +151,7 @@ def pars_block(
                 amount_end_search_param = 'F'
             amount_end = block.find(amount_end_search_param, amount_start)
             temp_amount_str = block[amount_start:amount_end].replace(',', '.')
-            temp_amount = float(temp_amount_str) * temp_amount_type
+            temp_amount = Decimal(temp_amount_str) * temp_amount_type
         # =========== TransacationTyp, Purpose and Counterparty ===========
         elif block.startswith(":86:"):
             block = block[4:]
@@ -167,11 +171,11 @@ def pars_block(
             temp_purpose = ' '.join(purpose_fields)
 
             if temp_purpose.startswith("SVWZ+"):
-                temp_purpose_adition = "SVWZ"
+                temp_purpose_addition = "SVWZ"
             elif temp_purpose.startswith("EREF+"):
-                temp_purpose_adition = "EREF"
+                temp_purpose_addition = "EREF"
             elif temp_purpose.startswith("KREF+"):
-                temp_purpose_adition = "KREF"
+                temp_purpose_addition = "KREF"
             temp_purpose = temp_purpose.replace('SVWZ+', '')
             temp_purpose = temp_purpose.replace('EREF+', '')
             temp_purpose = temp_purpose.replace('KREF+', '')
@@ -203,20 +207,22 @@ def pars_block(
                                     closing_balance)
 
             # =========== Gathering all data ===========
-            transaction['Reference'] = temp_reference
-            transaction['Account'] = temp_account_number
-            transaction['OpeningBalance'] = temp_opening_balance
-            transaction['Date'] = temp_date
-            transaction['Bookingdate'] = temp_bookingdate
-            transaction['Currency'] = temp_currency
-            transaction['Amount'] = temp_amount
-            transaction['TransactionTypeNumber'] = temp_transaction_type_number
-            transaction['TransactionTypeName'] = temp_transaction_type_name
-            transaction['PurposeAddition'] = temp_purpose_adition
-            transaction['Purpose'] = temp_purpose
-            transaction['CounterpartyAccount'] = temp_counterparty_account
-            transaction['CounterpartyName'] = temp_counterparty_name
-            transaction['ClosingBalance'] = temp_closing_balance
+            transaction = ImportedTransaction(
+                reference=temp_reference,
+                account_number=temp_account_number,
+                opening_balance=temp_opening_balance,
+                closing_balance=temp_closing_balance,
+                date=temp_date,
+                booking_date=temp_booking_date,
+                currency=temp_currency,
+                amount=temp_amount,
+                transaction_type_number=temp_transaction_type_number,
+                transaction_type_name=temp_transaction_type_name,
+                purpose_addition=temp_purpose_addition,
+                purpose=temp_purpose,
+                counterparty_account_number=temp_counterparty_account,
+                counterparty_name=temp_counterparty_name,
+            )
 
             # Add the transaction to the parsed data
             parsed_data.append(transaction)
@@ -225,15 +231,16 @@ def pars_block(
             # Reset temporary variables for the next transaction
             temp_reference = ""
             temp_account_number = ""
-            temp_opening_balance = 0.0
+            temp_opening_balance = Decimal(0)
             temp_date = ""
-            temp_bookingdate = ""
+            temp_booking_date = ""
             temp_amount_type = 0
-            temp_amount = 0.0
-            temp_purpose_adition = ""
+            temp_amount = Decimal(0)
+            temp_purpose_addition = ""
             temp_purpose = ""
             temp_counterparty_name = ""
             temp_closing_balance = ("", "", "")
+
     logger.debug("Parsed %d transactions.", number_parsed_transactions)
     logger.debug("Bank statement successfully parsed.")
     return parsed_data
@@ -241,7 +248,7 @@ def pars_block(
 
 def pars_file(
         file_content: str
-        ) -> List[Dict[str, Union[str, Tuple[str], int, float]]]:
+        ) -> List[ImportedTransaction]:
     split_content = split_toblocks(file_content)
     parsed_content = pars_block(split_content)
     return parsed_content

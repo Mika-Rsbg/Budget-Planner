@@ -1,18 +1,21 @@
 from tkinter import filedialog
 import logging
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Optional
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
 import features.importer.mt940.interpreter as mt940_interpreter
 import features.importer.mt940.database_service as mt940_database_service
+import features.account.account_repository as account_repository
 from features.importer.mt940.parser import pars_file
+from models.transaction.imported import ImportedTransaction
 
 
 logger = logging.getLogger(__name__)
 
 
 @log_fn
-def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
+def insert_all_data_to_db(data: List[ImportedTransaction],
+                          window: BaseWindow) -> None:
     """
     Process parsed MT940 data and insert all related
     information into the database.
@@ -26,7 +29,8 @@ def insert_all_data_to_db(data: List, window: BaseWindow) -> None:
 
     Args:
         data (List):
-            List of dictionaries containing parsed MT940 transaction data.
+            List of ImportedTransaction containing
+            parsed MT940 transaction data.
         window (BaseWindow):
             Main application window used for context during interpretation.
 
@@ -90,8 +94,8 @@ def import_mt940_file(master: BaseWindow) -> None:
 
 
 def format_data(
-    data: List[Dict[str, Union[str, Tuple[str], int, float]]],
-    filtered_columns: List[str]
+    data: List[ImportedTransaction],
+    filter_columns: List[str]
 ) -> List[List[Union[str, Tuple[str], int, float]]]:
     """
     Convert parsed transaction dictionaries into a tabular list format.
@@ -101,8 +105,8 @@ def format_data(
     for table widgets such as tksheet.
 
     Args:
-        data (List[Dict[str, Union[str, Tuple[str], int, float]]]):
-            List of transaction dictionaries containing parsed MT940 data.
+        data (List[ImportedTransaction]):
+            List of ImportedTransaction containing parsed MT940 data.
         filtered_columns (List[str]):
             List of keys to include in the output table.
 
@@ -116,39 +120,67 @@ def format_data(
     ] = []
 
     for transaction in data:
-        line = []
+        row = []
 
-        for (key, value) in transaction.items():
-            if key in filtered_columns:
-                line.append(value)
+        for column in filter_columns:
+            row.append(getattr(transaction, column))
 
-        formatted_data.append(line)
+        formatted_data.append(row)
 
     return formatted_data
+
+
+def get_account_data(account_id: int) -> Dict[str, str | float | int]:
+    # TODO: move this to account_service
+    # TODO: add docs
+    temp_account_data = account_repository.get_account_data(
+        selected_columns=[True, False, True, True,
+                          True, False, True, False]
+        )
+    # [AccountID(int), AccountName(str), AccountNumber(str),
+    # AccountBalance(float), RecordDate(str)]
+    # (3, 'Sparbuch 2', '3073527115', 226.99, '2024-12-30')
+    for account_data in temp_account_data:
+        (id, name, number, balance, last_record_date) = account_data
+        if id == account_id:
+            account = {
+                "account_id": id,
+                "account_name": name,
+                "account_number": number,
+                "account_balance": balance,
+                "last_record_date": last_record_date
+            }
+            return account
+    return {}
 
 
 @log_fn
 def import_mt940_file_gui(
         master: BaseWindow, columns: List[str] = [
-            "Account", "OpeningBalance", "Date", "Bookingdate", "Amount",
-            "TransactionTypeName", "Purpose", "CounterpartyAccount",
-            "CounterpartyName"]
+            "opening_balance", "date", "booking_date", "amount",
+            "transaction_type_name", "purpose", "counterparty_account_number",
+            "counterparty_name"], path: Optional[str] = None
         ) -> Tuple[
-            List[str], List[List[Union[str, Tuple[str], int, float]]]
-        ]:
+                str,
+                List[str],
+                List[List[Union[str, Tuple[str], int, float]]],
+                Dict[str, str | float | int],
+                str
+            ]:
     """
     Open a file dialog to import an MT940 text file and parse its content.
 
     This function allows the user to select a text file via a GUI file dialog.
     If a file is selected, it reads and parses the MT940 content, converts it
-    into a structured format, and returns headers together with formatted data
-    ready for further processing or display.
+    into a structured format, and returns the selected file path together with
+    the table headers and formatted transaction data.
 
     Workflow:
         1. Open file selection dialog.
         2. Read selected file using UTF-8 encoding.
         3. Parse MT940 content into structured blocks.
         4. Convert parsed data into tabular format.
+        5. Return the selected file path, headers, and formatted data.
 
     If no file is selected, an empty result is returned.
 
@@ -159,25 +191,35 @@ def import_mt940_file_gui(
             Column names used for formatting the parsed data.
             Defaults to:
             [
-                "Account", "OpeningBalance", "Date", "Bookingdate",
+                "OpeningBalance", "Date", "Bookingdate",
                 "Amount", "TransactionTypeName", "Purpose",
                 "CounterpartyAccount", "CounterpartyName"
             ]
 
     Returns:
-        Tuple[List[str], List[List[Union[str, Tuple[str], int, float]]]]:
+        Tuple[str, List[str],
+                        List[List[Union[str, Tuple[str], int, float]]],
+                        Dict[str, str | float | int]]:
             A tuple containing:
-            - headers: List of column names
-            - formatted_data: Table-like list of rows containing parsed values
+            - file_path: Path to the selected MT940 file.
+            - headers: List of column names.
+            - formatted_data: Table-like list of rows containing parsed values.
+            - account_info: Dictionary with account metadata:
+                "account_id", "account_name", "account_number",
+                "account_balance", "last_record_date"
+            - new_balance: String containing the new account balance
 
-            If no file is selected, returns ([], []).
+            If no file is selected, returns ("", [], [], {}, "").
     """
-    # TODO: Typ annotation
-    file_path = filedialog.askopenfilename(
-        parent=master,
-        title="Select MT940 Text File",
-        filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
-    )
+    # TODO: update docs
+    if path is None:
+        file_path = filedialog.askopenfilename(
+            parent=master,
+            title="Select MT940 Text File",
+            filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
+        )
+    else:
+        file_path = path
     if file_path:
         logger.info("Start importing bank statment.")
         with open(file_path, 'r', encoding='utf8') as file:
@@ -185,8 +227,32 @@ def import_mt940_file_gui(
 
         parsed_data = pars_file(file_content)
         formatted_data = format_data(parsed_data, columns)
+
+        (interpreted_data, closing_balance
+         ) = mt940_interpreter.interpret_transactions(
+            parsed_data, master
+            )
+        (interpreted_history_data, latest
+         ) = mt940_interpreter.interpret_account_history_entries(
+             closing_balance)
+
+        new_balance = str(next(iter(latest.values()))[1])
+        # {'1077149530': ('260702', '200.00', 1)}
+
         headers = columns
-        return (headers, formatted_data)
+
+        first_entry = parsed_data[0]
+        if parsed_data:
+            account_id = account_repository.get_account_id(
+                data=["", str(first_entry.account_number), "", ""],
+                supplied_data=[False, True, False, False]
+                )
+            account_data = get_account_data(account_id)
+        else:
+            logger.info("Empty file selected.")
+            return ("", [], [], {}, "")
+
+        return (file_path, headers, formatted_data, account_data, new_balance)
     else:
         logger.info("No file selected.")
-        return ([], [])
+        return ("", [], [], {}, "")

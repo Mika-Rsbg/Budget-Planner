@@ -1,4 +1,4 @@
-from typing import TypeAlias, List, Literal, Tuple, Dict
+from typing import List, Tuple, Dict
 import logging
 from features.account import (account_history_repository
                               as account_history_repository)
@@ -7,26 +7,13 @@ from features.transaction import (transaction_repository
 import features.account.account_service as account_service
 from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
+from models.transaction.entity import Transaction
 
 
 logger = logging.getLogger(__name__)
 
 
-RTIData: TypeAlias = tuple[
-    int,
-    str,
-    str,
-    int,
-    str,
-    str,
-    int,
-    Literal[1],
-    None,
-    None,
-]
-
-
-def add_transactions(data: List[RTIData]):
+def add_transactions(data: List[Transaction]):
     """
     Insert transaction data into the database.
 
@@ -35,13 +22,14 @@ def add_transactions(data: List[RTIData]):
     inserts and skipped entries (already existing records).
 
     Args:
-        data (List[RTIData]):
+        data (List[Transaction]):
             List of transaction objects ready for database insertion.
 
     Raises:
         DatabaseMT940Error:
             If an unexpected database error occurs during insertion.
     """
+    # TODO: update docs
     # Initialize counters
     number_skipped_transactions = 0
     number_inserted_transactions = 0
@@ -54,6 +42,16 @@ def add_transactions(data: List[RTIData]):
             number_inserted_transactions += 1
         except transaction_repository.AlreadyExistsError:
             number_skipped_transactions += 1
+            # TODO: add Transaction id addtion to transaction
+            # If a transaction is already in the database the the coresponding
+            # id should be added to later use it as indicator if the
+            # transaction is already in the database
+            # This information will be used for selection tools during the
+            # import.
+            # As this function is used to import the transactions another
+            # time to checke if transactions are already in the database should
+            # be used.
+
         except transaction_repository.Error:
             logger.error("Error inserting transaction.")
             raise DatabaseMT940Error("Error inserting transaction.")

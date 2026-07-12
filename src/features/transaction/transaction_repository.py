@@ -3,6 +3,7 @@ from pathlib import Path
 import logging
 from core.database.connection import DatabaseConnection
 import config
+from models.transaction.entity import Transaction
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ def edit_transaction(db_path: Path = config.Database.PATH):
     pass
 
 
-def add_transaction(data: tuple, db_path: Path = config.Database.PATH) -> None:
+def add_transaction(data: Transaction,
+                    db_path: Path = config.Database.PATH) -> None:
     """
     Adds a transaction to the database after checking for duplicates.
 
@@ -44,9 +46,17 @@ def add_transaction(data: tuple, db_path: Path = config.Database.PATH) -> None:
         AlreadyExistsError: If a transaction with the same details already
             exists in the database.
     """
-    (account_id, date, bookingdate, tt_id, amount,
-     purpose, counterparty_id, category_id, user_comments,
-     displayed_name) = data
+    # TODO: update docs
+    account_id = data.account_id
+    date = data.date
+    booking_date = data.booking_date
+    tt_id = data.transaction_type_id
+    amount = data.amount
+    purpose = data.purpose
+    counterparty_id = data.counterparty_id
+    category_id = data.category_id
+    user_comments = data.user_comments
+    displayed_name = data.displayed_name
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
@@ -70,7 +80,7 @@ def add_transaction(data: tuple, db_path: Path = config.Database.PATH) -> None:
               AND i8_CounterpartyID=?
               AND i8_CategoryID=?;
             ''',
-            (account_id, date, bookingdate, tt_id, amount, purpose,
+            (account_id, date, booking_date, tt_id, amount, purpose,
              counterparty_id, category_id)
         )
         if cursor.fetchone():
@@ -98,7 +108,7 @@ def add_transaction(data: tuple, db_path: Path = config.Database.PATH) -> None:
             (
                 account_id,
                 date,
-                bookingdate,
+                booking_date,
                 tt_id,
                 amount,
                 purpose,
