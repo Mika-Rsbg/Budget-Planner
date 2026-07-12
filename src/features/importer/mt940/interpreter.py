@@ -260,6 +260,8 @@ def interpret_account_history_entries(
     today = get_iso_date(today=True)
 
     for account_number, record_date, balance in closing_balance:
+        if (account_number, record_date, balance) == ('', '', ''):
+            continue
         try:
             account_id = account_repository.get_account_id(
                 data=[None, account_number, None, None],
