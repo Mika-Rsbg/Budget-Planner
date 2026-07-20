@@ -1,8 +1,10 @@
 import sqlite3
 from pathlib import Path
 import logging
+from typing import Dict
 from core.database.connection import DatabaseConnection
 import config
+from models.transaction_typ.entity import TransactionTyp
 
 
 logger = logging.getLogger(__name__)
@@ -102,6 +104,59 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
             logger.error("No matching transaction type found.")
             raise Error("No matching transaction type found.")
         return row[0]
+    except sqlite3.Error as e:
+        logger.exception(f"Error querying data: {e}")
+        raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
+
+
+def get_transaction_typ_by_id(transaction_typ_id: int,
+                              db_path: Path = config.Database.PATH
+                              ) -> TransactionTyp:
+    """
+    Retrieves transaction type data by its ID.
+
+    Args:
+        db_path (Path): Path to the SQLite database file.
+        transaction_typ_id (int): The ID of the transaction type to retrieve.
+
+    Returns:
+        dict: Dictionary with keys 'id', 'name', 'number'.
+
+    Raises:
+        Error: If there is a database error or the ID is not found.
+    """
+    if transaction_typ_id is None:
+        raise Error("transaction_typ_id must be provided")
+
+    try:
+        cursor = DatabaseConnection.get_cursor(db_path)
+    except sqlite3.Error as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise Error(f"Error connecting to database: {e}")
+
+    try:
+        cursor.execute(
+            '''
+            SELECT *
+            FROM tbl_TransactionTyp
+            WHERE i8_TransactionTypID = ?;
+            ''',
+            (transaction_typ_id,)
+        )
+        row = cursor.fetchone()
+        if row is None:
+            logger.error("No transaction type found "
+                         f"for ID {transaction_typ_id}.")
+            raise Error("No transaction type found"
+                        f"for ID {transaction_typ_id}.")
+
+        return TransactionTyp(
+            id=row[0],
+            name=row[1],
+            number=row[2]
+        )
     except sqlite3.Error as e:
         logger.exception(f"Error querying data: {e}")
         raise Error(f"Error querying data: {e}")
