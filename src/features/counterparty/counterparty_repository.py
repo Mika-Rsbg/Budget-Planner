@@ -4,6 +4,7 @@ import logging
 from typing import List, Tuple, Union, Optional
 from core.database.connection import DatabaseConnection
 import config
+from models.counterparty.entity import Counterparty
 
 
 logger = logging.getLogger(__name__)
@@ -165,3 +166,33 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
     if not counterparty_data:
         logger.warning("No counterparty data found.")
     return counterparty_data
+
+
+def get_counterparty_by_id(
+    counterparty_id: int,
+    db_path: Path = config.Database.PATH
+) -> Optional[Counterparty]:
+    """
+    Returns the data of a specific account identified by its AccountID.
+
+    Args:
+        account_id (int): ID of the account.
+        db_path (Path): Path to the SQLite database file.
+    Returns:
+        (list): A list of tuples containing the counterparty data. In
+            the following order: ["i8_CounterpartyID", "str_CounterpartyName",
+               "str_CounterpartyNumber"]
+    Raises:
+        Error: If there is a database error.
+    """
+    counterparty_data = get_counterparty_data(db_path=db_path)
+
+    for counterparty in counterparty_data:
+        if counterparty[0] == counterparty_id:
+            return Counterparty(
+                id=int(counterparty[0]),
+                name=str(counterparty[1]),
+                number=str(counterparty[2])
+            )
+
+    return None
