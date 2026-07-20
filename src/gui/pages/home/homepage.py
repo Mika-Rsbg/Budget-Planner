@@ -98,21 +98,18 @@ class Homepage(BaseWindow):
 
         # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
         # Get the account data from the database
-        account_list = list(get_account_data())
+        account_list = get_account_data()
         logger.info(f"Retrieved {len(account_list)} accounts from database.")
         logger.debug(f"Account data retrieved: {account_list}")
 
-        for (i8_AccountID, i8_WidgetPosition, str_AccountName,
-             str_AccountNumber, real_AccountBalance,
-             real_AccountDifference, str_RecordDate,
-             str_ChangeDate) in account_list:
-            logger.info(f"Creating widget for account '{str_AccountName}' "
-                        f"at position {i8_WidgetPosition}")
+        for account in account_list:
+            logger.info(f"Creating widget for account '{account.name}' "
+                        f"at position {account.widget_position}")
             self.create_account_widget(
-                row=2, column=i8_WidgetPosition,
-                account_name=str_AccountName,
-                current_value=real_AccountBalance,
-                difference_value=real_AccountDifference
+                row=2, column=account.widget_position,
+                account_name=account.name,
+                current_value=account.balance,
+                difference_value=account.difference
             )
 
         total_columns = len(account_list) if len(account_list) > 0 else 1

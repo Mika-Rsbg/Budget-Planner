@@ -48,15 +48,10 @@ def get_total_cash_history(start_date: str, end_date: str,
         Error: If an error occurs during the database query or connection.
     """
     try:
-        account_data = get_account_data(
-            selected_columns=[True, False, True, False, True,
-                              False, True, False], db_path=db_path
-        )
-        # print(account_data)
+        account_data = get_account_data(db_path=db_path)
         all_account_histories = get_balance_history(
-            cast(List[int], [account[0] for account in account_data]), db_path
+            cast(List[int], [account.id for account in account_data]), db_path
         )
-        # print(all_account_histories)
     except NoAccountFoundError as e:
         logger.error(f"No accounts found: {e}")
         raise NoAccountHistoryFoundError("No accounts found.")

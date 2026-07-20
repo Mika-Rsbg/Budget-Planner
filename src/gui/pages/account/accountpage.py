@@ -52,9 +52,9 @@ class AccountPage(BaseToplevelWindow):
             self.account_data = [(0, "Bitte wählen...")]
         else:
             self.account_data = [(0, "")]
-        self.account_data.extend(account_repository.get_account_data(
-            selected_columns=[True, True, False, False, False]
-        ))
+        temp_account_data = account_repository.get_account_data()
+        for account in temp_account_data:
+            self.account_data.append((account.id, account.name))
         print(self.account_data)
         self.account_data_dict = {
             name: id for id, name in self.account_data
@@ -156,10 +156,10 @@ class AccountPage(BaseToplevelWindow):
         self.account_number_entry.delete(0, "end")
         self.account_balance_entry.delete(0, "end")
         self.account_difference_entry.delete(0, "end")
-        self.account_name_entry.insert(0, data[0][1])
-        self.account_number_entry.insert(0, data[0][2])
-        self.account_balance_entry.insert(0, data[0][3])
-        self.account_difference_entry.insert(0, data[0][4])
+        self.account_name_entry.insert(0, data[0].name)
+        self.account_number_entry.insert(0, data[0].number)
+        self.account_balance_entry.insert(0, str(data[0].balance))
+        self.account_difference_entry.insert(0, str(data[0].difference))
 
     # ============= Button Callback Methods =============
     def cancel_action(self) -> None:

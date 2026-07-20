@@ -235,6 +235,7 @@ def add_account_mt940(number: str, master: BaseWindow,
                       db_path: Path = config.Database.PATH
                       ) -> None:
     # FIXME: remove default None
+    # TODO: adapt a new ImportAccount datatyp
     """
     Adds a new account to the database, is used for MT940 import.
     If the name is not provided, it prompts the user to input a name.

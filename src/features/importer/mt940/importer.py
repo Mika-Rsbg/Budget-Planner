@@ -131,24 +131,20 @@ def format_data(
 
 
 def get_account_data(account_id: int) -> Dict[str, str | float | int]:
-    # TODO: move this to account_service
+    # TODO: use function from account_service
     # TODO: add docs
-    temp_account_data = account_repository.get_account_data(
-        selected_columns=[True, False, True, True,
-                          True, False, True, False]
-        )
+    temp_account_data = account_repository.get_account_data()
     # [AccountID(int), AccountName(str), AccountNumber(str),
     # AccountBalance(float), RecordDate(str)]
     # (3, 'Sparbuch 2', '3073527115', 226.99, '2024-12-30')
     for account_data in temp_account_data:
-        (id, name, number, balance, last_record_date) = account_data
         if id == account_id:
             account = {
-                "account_id": id,
-                "account_name": name,
-                "account_number": number,
-                "account_balance": balance,
-                "last_record_date": last_record_date
+                "account_id": account_data.id,
+                "account_name": account_data.name,
+                "account_number": account_data.number,
+                "account_balance": account_data.balance,
+                "last_record_date": account_data.record_date
             }
             return account
     return {}
