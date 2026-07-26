@@ -1,6 +1,7 @@
 from tkinter import filedialog
 import logging
 from typing import List, Dict, Tuple, Union, Optional
+from datetime import date
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
 import features.importer.mt940.interpreter as mt940_interpreter
@@ -130,7 +131,7 @@ def format_data(
     return formatted_data
 
 
-def get_account_data(account_id: int) -> Dict[str, str | float | int]:
+def get_account_data(account_id: int) -> Dict[str, str | float | int | date]:
     # TODO: use function from account_service
     # TODO: add docs
     temp_account_data = account_repository.get_account_data()
@@ -160,7 +161,7 @@ def import_mt940_file_gui(
                 str,
                 List[str],
                 List[List[Union[str, Tuple[str], int, float]]],
-                Dict[str, str | float | int],
+                Dict[str, str | float | int | date],
                 str
             ]:
     """

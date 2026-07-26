@@ -3,11 +3,11 @@ import string
 import random
 from pathlib import Path
 from typing import List, Optional, Union, cast
+from datetime import date
 import logging
 from gui.app.basewindow import BaseWindow
 from gui.pages.account.name_input_page import NameInputDialog
 from core.database.connection import DatabaseConnection
-from shared.date_utils import get_iso_date
 from features.account.account_repository import add_account
 import config
 
@@ -231,11 +231,12 @@ def add_account_mt940(number: str, master: BaseWindow,
                       name: Optional[str] = None,
                       balance: Optional[float] = None,
                       difference: Optional[float] = None,
-                      record_date: str = get_iso_date(date="010101"),
+                      record_date: date = date(2001, 1, 1),
                       db_path: Path = config.Database.PATH
                       ) -> None:
     # FIXME: remove default None
     # TODO: adapt a new ImportAccount datatyp
+    # TODO: remove record_date default
     """
     Adds a new account to the database, is used for MT940 import.
     If the name is not provided, it prompts the user to input a name.
@@ -246,7 +247,7 @@ def add_account_mt940(number: str, master: BaseWindow,
         name (str, Optional): Name of the account.
         balance (float, Optional): Balance of the account.
         difference (float, Optional): Difference of the account.
-        record_date (str): Date of the record in ISO format.
+        record_date (date): Date of the record as datetime.date().
         db_path (Path, Optional): Path to the SQLite database file.
     Raises:
         Error: If the account number is not provided or if any database error

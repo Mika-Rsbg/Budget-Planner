@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 
 
 @dataclass
@@ -13,5 +14,5 @@ class Account:
     balance: float
     difference: float
 
-    record_date: str
-    change_date: str
+    record_date: date
+    change_date: date

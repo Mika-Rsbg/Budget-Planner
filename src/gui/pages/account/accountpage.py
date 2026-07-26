@@ -53,6 +53,7 @@ class AccountPage(BaseToplevelWindow):
         else:
             self.account_data = [(0, "")]
         temp_account_data = account_repository.get_account_data()
+        # TODO: check if data typ date changes use
         for account in temp_account_data:
             self.account_data.append((account.id, account.name))
         print(self.account_data)
@@ -150,6 +151,7 @@ class AccountPage(BaseToplevelWindow):
             else:
                 return False
         data = account_repository.get_account_data()
+        # TODO: check if data typ date changes use
         data = list(filter(filter_list, data))
         print(data)
         self.account_name_entry.delete(0, "end")

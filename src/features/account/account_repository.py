@@ -2,8 +2,8 @@ import sqlite3
 from pathlib import Path
 from typing import List, Optional, cast
 import logging
+from datetime import date
 from core.database.connection import DatabaseConnection
-from shared.date_utils import get_iso_date
 import config
 from models.account.entity import Account
 
@@ -77,8 +77,8 @@ def get_account_data(
                     number=account[3],
                     balance=account[4],
                     difference=account[5],
-                    record_date=account[6],
-                    change_date=account[7]
+                    record_date=date.fromisoformat(account[6]),
+                    change_date=date.fromisoformat(account[7])
                 )
             )
 
@@ -180,9 +180,9 @@ def add_account(
         number: str,
         balance: float,
         difference: float,
-        record_date: Optional[str] = None,
+        record_date: Optional[date] = None,
         position: Optional[int] = None,
-        change_date: Optional[str] = None,
+        change_date: Optional[date] = None,
         db_path: Path = config.Database.PATH,
 ) -> None:
     # FIXME: remove default None
@@ -195,16 +195,16 @@ def add_account(
         number (str): Number of the account.
         balance (float): Balance of the account.
         difference (float): Difference of the account.
-        record_date (str): Date of the record in ISO format.
+        record_date (date): Date of the record as datetime.date.
         position (int, optional): Position of the account in the widget.
-        change_date (str, optional): Date of the change in ISO format.
+        change_date (date, optional): Date of the change as datetime.date.
         db_path (Path, optional): Path to the SQLite database file.
     Raises:
         Error: If any of the required parameters are missing or if an error
               occurs during the database operation.
     """
     if not record_date:
-        record_date = get_iso_date(today=True)
+        record_date = date.today()
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
@@ -223,7 +223,7 @@ def add_account(
             position = 0
 
     if change_date is None:
-        change_date = get_iso_date(today=True)
+        change_date = date.today()
 
     try:
         cursor.execute(
@@ -233,8 +233,8 @@ def add_account(
             str_RecordDate, str_ChangeDate)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ''',
-            (position, name, number, balance, difference, record_date,
-             change_date))
+            (position, name, number, balance, difference,
+             record_date.isoformat(), change_date.isoformat()))
         conn.commit()
         logger.debug("Account added successfully.")
     except sqlite3.Error as e:
