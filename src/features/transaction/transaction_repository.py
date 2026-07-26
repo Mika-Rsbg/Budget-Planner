@@ -31,6 +31,84 @@ def edit_transaction(db_path: Path = config.Database.PATH):
     pass
 
 
+def get_transaction_id(transaction: Transaction,
+                       db_path: Path = config.Database.PATH) -> int | None:
+    """Find the ID of an existing transaction based on its details.
+
+    Args:
+        transaction (Transaction): Transaction object to be checked.
+        db_path (Path, optional):  Path to the SQLite database file.
+
+    Raises:
+        Error: If there is an error getting the database cursor
+            or if there is any error during the SQL-Query.
+
+    Returns:
+        int | None: The ID of the existing transaction, or None if not found.
+    """
+
+    try:
+        cursor = DatabaseConnection.get_cursor(db_path)
+    except sqlite3.Error as e:
+        logger.exception(f"Error connecting to database: {e}")
+        raise Error(f"Error connecting to database: {e}")
+
+    try:
+        cursor.execute(
+            '''
+            SELECT i8_TransactionID
+            FROM tbl_Transaction
+            WHERE i8_AccountID=?
+              AND str_Date=?
+              AND str_Bookingdate=?
+              AND i8_TransactionTypeID=?
+              AND real_Amount=?
+              AND str_Purpose=?
+              AND i8_CounterpartyID=?
+              AND i8_CategoryID=?;
+            ''',
+            (
+                transaction.account_id,
+                transaction.date,
+                transaction.booking_date,
+                transaction.transaction_type_id,
+                transaction.amount,
+                transaction.purpose,
+                transaction.counterparty_id,
+                transaction.category_id
+            )
+        )
+
+        row = cursor.fetchone()
+        if row:
+            return row[0]  # transaction_id
+
+    except sqlite3.Error as e:
+        logger.error(f"Error checking for existing transaction: {e}")
+        raise Error(f"Error checking for existing transaction: {e}")
+
+    return None
+
+
+def transaction_exists(transaction: Transaction,
+                       db_path: Path = config.Database.PATH) -> bool:
+    """Check if a transaction with the same details
+    (except displayed_name and user_comments) exists
+
+    Args:
+        transaction (Transaction): Transaction object to be checked.
+        db_path (Path, optional):  Path to the SQLite database file.
+
+    Raises:
+        Error: If there is an error getting the database cursor
+            or if there is any error during the SQL-Query.
+
+    Returns:
+        bool: "True" if transacation already exists.
+    """
+    return get_transaction_id(transaction, db_path) is not None
+
+
 def add_transaction(data: Transaction,
                     db_path: Path = config.Database.PATH) -> None:
     """
@@ -65,29 +143,8 @@ def add_transaction(data: Transaction,
         logger.exception(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
-    try:
-        # Check if a transaction with the same details
-        # (except displayed_name and user_comments) exists
-        cursor.execute(
-            '''
-            SELECT 1 FROM tbl_Transaction
-            WHERE i8_AccountID=?
-              AND str_Date=?
-              AND str_Bookingdate=?
-              AND i8_TransactionTypeID=?
-              AND real_Amount=?
-              AND str_Purpose=?
-              AND i8_CounterpartyID=?
-              AND i8_CategoryID=?;
-            ''',
-            (account_id, date, booking_date, tt_id, amount, purpose,
-             counterparty_id, category_id)
-        )
-        if cursor.fetchone():
-            raise AlreadyExistsError("Transaction already exists.")
-    except sqlite3.Error as e:
-        logger.error(f"Error checking for duplicate transaction: {e}")
-        raise Error(f"Error checking for duplicate transaction: {e}")
+    if transaction_exists(data, db_path):
+        raise AlreadyExistsError("Transaction already exists.")
 
     try:
         cursor.execute(
