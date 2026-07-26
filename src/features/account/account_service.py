@@ -47,6 +47,7 @@ def update_account(account_id: int,
     Raises:
         Error: If no update is needed or if any database error occurs.
     """
+    # TODO: adapt datetime.date data typ for date
     # Define the column names corresponding to the new values.
     columns = ["i8_WidgetPosition", "str_AccountName", "str_AccountNumber",
                "real_AccountBalance", "real_AccountDifference",
@@ -69,7 +70,7 @@ def update_account(account_id: int,
         )
         current_record = cursor.fetchone()
         logger.debug("Current record fetched successfully.")
-        # Remove the following logging statement.
+        # TODO: Remove the following logging statement.
         print("Current record:", current_record)
         # Check if the new record date is older than the current record date
         if current_record is not None:
