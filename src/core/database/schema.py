@@ -226,6 +226,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 str_ChangeDate INTEGER
                 );
             ''')
+            # TODO: change Date format to iso
             conn.commit()
             logger.debug("Account table created successfully.")
         except sqlite3.Error as e:

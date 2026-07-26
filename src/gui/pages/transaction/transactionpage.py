@@ -2,6 +2,7 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Union, cast
+from datetime import date
 from functools import partial
 from gui.app.basewindow import BaseWindow
 from gui.app.basetoplevelwindow import BaseToplevelWindow
@@ -62,7 +63,7 @@ class TransactionPage(BaseToplevelWindow):
             if account.name == temp_account_name:
                 rti_account_id = cast(int, account.id)
                 break
-        rti_date = self.date_entry.get()
+        rti_date = date.fromisoformat(self.date_entry.get())
         rti_bookingdate = rti_date
         rti_amount = self.amount_entry.get()
         rti_tt_id = 1  # ================================================
@@ -82,7 +83,7 @@ class TransactionPage(BaseToplevelWindow):
 
         rti_data = Transaction(
             account_id=rti_account_id,
-            date=rti_date,
+            date=rti_date.isoformat(),
             booking_date=rti_bookingdate,
             transaction_type_id=rti_tt_id,
             amount=rti_amount,

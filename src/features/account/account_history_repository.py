@@ -3,12 +3,11 @@ from datetime import date, timedelta
 from pathlib import Path
 from logging import getLogger
 from collections import defaultdict
-from typing import List, Tuple, cast
+from typing import List, Tuple, cast, Optional
 from core.database.connection import DatabaseConnection
 from features.account.account_repository import (
     get_account_data, NoAccountFoundError
 )
-from shared.date_utils import get_iso_date
 import config
 
 
@@ -30,19 +29,24 @@ class NoAccountHistoryFoundError(Exception):
     pass
 
 
-def get_total_cash_history(start_date: str, end_date: str,
-                           db_path: Path = config.Database.PATH
-                           ) -> List[Tuple[float, str]]:
+def get_total_cash_history(
+    start_date: date | None = None,
+    end_date: date | None = None,
+    db_path: Path = config.Database.PATH,
+) -> List[Tuple[date, float]]:
     """
     Retrieves the total cash history for all accounts within a specified date
-    range. If no date range is specified, it retrieves the entire history.
+    range.
+
     Args:
-        start_date (str): Start date in ISO format (YYYY-MM-DD).
-        end_date (str): End date in ISO format (YYYY-MM-DD).
+        start_date (date | None): Start date.
+        end_date (date | None): End date.
         db_path (Path, optional): Path to the SQLite database file.
+
     Returns:
-        List[Tuple[float, str]]: A list of tuples containing the date and total
+        List[Tuple[date, float]]: A list containing the date and the total
             cash value for that date.
+
     Raises:
         NoAccountHistoryFoundError: If no account history is found.
         Error: If an error occurs during the database query or connection.
@@ -50,59 +54,74 @@ def get_total_cash_history(start_date: str, end_date: str,
     try:
         account_data = get_account_data(db_path=db_path)
         all_account_histories = get_balance_history(
-            cast(List[int], [account.id for account in account_data]), db_path
+            cast(List[int], [account.id for account in account_data]),
+            db_path,
         )
     except NoAccountFoundError as e:
         logger.error(f"No accounts found: {e}")
         raise NoAccountHistoryFoundError("No accounts found.")
     except Error as e:
         logger.error(f"Error retrieving account history: {e}")
-        raise NoAccountHistoryFoundError("Error retrieving account history.")
+        raise NoAccountHistoryFoundError(
+            "Error retrieving account history."
+        )
 
     current_values = defaultdict(float)
     all_dates = set()
-    # collect all dates
+
+    # Collect all dates.
     for account_history in all_account_histories:
         for _, _, record_date in account_history:
             all_dates.add(record_date)
-    # sort all dates
+
     sorted_dates = sorted(all_dates)
-    # build a per-id timeline
+
+    # Build a per-account timeline.
     changes = defaultdict(dict)
     for account_history in all_account_histories:
         for acc_id, balance, record_date in account_history:
             changes[acc_id][record_date] = balance
-    # calculate totals over time
+
+    # Calculate totals over time.
     result = []
+
     for record_date in sorted_dates:
         for acc_id in changes:
             if record_date in changes[acc_id]:
                 current_values[acc_id] = changes[acc_id][record_date]
+
         total = sum(current_values.values())
         result.append((record_date, total))
 
-    # filter results by date range
-    if start_date or end_date:
-        start_date = start_date or "0001-01-01"
-        end_date = end_date or "9999-12-31"
+    # Filter results by date range.
+    if start_date is not None or end_date is not None:
+        start_date = start_date or date.min
+        end_date = end_date or date.max
+
         result = [
-            (date, value) for date, value in result
-            if start_date <= date <= end_date
+            (record_date, value)
+            for record_date, value in result
+            if start_date <= record_date <= end_date
         ]
+
     return result
 
 
-def get_balance_history(account_id: List[int],
-                        db_path: Path = config.Database.PATH
-                        ) -> List[List[Tuple[int, float, str]]]:
+def get_balance_history(
+    account_id: List[int],
+    db_path: Path = config.Database.PATH,
+) -> List[List[Tuple[int, float, date]]]:
     """
     Retrieves the balance history for the specified account IDs.
+
     Args:
         account_id (List[int]): List of account IDs to retrieve history for.
         db_path (Path, optional): Path to the SQLite database file.
+
     Returns:
-        List[List[Tuple[int, float, str]]]: A list of lists containing tuples
+        List[List[Tuple[int, float, date]]]: A list of lists containing tuples
             with account ID, balance, and record date.
+
     Raises:
         NoAccountHistoryFoundError: If no balance history is found for the
             specified account IDs.
@@ -115,26 +134,43 @@ def get_balance_history(account_id: List[int],
         raise Error(f"Error connecting to database: {e}")
 
     try:
-        result: List[List[Tuple[int, float, str]]] = []
-        for id in account_id:
-            cursor.execute("""
+        result: List[List[Tuple[int, float, date]]] = []
+
+        for account_id_value in account_id:
+            cursor.execute(
+                """
                 SELECT i8_AccountID, real_Balance, str_RecordDate
-                FROM tbl_AccountHistory WHERE i8_AccountID = ?
+                FROM tbl_AccountHistory
+                WHERE i8_AccountID = ?
                 ORDER BY str_RecordDate
-            """, (
-                id,
-            ))
+                """,
+                (account_id_value,),
+            )
+
             data = cursor.fetchall()
-            result.append(data)
+
+            converted_data = [
+                (
+                    account_id,
+                    balance,
+                    date.fromisoformat(record_date),
+                )
+                for account_id, balance, record_date in data
+            ]
+
+            result.append(converted_data)
+
         if any(result):
             logger.debug("Balance history found.")
-            # print(result)
             return result
+
         logger.warning("No balance found.")
         raise NoAccountHistoryFoundError("No balance found.")
+
     except sqlite3.Error as e:
         logger.error(f"Error retrieving balance: {e}")
         raise Error(f"Error retrieving balance: {e}")
+
     finally:
         DatabaseConnection.close_cursor()
 
@@ -191,8 +227,9 @@ def get_last_balance(account_id: int,
         DatabaseConnection.close_cursor()
 
 
-def add_account_history(account_id: int, balance: float, record_date: str,
-                        change_date: str = "", manual_entry: bool = False,
+def add_account_history(account_id: int, balance: float, record_date: date,
+                        change_date: Optional[date] = None,
+                        manual_entry: bool = False,
                         db_path: Path = config.Database.PATH) -> None:
     """
     Adds a new account history record to the database for the specified
@@ -221,8 +258,8 @@ def add_account_history(account_id: int, balance: float, record_date: str,
     except sqlite3.Error as e:
         raise Error(f"Error connecting to database: {e}")
 
-    if change_date == "":
-        change_date = get_iso_date(today=True)
+    if change_date is None:
+        change_date = date.today()
 
     try:
         cursor.execute(

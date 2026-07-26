@@ -1,4 +1,5 @@
 from typing import List, Tuple, Dict
+from datetime import date
 import logging
 from features.account import (account_history_repository
                               as account_history_repository)
@@ -90,8 +91,8 @@ def add_account_history_entries(data: List[Tuple[int, float, str, str]]):
             account_history_repository.add_account_history(
                 account_id=account_id,
                 balance=balance,
-                record_date=record_date,
-                change_date=change_date
+                record_date=date.fromisoformat(record_date),
+                change_date=date.fromisoformat(change_date)
             )
             number_added_ac_his_entries += 1
         except account_history_repository.ExistingAccountHistoryError:

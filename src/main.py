@@ -63,6 +63,7 @@ def main_fn_test() -> None:
     It creates the database.
     Logs in a test log file.
     """
+    from datetime import date
     from core.database.schema import create_database
     from features.account.account_history_repository import (
         get_total_cash_history
@@ -74,7 +75,7 @@ def main_fn_test() -> None:
     )
     logger.info("")
     create_database()
-    print(get_total_cash_history("2024-12-01", ""))
+    print(get_total_cash_history(start_date=date(2024, 12, 1)))
 
 
 if __name__ == "__main__":
