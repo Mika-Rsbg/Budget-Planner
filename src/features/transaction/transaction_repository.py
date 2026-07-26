@@ -69,8 +69,8 @@ def get_transaction_id(transaction: Transaction,
             ''',
             (
                 transaction.account_id,
-                transaction.date,
-                transaction.booking_date,
+                transaction.date.isoformat(),
+                transaction.booking_date.isoformat(),
                 transaction.transaction_type_id,
                 transaction.amount,
                 transaction.purpose,
@@ -126,8 +126,8 @@ def add_transaction(data: Transaction,
     """
     # TODO: update docs
     account_id = data.account_id
-    date = data.date
-    booking_date = data.booking_date
+    date = data.date.isoformat()
+    booking_date = data.booking_date.isoformat()
     tt_id = data.transaction_type_id
     amount = data.amount
     purpose = data.purpose

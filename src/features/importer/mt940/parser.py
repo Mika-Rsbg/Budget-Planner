@@ -250,6 +250,7 @@ def pars_block(
 def pars_file(
         file_content: str
         ) -> List[ImportedTransaction]:
+    # TODO: add docs
     split_content = split_toblocks(file_content)
     parsed_content = pars_block(split_content)
     return parsed_content

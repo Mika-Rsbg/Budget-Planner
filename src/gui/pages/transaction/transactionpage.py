@@ -83,7 +83,7 @@ class TransactionPage(BaseToplevelWindow):
 
         rti_data = Transaction(
             account_id=rti_account_id,
-            date=rti_date.isoformat(),
+            date=rti_date,
             booking_date=rti_bookingdate,
             transaction_type_id=rti_tt_id,
             amount=rti_amount,

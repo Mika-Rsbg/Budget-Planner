@@ -1,5 +1,6 @@
 import logging
 from typing import List, Dict, Tuple
+from datetime import date
 from decimal import Decimal
 from gui.app.basewindow import BaseWindow
 from features.account import account_repository as account_repository
@@ -180,10 +181,10 @@ def interpret_transactions(
         rti_account_id = get_account_id(temp_account_number, entry, window)
 
         temp_date = entry.date
-        rti_date = get_iso_date(temp_date)
+        rti_date = date.fromisoformat(temp_date)
 
-        temp_bookingdate = str(rti_date[:2]) + entry.booking_date
-        rti_booking_date = get_iso_date(temp_bookingdate)
+        temp_bookingdate = str(temp_date[:2]) + entry.booking_date
+        rti_booking_date = date.fromisoformat(temp_bookingdate)
 
         temp_tt_number = entry.transaction_type_number
         temp_tt_name = entry.transaction_type_name

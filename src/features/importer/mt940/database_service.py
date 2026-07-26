@@ -142,6 +142,7 @@ def update_account_balances(latest: Dict[str, Tuple[str, float, int]]) -> None:
         DatabaseMT940Error:
             If updating the account fails due to database issues.
     """
+    # TODO: adapt datetime.date datatyp
     today = get_iso_date(today=True)
     for account_number, (record_date, balance,
                          rti_account_id) in latest.items():
