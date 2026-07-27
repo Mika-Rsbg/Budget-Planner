@@ -31,9 +31,7 @@ class TransactionPage(BaseToplevelWindow):
         """List[Tuple[int, str, str, float]]"""
         self.counterparty_data = get_counterparty_data()
         """List[Tuple[int, str, str]]"""
-        self.category_data = get_category_data(
-            selected_columns=[True, True, True, False]
-        )
+        self.category_data = get_category_data()
         """List[Tuple[int, str, float]]"""
         super().__init__(parent, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
@@ -75,8 +73,8 @@ class TransactionPage(BaseToplevelWindow):
                 break
         temp_category_name = self.category_name_var.get()
         for category in self.category_data:
-            if category[1] == temp_category_name:
-                rti_category_id = category[0]
+            if category.name == temp_category_name:
+                rti_category_id = category.id
                 break
         rti_user_comments = None
         rti_displayed_name = None
@@ -391,7 +389,7 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.category_label.grid(row=0, column=0)
         category_names: List[str] = [
-            cast(str, category[1]) for category in self.category_data
+            cast(str, category.name) for category in self.category_data
         ]
         self.category_name_var = tk.StringVar(value="Select Category")
         self.category_name_dropdown = ttk.Combobox(
@@ -405,10 +403,10 @@ class TransactionPage(BaseToplevelWindow):
         def on_category_selected(event):
             selected_name = self.category_name_var.get()
             for category in self.category_data:
-                if category[1] == selected_name:
+                if category.name == selected_name:
                     self.category_budget_entry.config(state="normal")
                     self.category_budget_entry.delete(0, tk.END)
-                    self.category_budget_entry.insert(0, str(category[2]))
+                    self.category_budget_entry.insert(0, str(category.budget))
                     self.category_budget_entry.config(state="readonly")
                     break
 
