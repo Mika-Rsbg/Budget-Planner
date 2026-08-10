@@ -41,9 +41,24 @@ class ImportOverview(BaseToplevelWindow):
         super().__init__(parent, plugin_scope, title, geometry, bg_color,
                          fullscreen=True)
 
+    def _update_selected_count(self) -> None:
+        if not hasattr(self, "number_selected_readonly_entry"):
+            return
+
+        selected_rows = self.sheet.get_selected_rows(get_cells_as_rows=True)
+        count = len(selected_rows)
+        display_value = f"{count}/{len(self.sheet_data)}"
+
+        self.number_selected_readonly_entry.config(state="normal")
+        self.number_selected_readonly_entry.delete(0, tk.END)
+        self.number_selected_readonly_entry.insert(0, display_value)
+        self.number_selected_readonly_entry.config(state="readonly")
+
     def _selected_not_already_imported(self):
+        self.sheet.deselect("all")
         for row in self.rows_not_in_database:
             self.sheet.add_row_selection(row)
+        self._update_selected_count()
 
     def _refresh_selection(self):
         mode = self.selection_mode_dropdown.get()
@@ -51,6 +66,7 @@ class ImportOverview(BaseToplevelWindow):
             self._selected_not_already_imported()
         else:
             self.sheet.deselect("all")
+            self._update_selected_count()
         # TODO: add differnt mode support
 
     def init_ui(self) -> None:
@@ -207,6 +223,10 @@ class ImportOverview(BaseToplevelWindow):
         # FIXME: Add no or empty file selected support
 
         self.sheet.enable_bindings()
+        self.sheet.bind(
+            "<<SheetSelect>>",
+            lambda event=None: self._update_selected_count()
+        )
         self.sheet.pack(fill="both", expand=True)
 
         # ============= Separator =============
@@ -260,18 +280,11 @@ class ImportOverview(BaseToplevelWindow):
             self.selection_frame, state="readonly",
             background=self.bg_color, foreground="black", width=10
         )
-
-        number_selected = "0/" + str(self.sheet_data.__len__())
-
-        self.number_selected_readonly_entry.config(
-            state="normal", justify="center"
-        )
-        self.number_selected_readonly_entry.delete(0, tk.END)
-        self.number_selected_readonly_entry.insert(0, number_selected)
-        self.number_selected_readonly_entry.config(state="readonly")
+        self.number_selected_readonly_entry.config(justify="center")
         self.number_selected_readonly_entry.grid(
             row=0, column=3, sticky="ew", padx=10
         )
+        self._update_selected_count()
 
         self.refresh_selection_button = ttk.Button(
             self.selection_frame, text="Aktualisieren",
