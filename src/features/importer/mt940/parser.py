@@ -167,8 +167,7 @@ def pars_block(
                     next_qmark = block.find('?', start)
                     end = next_qmark if next_qmark != -1 else len(block)
                     purpose_fields.append(block[start:end])
-            temp_purpose = ' '.join(purpose_fields)
-            # TODO: remove " "
+            temp_purpose = ''.join(purpose_fields)
 
             if temp_purpose.startswith("SVWZ+"):
                 temp_purpose_addition = "SVWZ"
@@ -194,7 +193,7 @@ def pars_block(
             if block.find('?33') != -1:
                 second_start = block.find('?33') + 3
                 second_end = block.find('?', second_start)
-                temp_counterparty_name += " " + block[second_start:second_end]
+                temp_counterparty_name += "" + block[second_start:second_end]
 
             last_block_86 = True
         # =========== Closing balance ===========
