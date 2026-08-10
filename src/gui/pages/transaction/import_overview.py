@@ -1,7 +1,5 @@
 import logging
 import tksheet
-import csv
-from pathlib import Path
 from tkinter import ttk
 import tkinter as tk
 from typing import List, Tuple, Union, Dict
@@ -16,18 +14,6 @@ from models.transaction.imported_view import ImportedTransactionView
 logger = logging.getLogger(__name__)
 
 
-def save_to_csv(
-    file_path: Path,
-    header: list[str],
-    data: list[list],
-) -> None:
-    with open(file_path, "w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-
-        writer.writerow(header)
-        writer.writerows(data)
-
-
 class ImportOverview(BaseToplevelWindow):
     def __init__(self, parent: BaseWindow, plugin_scope: str,
                  title="Transactions Importer Page",
@@ -36,11 +22,7 @@ class ImportOverview(BaseToplevelWindow):
 
         (path, header, data, initialy_selected_rows, account_data,
          new_balance, transactions, history_data,
-         latest, valid_file) = import_mt940_file_gui(
-            self.parent,
-            path="C:/Users/Mika/Downloads/20260704-1077149530-umsMT940.TXT"
-            )
-        # TODO: Delete path
+         latest, valid_file) = import_mt940_file_gui(self.parent)
 
         self.file_path: str = path
         self.sheet_header: List[str] = header
@@ -55,12 +37,6 @@ class ImportOverview(BaseToplevelWindow):
         self.history_data = history_data
         self.latest = latest
         self.valid_file_selected = valid_file
-
-        save_to_csv(
-            Path("transactions_nogithub.csv"),
-            self.sheet_header,
-            self.sheet_data,
-        )
         super().__init__(parent, plugin_scope, title, geometry, bg_color,
                          fullscreen=True)
 
@@ -366,18 +342,22 @@ class ImportOverview(BaseToplevelWindow):
         self.main_frame.grid_rowconfigure(4, weight=1)
 
     def open_file(self):
-        (path, header, data,
-         account_data, new_balance) = import_mt940_file_gui(self.parent)
+        (path, header, data, initialy_selected_rows, account_data,
+         new_balance, transactions, history_data,
+         latest, valid_file) = import_mt940_file_gui(self.parent)
         self.file_path = path
         self.sheet_header = header
         self.sheet_data = data
+        self.rows_not_in_database = initialy_selected_rows
         self.account_data = account_data
         self.new_balance = new_balance
-        save_to_csv(
-            Path("transactions_nogithub.csv"),
-            self.sheet_header,
-            self.sheet_data,
-        )
+        self.transactions_by_import_id = {
+            transaction.import_id: transaction
+            for transaction in transactions
+        }
+        self.history_data = history_data
+        self.latest = latest
+        self.valid_file_selected = valid_file
         self.reload()
 
     def import_transactions(self):
