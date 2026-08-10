@@ -65,3 +65,8 @@ def get_iso_date(date: str = "", today: bool = False) -> str:
 
     dt = datetime.datetime(full_year, month, day)
     return dt.strftime("%Y-%m-%d")
+
+
+def format_mt940_date(value: datetime.date) -> str:
+    """Convert a date object to German date format."""
+    return value.strftime("%d.%m.%Y")
