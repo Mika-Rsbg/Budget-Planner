@@ -156,7 +156,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 '''
                 CREATE TABLE IF NOT EXISTS tbl_Counterparty (
                     i8_CounterpartyID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    str_CounterpartyName TEXT UNIQUE NOT NULL,
+                    str_CounterpartyName TEXT NOT NULL,
                     str_CounterpartyNumber TEXT UNIQUE NOT NULL
                 );
                 '''
