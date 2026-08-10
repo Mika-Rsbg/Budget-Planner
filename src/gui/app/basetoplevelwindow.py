@@ -107,6 +107,7 @@ class BaseToplevelWindow(tk.Toplevel):
 
         popup.grab_set()
         popup.transient(self)
+        self.wait_window(popup)
 
     @log_fn
     def reload(self) -> None:
