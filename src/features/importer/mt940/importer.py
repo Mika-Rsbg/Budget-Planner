@@ -1,14 +1,18 @@
 from tkinter import filedialog
 import logging
-from typing import List, Dict, Tuple, Union, Optional
-from datetime import date
+from typing import List, Tuple, Union, Optional, Any, Dict
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
+from features.account.account_repository import get_account_by_id
 import features.importer.mt940.interpreter as mt940_interpreter
 import features.importer.mt940.database_service as mt940_database_service
 import features.account.account_repository as account_repository
 from features.importer.mt940.parser import pars_file
+from features.importer.mt940.table_config import (TableColumn,
+                                                  TRANSACTION_TABLE_COLUMNS)
 from models.transaction.imported import ImportedTransaction
+from models.transaction.imported_view import ImportedTransactionView
+from models.account.entity import Account
 
 
 logger = logging.getLogger(__name__)
@@ -95,74 +99,56 @@ def import_mt940_file(master: BaseWindow) -> None:
 
 
 def format_data(
-    data: List[ImportedTransaction],
-    filter_columns: List[str]
-) -> List[List[Union[str, Tuple[str], int, float]]]:
-    """
-    Convert parsed transaction dictionaries into a tabular list format.
-
-    This function extracts only the specified columns from each transaction
-    dictionary and converts the data into a list-of-lists structure suitable
-    for table widgets such as tksheet.
-
-    Args:
-        data (List[ImportedTransaction]):
-            List of ImportedTransaction containing parsed MT940 data.
-        filtered_columns (List[str]):
-            List of keys to include in the output table.
-
-    Returns:
-        List[List[Union[str, Tuple[str], int, float]]]:
-            Tabular representation of the filtered transaction data.
-            Each inner list represents one row.
-    """
-    formatted_data: List[
-        List[Union[str, Tuple[str], int, float]]
-    ] = []
+    data: list[ImportedTransactionView],
+    columns: list[TableColumn]
+) -> list[list[Any]]:
+    """Convert transactions into table data."""
+    formatted_data = []
 
     for transaction in data:
         row = []
 
-        for column in filter_columns:
-            row.append(getattr(transaction, column))
+        for column in columns:
+            value = getattr(transaction, column.attribute)
+
+            if column.formatter is not None:
+                value = column.formatter(value)
+
+            row.append(value)
 
         formatted_data.append(row)
 
     return formatted_data
 
 
-def get_account_data(account_id: int) -> Dict[str, str | float | int | date]:
-    # TODO: use function from account_service
-    # TODO: add docs
-    temp_account_data = account_repository.get_account_data()
-    # [AccountID(int), AccountName(str), AccountNumber(str),
-    # AccountBalance(float), RecordDate(str)]
-    # (3, 'Sparbuch 2', '3073527115', 226.99, '2024-12-30')
-    for account_data in temp_account_data:
-        if id == account_id:
-            account = {
-                "account_id": account_data.id,
-                "account_name": account_data.name,
-                "account_number": account_data.number,
-                "account_balance": account_data.balance,
-                "last_record_date": account_data.record_date
-            }
-            return account
-    return {}
+def get_initial_selected_rows(
+    data: list[ImportedTransactionView],
+) -> list[int]:
+    """
+    Return rows that should be selected initially,
+    because they aren't in the database.
+    """
+    return [
+        index
+        for index, transaction in enumerate(data)
+        if not transaction.in_database
+    ]
 
 
 @log_fn
 def import_mt940_file_gui(
-        master: BaseWindow, columns: List[str] = [
-            "opening_balance", "date", "booking_date", "amount",
-            "transaction_type_name", "purpose", "counterparty_account_number",
-            "counterparty_name"], path: Optional[str] = None
+        master: BaseWindow, path: Optional[str] = None
         ) -> Tuple[
                 str,
                 List[str],
-                List[List[Union[str, Tuple[str], int, float]]],
-                Dict[str, str | float | int | date],
-                str
+                List[List[Union[str, float]]],
+                List[int],
+                Account,
+                str,
+                List[ImportedTransactionView],
+                List[Tuple[int, float, str, str]],
+                Dict[str, Tuple[str, float, int]],
+                bool
             ]:
     """
     Open a file dialog to import an MT940 text file and parse its content.
@@ -184,19 +170,11 @@ def import_mt940_file_gui(
     Args:
         master (BaseWindow):
             Parent window used to attach the file dialog.
-        columns (List[str], optional):
-            Column names used for formatting the parsed data.
-            Defaults to:
-            [
-                "OpeningBalance", "Date", "Bookingdate",
-                "Amount", "TransactionTypeName", "Purpose",
-                "CounterpartyAccount", "CounterpartyName"
-            ]
 
     Returns:
         Tuple[str, List[str],
-                        List[List[Union[str, Tuple[str], int, float]]],
-                        Dict[str, str | float | int]]:
+            List[List[Union[str, float, Tuple[str, str, str]]]],
+            Dict[str, str | float | int]]:
             A tuple containing:
             - file_path: Path to the selected MT940 file.
             - headers: List of column names.
@@ -209,6 +187,7 @@ def import_mt940_file_gui(
             If no file is selected, returns ("", [], [], {}, "").
     """
     # TODO: update docs
+
     if path is None:
         file_path = filedialog.askopenfilename(
             parent=master,
@@ -217,26 +196,37 @@ def import_mt940_file_gui(
         )
     else:
         file_path = path
+
     if file_path:
         logger.info("Start importing bank statment.")
+
         with open(file_path, 'r', encoding='utf8') as file:
             file_content = file.read()
 
         parsed_data = pars_file(file_content)
-        formatted_data = format_data(parsed_data, columns)
 
         (interpreted_data, closing_balance
-         ) = mt940_interpreter.interpret_transactions(
+         ) = mt940_interpreter.interpret_transactions_gui(
             parsed_data, master
             )
+
+        formatted_data = format_data(
+            interpreted_data, TRANSACTION_TABLE_COLUMNS
+        )
+
+        initial_selected_rows = get_initial_selected_rows(interpreted_data)
+
         (interpreted_history_data, latest
          ) = mt940_interpreter.interpret_account_history_entries(
              closing_balance)
 
         new_balance = str(next(iter(latest.values()))[1])
-        # {'1077149530': ('260702', '200.00', 1)}
+        # latest: {'1077149530': ('260702', '200.00', 1)}
 
-        headers = columns
+        headers = [
+            column.header
+            for column in TRANSACTION_TABLE_COLUMNS
+        ]
 
         first_entry = parsed_data[0]
         if parsed_data:
@@ -244,12 +234,34 @@ def import_mt940_file_gui(
                 data=["", str(first_entry.account_number), "", ""],
                 supplied_data=[False, True, False, False]
                 )
-            account_data = get_account_data(account_id)
+            account_data = get_account_by_id(account_id)
+            assert account_data is not None
         else:
             logger.info("Empty file selected.")
-            return ("", [], [], {}, "")
+            return ("n.a.", ["null"], [["null"]], [], Account.empty(), "n.a.",
+                    [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
+                    {"": ("", 0.0, 0)}, False)
 
-        return (file_path, headers, formatted_data, account_data, new_balance)
+        return (file_path, headers, formatted_data,
+                initial_selected_rows, account_data, new_balance,
+                interpreted_data, interpreted_history_data, latest, True)
     else:
         logger.info("No file selected.")
-        return ("", [], [], {}, "")
+        return ("n.a.", ["null"], [["null"]], [], Account.empty(), "n.a.",
+                [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
+                {"": ("", 0.0, 0)}, False)
+
+
+@log_fn
+def insert_transactions_to_db(data: List[ImportedTransactionView],
+                              history_data: List[Tuple[int, float, str, str]],
+                              latest: Dict[str, Tuple[str, float, int]],
+                              window: BaseWindow) -> None:
+    # TODO: add docs
+    mt940_database_service.add_transactions(data)
+
+    # Add the closing balance to the database
+    mt940_database_service.add_account_history_entries(history_data)
+
+    mt940_database_service.update_account_balances(latest)
+    logger.debug("Bank statement successfully inserted to database.")
