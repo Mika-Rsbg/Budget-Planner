@@ -4,6 +4,7 @@ import logging
 from core.database.connection import DatabaseConnection
 import config
 from models.transaction.entity import Transaction
+from models.transaction.imported_view import ImportedTransactionView
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def edit_transaction(db_path: Path = config.Database.PATH):
     pass
 
 
-def get_transaction_id(transaction: Transaction,
+def get_transaction_id(transaction: Transaction | ImportedTransactionView,
                        db_path: Path = config.Database.PATH) -> int | None:
     """Find the ID of an existing transaction based on its details.
 
@@ -54,13 +55,36 @@ def get_transaction_id(transaction: Transaction,
         raise Error(f"Error connecting to database: {e}")
 
     try:
+        # cursor.execute(
+        #     '''
+        #     SELECT i8_TransactionID
+        #     FROM tbl_Transaction
+        #     WHERE i8_AccountID=?
+        #       AND str_Date=?
+        #       AND str_Bookingdate=?
+        #       AND i8_TransactionTypeID=?
+        #       AND real_Amount=?
+        #       AND str_Purpose=?
+        #       AND i8_CounterpartyID=?
+        #       AND i8_CategoryID=?;
+        #     ''',
+        #     (
+        #         transaction.account_id,
+        #         transaction.date.isoformat(),
+        #         transaction.booking_date.isoformat(),
+        #         transaction.transaction_type_id,
+        #         transaction.amount,
+        #         transaction.purpose,
+        #         transaction.counterparty_id,
+        #         transaction.category_id
+        #     )
+        # )
         cursor.execute(
             '''
             SELECT i8_TransactionID
             FROM tbl_Transaction
             WHERE i8_AccountID=?
               AND str_Date=?
-              AND str_Bookingdate=?
               AND i8_TransactionTypeID=?
               AND real_Amount=?
               AND str_Purpose=?
@@ -70,7 +94,6 @@ def get_transaction_id(transaction: Transaction,
             (
                 transaction.account_id,
                 transaction.date.isoformat(),
-                transaction.booking_date.isoformat(),
                 transaction.transaction_type_id,
                 transaction.amount,
                 transaction.purpose,
@@ -78,6 +101,9 @@ def get_transaction_id(transaction: Transaction,
                 transaction.category_id
             )
         )
+        # TODO: add booking_date to query
+        # bookingdate always has the year 2020 in the database
+        # probably because of a mistake during the import
 
         row = cursor.fetchone()
         if row:
@@ -90,7 +116,7 @@ def get_transaction_id(transaction: Transaction,
     return None
 
 
-def transaction_exists(transaction: Transaction,
+def transaction_exists(transaction: Transaction | ImportedTransactionView,
                        db_path: Path = config.Database.PATH) -> bool:
     """Check if a transaction with the same details
     (except displayed_name and user_comments) exists
@@ -109,7 +135,7 @@ def transaction_exists(transaction: Transaction,
     return get_transaction_id(transaction, db_path) is not None
 
 
-def add_transaction(data: Transaction,
+def add_transaction(data: Transaction | ImportedTransactionView,
                     db_path: Path = config.Database.PATH) -> None:
     """
     Adds a transaction to the database after checking for duplicates.

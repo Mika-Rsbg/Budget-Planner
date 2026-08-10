@@ -1,7 +1,6 @@
 import logging
 from typing import List, Dict, Tuple
-from datetime import date
-from decimal import Decimal
+from datetime import datetime
 from gui.app.basewindow import BaseWindow
 from features.account import account_repository as account_repository
 from features.account import account_service as account_service
@@ -9,10 +8,12 @@ from features.counterparty import (counterparty_repository
                                    as counterparty_repository)
 from features.transaction import (transaction_typ_repository
                                   as transaction_typ_repository)
+from features.transaction import transaction_repository
 from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
 from models.transaction.imported import ImportedTransaction
 from models.transaction.entity import Transaction
+from models.transaction.imported_view import ImportedTransactionView
 
 
 logger = logging.getLogger(__name__)
@@ -169,6 +170,7 @@ def interpret_transactions(
                 Closing balance entries in format:
                 (account_number, record_date, balance)
     """
+    # TODO: update docs
     closing_balance: List[Tuple[str, str, str]] = []
 
     interpreted_data: List[Transaction] = []
@@ -181,10 +183,10 @@ def interpret_transactions(
         rti_account_id = get_account_id(temp_account_number, entry, window)
 
         temp_date = entry.date
-        rti_date = date.fromisoformat(temp_date)
+        rti_date = datetime.strptime(temp_date, "%y%m%d").date()
 
-        temp_bookingdate = str(temp_date[:2]) + entry.booking_date
-        rti_booking_date = date.fromisoformat(temp_bookingdate)
+        temp_bookingdate = entry.booking_date
+        rti_booking_date = datetime.strptime(temp_bookingdate, "%y%m%d").date()
 
         temp_tt_number = entry.transaction_type_number
         temp_tt_name = entry.transaction_type_name
@@ -214,7 +216,7 @@ def interpret_transactions(
             date=rti_date,
             booking_date=rti_booking_date,
             transaction_type_id=rti_tt_id,
-            amount=Decimal(rti_amount),
+            amount=float(rti_amount),
             purpose=rti_purpose,
             counterparty_id=rti_counterparty_id,
             category_id=rti_category_id,
@@ -222,6 +224,128 @@ def interpret_transactions(
             displayed_name=rti_displayed_name,
         )
         interpreted_data.append(transaction)
+
+    return (interpreted_data, closing_balance)
+
+
+def interpret_transactions_gui(
+        data: List[ImportedTransaction],
+        window: BaseWindow
+        ) -> Tuple[List[ImportedTransactionView],
+                   List[Tuple[str, str, str]]]:
+    # TODO: change name
+    # TODO: update docs
+    """
+    Convert parsed MT940 transactions into database-ready structures.
+
+    This function:
+        - Resolves or creates accounts, transaction types, and counterparties
+        - Converts raw MT940 fields into normalized database IDs
+        - Builds RTI (Ready-To-Insert) transaction tuples
+        - Collects closing balance entries for account history processing
+
+    Args:
+        data (List[Dict[str, Union[str, Tuple[str], int, float]]]):
+            Parsed MT940 transaction data.
+        window (BaseWindow):
+            Main application window used for account creation
+            and context handling.
+
+    Returns:
+        Tuple containing:
+            - List[RTIData]:
+                Normalized transaction data ready for database insertion.
+            - List[Tuple[str, str, str]]:
+                Closing balance entries in format:
+                (account_number, record_date, balance)
+    """
+    closing_balance: List[Tuple[str, str, str]] = []
+
+    interpreted_data: List[ImportedTransactionView] = []
+
+    transaction_id = 0
+
+    for entry in data:
+        # temp: not ready for the database
+        # rti: ready to insert
+
+        temp_account_number = entry.account_number
+        rti_account_id = get_account_id(temp_account_number, entry, window)
+
+        temp_date = entry.date
+        rti_date = datetime.strptime(temp_date, "%y%m%d").date()
+
+        temp_bookingdate = entry.booking_date
+        rti_booking_date = datetime.strptime(temp_bookingdate, "%y%m%d").date()
+
+        temp_tt_number = entry.transaction_type_number
+        temp_tt_name = entry.transaction_type_name
+        rti_tt_id = get_tt_id(temp_tt_name, temp_tt_number)
+
+        rti_amount = str(entry.amount)
+        rti_purpose = entry.purpose
+
+        temp_counterparty_number = entry.counterparty_account_number
+        temp_counterparty_name = entry.counterparty_name
+        rti_counterparty_id = get_counterparty_id(
+            temp_counterparty_name, temp_counterparty_number
+        )
+
+        rti_category_id = 1  # Default category
+        rti_user_comments = None  # No user comments
+        rti_displayed_name = None  # No displayed name
+
+        # TODO: Add support for category, comments and displayed_name
+
+        # Add the closing balance to the List
+        if entry.closing_balance != ("", "", ""):
+            closing_balance.append(entry.closing_balance)
+
+        check_transaction = Transaction(
+            account_id=rti_account_id,
+            date=rti_date,
+            booking_date=rti_booking_date,
+            transaction_type_id=rti_tt_id,
+            amount=float(rti_amount),
+            purpose=rti_purpose,
+            counterparty_id=rti_counterparty_id,
+            category_id=rti_category_id,
+            user_comments=rti_user_comments,
+            displayed_name=rti_displayed_name,
+        )
+
+        rti_transaction_id = transaction_repository.get_transaction_id(
+            check_transaction
+        )
+        rti_in_database = rti_transaction_id is not None
+
+        transaction = ImportedTransactionView(
+            import_id=transaction_id,
+            reference=entry.reference,
+            account_number=entry.account_number,
+            account_id=rti_account_id,
+            opening_balance=entry.opening_balance,
+            date=rti_date,
+            booking_date=rti_booking_date,
+            currency=entry.currency,
+            transaction_type_name=entry.transaction_type_name,
+            transaction_type_number=entry.transaction_type_number,
+            transaction_type_id=rti_tt_id,
+            amount=float(rti_amount),
+            purpose=rti_purpose,
+            purpose_addition=entry.purpose_addition,
+            counterparty_account_number=entry.counterparty_account_number,
+            counterparty_name=entry.counterparty_name,
+            counterparty_id=rti_counterparty_id,
+            category_id=rti_category_id,
+            user_comments=rti_user_comments,
+            displayed_name=rti_displayed_name,
+            in_database=rti_in_database,
+            transaction_id=rti_transaction_id
+        )
+        interpreted_data.append(transaction)
+
+        transaction_id += 1
 
     return (interpreted_data, closing_balance)
 

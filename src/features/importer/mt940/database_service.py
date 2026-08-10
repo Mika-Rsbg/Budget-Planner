@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Sequence
 from datetime import date
 import logging
 from features.account import (account_history_repository
@@ -9,12 +9,13 @@ import features.account.account_service as account_service
 from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
 from models.transaction.entity import Transaction
+from models.transaction.imported_view import ImportedTransactionView
 
 
 logger = logging.getLogger(__name__)
 
 
-def add_transactions(data: List[Transaction]):
+def add_transactions(data: Sequence[Transaction | ImportedTransactionView]):
     """
     Insert transaction data into the database.
 
