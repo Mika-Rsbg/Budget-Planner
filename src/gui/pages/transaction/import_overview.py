@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImportOverview(BaseToplevelWindow):
-    def __init__(self, parent: BaseWindow, plugin_scope: str,
+    def __init__(self, parent: BaseWindow,
                  title="Transactions Importer Page",
                  geometry="500x600", bg_color="white") -> None:
         self.parent = parent
@@ -37,6 +37,7 @@ class ImportOverview(BaseToplevelWindow):
         self.history_data = history_data
         self.latest = latest
         self.valid_file_selected = valid_file
+        plugin_scope = "import-overview"
         super().__init__(parent, plugin_scope, title, geometry, bg_color,
                          fullscreen=True)
 

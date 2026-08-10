@@ -1,38 +1,34 @@
 import tkinter as tk
-from gui.pages.transaction.transactionpage import TransactionPage
-from features.importer.mt940.importer import import_mt940_file
+from gui.app.basewindow import BaseWindow
+from gui.pages.transaction.import_overview import ImportOverview
 
-menu_id = 20
+menu_id = 5
 
 
-def add_to_menu(window, menu_bar):
+def add_to_menu(window: BaseWindow, menu_bar):
     transaction_menu = tk.Menu(menu_bar, tearoff=0)
 
     # Transaktion manuell hinzufügen
     transaction_menu.add_command(
-        label="Manuelle Transaktion hinzufügen (Beta)",
-        command=lambda: open_transaction_page
-        (window)
+        label="Manuelle Transaktion hinzufügen (WIP)"
     )
 
     # Transaktion aus Datei importieren
     transaction_menu.add_command(
         label="Transaktionen aus MT940-Datei importieren",
-        command=lambda: import_mt940_file(window)
+        command=lambda: open_transaction_page(window)
     )
 
     transaction_menu.add_separator()
 
     # Transaktion bearbeiten
     transaction_menu.add_command(
-        label="Transaktion bearbeiten (WIP)",
-        command=lambda: open_transaction_page_1(window, 1)
+        label="Transaktion bearbeiten (WIP)"
     )
 
     # Transaktion löschen
     transaction_menu.add_command(
-        label="Transaktion löschen (WIP)",
-        command=lambda: open_transaction_page_1(window, 2)
+        label="Transaktion löschen (WIP)"
     )
 
     transaction_menu.add_separator()
@@ -49,24 +45,10 @@ def add_to_menu(window, menu_bar):
     menu_bar.add_cascade(label="Transaktionen", menu=transaction_menu)
 
 
-def open_transaction_page_1(window, opening_mode: int) -> None:
-    """Open the transaction page.
-
-    Args:
-        window: parent window
-        opening_mode (int): 0 = add, 1 = edit, 2 = delete
-    """
-    # TransactionPage(window, opening_mode)
-    window.show_message(
-        "Feature not implemented yet!"
-    )
-
-
 def open_transaction_page(window) -> None:
     """Open the transaction page.
 
     Args:
         window: parent window
-        opening_mode (int): 0 = add, 1 = edit, 2 = delete
     """
-    TransactionPage(parent=window, plugin_scope="transaction-page")
+    ImportOverview(parent=window)

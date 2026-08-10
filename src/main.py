@@ -52,7 +52,7 @@ def main_test() -> None:
         auto_ui_init=False
     )
     app.withdraw()  # Hide the root window
-    transaction_page = ImportOverview(parent=app, plugin_scope="test")
+    transaction_page = ImportOverview(parent=app)
     app.wait_window(transaction_page)
     app.destroy()
 
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    # main()
-    main_test()
+    main()
+    # main_test()
     # main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
