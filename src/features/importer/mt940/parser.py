@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from decimal import Decimal
 import logging
 from models.transaction.imported import ImportedTransaction
 from core.logging.logging_tools import log_fn
@@ -66,12 +65,12 @@ def pars_block(
     temp_transaction_type_name: str = ""
     temp_reference: str = ""
     temp_account_number: str = ""
-    temp_opening_balance: Decimal = Decimal(0)
+    temp_opening_balance: float = float(0)
     temp_date: str = ""
     temp_booking_date: str = ""
     temp_amount_type: int
     temp_currency: str = ""
-    temp_amount: Decimal = Decimal(0)
+    temp_amount: float = float(0)
     temp_purpose_addition: str = ""
     temp_purpose: str = ""
     temp_counterparty_name: str = ""
@@ -91,7 +90,7 @@ def pars_block(
         # =========== Opening balance ===========
         elif block.startswith(":60F:"):
             # Opening balance of the account
-            temp_opening_balance = Decimal(block[15:].replace(',', '.'))
+            temp_opening_balance = float(block[15:].replace(',', '.'))
             if block[6] == "D":
                 temp_opening_balance *= -1
         #  =========== (Booking-)Date and Amount of the transaction ===========
@@ -105,7 +104,7 @@ def pars_block(
                     opening_balance=temp_opening_balance,
                     closing_balance=temp_closing_balance,
                     date=temp_date,
-                    booking_date=temp_booking_date,
+                    booking_date=str(temp_date[:2]) + temp_booking_date,
                     currency=temp_currency,
                     amount=temp_amount,
                     transaction_type_number=temp_transaction_type_number,
@@ -151,7 +150,7 @@ def pars_block(
                 amount_end_search_param = 'F'
             amount_end = block.find(amount_end_search_param, amount_start)
             temp_amount_str = block[amount_start:amount_end].replace(',', '.')
-            temp_amount = Decimal(temp_amount_str) * temp_amount_type
+            temp_amount = float(temp_amount_str) * temp_amount_type
         # =========== TransacationTyp, Purpose and Counterparty ===========
         elif block.startswith(":86:"):
             block = block[4:]
@@ -214,7 +213,7 @@ def pars_block(
                 opening_balance=temp_opening_balance,
                 closing_balance=temp_closing_balance,
                 date=temp_date,
-                booking_date=temp_booking_date,
+                booking_date=str(temp_date[:2]) + temp_booking_date,
                 currency=temp_currency,
                 amount=temp_amount,
                 transaction_type_number=temp_transaction_type_number,
@@ -232,11 +231,11 @@ def pars_block(
             # Reset temporary variables for the next transaction
             temp_reference = ""
             temp_account_number = ""
-            temp_opening_balance = Decimal(0)
+            temp_opening_balance = float(0)
             temp_date = ""
             temp_booking_date = ""
             temp_amount_type = 0
-            temp_amount = Decimal(0)
+            temp_amount = float(0)
             temp_purpose_addition = ""
             temp_purpose = ""
             temp_counterparty_name = ""

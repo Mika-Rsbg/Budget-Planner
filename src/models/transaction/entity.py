@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from decimal import Decimal
 from datetime import date as datetime
 
 
@@ -12,7 +11,7 @@ class Transaction:
 
     transaction_type_id: int
 
-    amount: Decimal
+    amount: float
 
     purpose: str
 
@@ -24,3 +23,19 @@ class Transaction:
     displayed_name: str | None
 
     transaction_id: int | None = None
+
+    @classmethod
+    def empty(cls) -> "Transaction":
+        return cls(
+            account_id=-1,
+            booking_date=datetime(1, 1, 1),
+            date=datetime(1, 1, 1),
+            transaction_type_id=-1,
+            amount=float("0"),
+            purpose="",
+            counterparty_id=None,
+            category_id=-1,
+            user_comments=None,
+            displayed_name=None,
+            transaction_id=None,
+        )

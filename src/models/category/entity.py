@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from decimal import Decimal
+from float import float
 
 
 @dataclass
@@ -8,6 +8,6 @@ class Category:
 
     name: str
 
-    budget: Decimal
+    budget: float
 
     budget_period_id: int
