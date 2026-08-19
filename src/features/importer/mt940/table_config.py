@@ -20,5 +20,5 @@ TRANSACTION_TABLE_COLUMNS = [
     TableColumn("counterparty_account_number", "Kontonummer"),
     TableColumn("counterparty_name", "Name"),
     TableColumn("opening_balance", "Eröffnungssaldo"),
-    TableColumn("import_id", "ID"),
+    TableColumn("category_id", "Kategorie ID"),
 ]

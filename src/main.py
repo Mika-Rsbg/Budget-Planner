@@ -22,7 +22,7 @@ def main() -> None:
 
     create_database()
 
-    app = Homepage(fullscreen=True)
+    app = Homepage(fullscreen=False)
     app.run()
 
     logger.info("")

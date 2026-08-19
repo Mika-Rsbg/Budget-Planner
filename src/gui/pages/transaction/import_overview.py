@@ -403,8 +403,10 @@ class ImportOverview(BaseToplevelWindow):
             # TODO: improve user feedback
             logger.debug("Close Import Overview. After import.")
             self.destroy()
+            self.parent.reload()
         else:
             self.show_message("Empty or invalid file selected.")
             logger.info("Empty or invalid file selected. No import possible.")
             logger.debug("Close Import Overview.")
             self.destroy()
+            self.parent.reload()
