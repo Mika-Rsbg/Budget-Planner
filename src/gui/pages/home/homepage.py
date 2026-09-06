@@ -69,6 +69,7 @@ class Homepage(BaseWindow):
         """
         Init the UI for the homepage.
         """
+        # TODO: add desciption when hovering
         # ============= Heanding =============
         self.heading_frame = ttk.Frame(self.main_frame, padding=10)
         self.heading_frame.grid(row=0, column=0, sticky="nsew")
