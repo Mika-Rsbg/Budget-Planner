@@ -5,7 +5,7 @@ import tkinter as tk
 from typing import List, Tuple, Union, Dict
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-from features.importer.mt940.importer import (import_mt940_file_gui,
+from features.importer.mt940.importer import (import_mt940_file,
                                               insert_transactions_to_db)
 from models.account.entity import Account
 from models.transaction.imported_view import ImportedTransactionView
@@ -22,7 +22,7 @@ class ImportOverview(BaseToplevelWindow):
 
         (path, header, data, initialy_selected_rows, account_data,
          new_balance, transactions, history_data,
-         latest, valid_file) = import_mt940_file_gui(self.parent)
+         latest, valid_file) = import_mt940_file(self.parent)
 
         self.file_path: str = path
         self.sheet_header: List[str] = header
@@ -358,7 +358,7 @@ class ImportOverview(BaseToplevelWindow):
     def open_file(self):
         (path, header, data, initialy_selected_rows, account_data,
          new_balance, transactions, history_data,
-         latest, valid_file) = import_mt940_file_gui(self.parent)
+         latest, valid_file) = import_mt940_file(self.parent)
         self.file_path = path
         self.sheet_header = header
         self.sheet_data = data
