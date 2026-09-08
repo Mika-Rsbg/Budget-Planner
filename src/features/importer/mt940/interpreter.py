@@ -61,6 +61,7 @@ def get_account_id(account_number: str,
             data=[None, account_number, None, None],
             supplied_data=[False, True, False, False]
         )
+    logger.debug("Got account id from database.")
     return rti_account_id
 
 
@@ -97,6 +98,7 @@ def get_tt_id(tt_name: str, tt_number: str) -> int:
             data=[tt_name, tt_number],
             supplied_data=[True, True]
         )
+    logger.debug("Got transaction typ id from database.")
     return rti_tt_id
 
 
@@ -138,6 +140,7 @@ def get_counterparty_id(counterparty_name: str,
     if rti_counterparty_id is None:
         # wird nicht passieren, da None nie eintreten kann
         return -1
+    logger.debug("Got counterparty id from database.")
     return rti_counterparty_id
 
 
@@ -146,7 +149,6 @@ def interpret_transactions(
         window: BaseWindow
         ) -> Tuple[List[ImportedTransactionView],
                    List[Tuple[str, str, str]]]:
-    # TODO: change name
     # TODO: update docs
     """
     Convert parsed MT940 transactions into database-ready structures.
@@ -172,6 +174,7 @@ def interpret_transactions(
                 Closing balance entries in format:
                 (account_number, record_date, balance)
     """
+    logger.info("Start interpreting bank statment.")
     closing_balance: List[Tuple[str, str, str]] = []
 
     interpreted_data: List[ImportedTransactionView] = []
@@ -260,6 +263,7 @@ def interpret_transactions(
 
         transaction_id += 1
 
+    logger.debug("Bank statment succesfully interpreted.")
     return (interpreted_data, closing_balance)
 
 
@@ -290,6 +294,7 @@ def interpret_account_history_entries(
                 Latest entry per account:
                 account_number -> (record_date, balance, account_id)
     """
+    logger.debug("Start interpreting account history entries.")
     latest: Dict = {}
     interpreted_data: List[Tuple[int, float, str, str]] = []
 
@@ -324,4 +329,5 @@ def interpret_account_history_entries(
             latest[account_number] = (record_date, balance, account_id)
         elif record_date > latest[account_number][0]:
             latest[account_number] = (record_date, balance, account_id)
+    logger.debug("Succesfully interpreted account history_entries.")
     return (interpreted_data, latest)

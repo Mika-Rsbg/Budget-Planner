@@ -37,6 +37,7 @@ def format_data(
 
         formatted_data.append(row)
 
+    logger.debug("Formatted ImportedTransactionView's for table view.")
     return formatted_data
 
 
@@ -70,50 +71,83 @@ def import_mt940_file(
                 bool
             ]:
     """
-    Open a file dialog to import an MT940 text file and parse its content.
+    Import and parse an MT940 bank statement file.
 
-    This function allows the user to select a text file via a GUI file dialog.
-    If a file is selected, it reads and parses the MT940 content, converts it
-    into a structured format, and returns the selected file path together with
-    the table headers and formatted transaction data.
+    If ``path`` is provided, the specified file is imported directly.
+    Otherwise, a file selection dialog is opened and the user can select
+    an MT940 text file.
 
-    Workflow:
-        1. Open file selection dialog.
-        2. Read selected file using UTF-8 encoding.
-        3. Parse MT940 content into structured blocks.
-        4. Convert parsed data into tabular format.
-        5. Return the selected file path, headers, and formatted data.
-
-    If no file is selected, an empty result is returned.
+    The selected file is read using UTF-8 encoding and parsed into
+    structured transaction data. The transactions are then formatted
+    for display in the transaction table. Account information, the
+    initial selected rows, the new account balance, and account history
+    information are also extracted.
 
     Args:
         master (BaseWindow):
-            Parent window used to attach the file dialog.
+            Parent window used for the file selection dialog and passed
+            to the MT940 transaction interpreter.
+
+        path (Optional[str]):
+            Path to the MT940 file to import. If ``None``, a file selection
+            dialog is opened to let the user choose a file.
 
     Returns:
-        Tuple[str, List[str],
-            List[List[Union[str, float, Tuple[str, str, str]]]],
-            Dict[str, str | float | int]]:
-            A tuple containing:
-            - file_path: Path to the selected MT940 file.
-            - headers: List of column names.
-            - formatted_data: Table-like list of rows containing parsed values.
-            - account_info: Dictionary with account metadata:
-                "account_id", "account_name", "account_number",
-                "account_balance", "last_record_date"
-            - new_balance: String containing the new account balance
+        Tuple containing:
 
-            If no file is selected, returns ("", [], [], {}, "").
+        - file_path (str):
+            Path to the imported MT940 file, or ``"n.a."`` if no file
+            was selected or the file contains no account data.
+
+        - headers (List[str]):
+            Column headers for the formatted transaction table.
+
+        - formatted_data (List[List[Union[str, float]]]):
+            Transaction data formatted for display in the transaction
+            table.
+
+        - initial_selected_rows (List[int]):
+            Indices of the transaction rows that should initially be
+            selected. (All Transactions that are not allready in the database)
+
+        - account_data (Account):
+            Account associated with the imported transactions.
+
+        - new_balance (str):
+            Closing balance of the imported account as a string.
+
+        - interpreted_data (List[ImportedTransactionView]):
+            Parsed and interpreted transaction entries.
+
+        - interpreted_history_data (List[Tuple[int, float, str, str]]):
+            Interpreted account history entries derived from the closing
+            balance.
+
+        - latest (Dict[str, Tuple[str, float, int]]):
+            Latest account balance information returned by the account
+            history interpreter.
+
+        - success (bool):
+            ``True`` if an MT940 file was successfully imported and
+            processed; otherwise ``False``.
+
+    Notes:
+        If no file is selected, or if the selected file contains no
+        parsable account data, a default result indicating an unsuccessful
+        import is returned.
     """
     # TODO: update docs
 
     if path is None:
+        logger.debug("No file path was provided. Open filedialog.")
         file_path = filedialog.askopenfilename(
             parent=master,
             title="Select MT940 Text File",
             filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
         )
+        logger.debug("Filedialog closed.")
     else:
+        logger.debug("File path was provided. No filedialog needed.")
         file_path = path
 
     if file_path:
@@ -147,8 +181,8 @@ def import_mt940_file(
             for column in TRANSACTION_TABLE_COLUMNS
         ]
 
-        first_entry = parsed_data[0]
         if parsed_data:
+            first_entry = parsed_data[0]
             account_id = account_repository.get_account_id(
                 data=["", str(first_entry.account_number), "", ""],
                 supplied_data=[False, True, False, False]

@@ -77,6 +77,8 @@ def pars_block(
     temp_counterparty_account: str = ""
     temp_closing_balance: Tuple[str, str, str] = ("", "", "")
 
+    logger.debug("Start parsing split blocks.")
+
     for block in blocks:
         transaction = {}
         # =========== Reference ===========
@@ -241,7 +243,6 @@ def pars_block(
             temp_closing_balance = ("", "", "")
 
     logger.debug("Parsed %d transactions.", number_parsed_transactions)
-    logger.debug("Bank statement successfully parsed.")
     return parsed_data
 
 
@@ -249,6 +250,8 @@ def pars_file(
         file_content: str
         ) -> List[ImportedTransaction]:
     # TODO: add docs
+    logger.info("Start file parsing.")
     split_content = split_toblocks(file_content)
     parsed_content = pars_block(split_content)
+    logger.debug("Bank statement successfully parsed.")
     return parsed_content
