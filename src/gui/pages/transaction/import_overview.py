@@ -5,6 +5,7 @@ import tkinter as tk
 from typing import List, Tuple, Union, Dict
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
+from gui.pages.category.selectionpage import CategorySelectionPage
 from features.importer.mt940.importer import (import_mt940_file,
                                               insert_transactions_to_db)
 from models.account.entity import Account
@@ -315,14 +316,14 @@ class ImportOverview(BaseToplevelWindow):
         # ====== Add Categorization ======
         self.add_categorization_button = ttk.Button(
             self.categoration_frame, text="Zuordnungen anlegen",
-            # command=self.open_file
+            # command=self.add_category_manual
         )
         self.add_categorization_button.grid(row=0, column=1, padx=10)
 
         # ====== Manual Categorization ======
         self.manual_categorization_button = ttk.Button(
             self.categoration_frame, text="Manuell Zuordnen",
-            # command=self.open_file
+            command=self.add_category_manual
         )
         self.manual_categorization_button.grid(row=0, column=2, padx=10)
 
@@ -410,3 +411,11 @@ class ImportOverview(BaseToplevelWindow):
             logger.debug("Close Import Overview.")
             self.destroy()
             self.parent.reload()
+
+    def add_category_manual(self):
+        # get selected
+        # open selection page
+        # change importedTransactionView date
+        # re render table with new data
+        CategorySelectionPage(self.parent)
+        pass
