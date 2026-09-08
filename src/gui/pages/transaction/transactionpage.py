@@ -33,9 +33,8 @@ class TransactionPage(BaseToplevelWindow):
         """List[Tuple[int, str, str]]"""
         self.category_data = get_category_data()
         """List[Tuple[int, str, float]]"""
-        super().__init__(parent, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
-        self.init_ui()
+        super().__init__(parent, plugin_scope, title, geometry, bg_color)
 
     def _clear_placeholder(self, event, placeholder: str):
         """

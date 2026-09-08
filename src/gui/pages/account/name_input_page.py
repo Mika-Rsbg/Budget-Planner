@@ -20,9 +20,9 @@ class NameInputDialog(BaseToplevelWindow):
         """
         logger.debug("Initializing NameInputDialog")
         self.number = number
+        self.name = None
         super().__init__(master, title="Name eingeben", geometry="250x200",
                          plugin_scope="")
-        self.name = None
 
     def init_ui(self) -> None:
         if self.number is not None:
