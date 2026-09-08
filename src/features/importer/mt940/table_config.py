@@ -13,6 +13,7 @@ class TableColumn:
 
 
 TRANSACTION_TABLE_COLUMNS = [
+    TableColumn("import_id", "ID"),
     TableColumn("date", "Datum", format_mt940_date),
     TableColumn("booking_date", "Buchungsdatum", format_mt940_date),
     TableColumn("amount", "Betrag", format_mt940_currency),

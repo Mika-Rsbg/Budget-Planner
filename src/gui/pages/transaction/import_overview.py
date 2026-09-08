@@ -208,7 +208,7 @@ class ImportOverview(BaseToplevelWindow):
         self.sheet.set_all_column_widths()
         if self.sheet_data[0].__len__() > 5:
             self.sheet.column_width(
-                column=4,
+                column=5,
                 width=500,
             )
         self.sheet.readonly(True)
