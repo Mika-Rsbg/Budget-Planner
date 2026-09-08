@@ -1,13 +1,63 @@
+import tkinter as tk
 import tkinter.ttk as ttk
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
+from features.category.category_repository import get_category_data
+from features.category.service import (get_category_names,
+                                       get_category_id_name_mapping,
+                                       get_category_name_id_mapping)
 
 
 class CategorySelectionPage(BaseToplevelWindow):
     def __init__(self, master: BaseWindow, plugin_scope: str = "selection",
                  title: str = "Kategorie auswählen ...",
                  geometry: str = "600x160") -> None:
+        self._get_category_data()
         super().__init__(master, plugin_scope, title, geometry)
+
+    def _get_category_data(self) -> None:
+        self.category_data = get_category_data()
+        self.category_name = get_category_names(self.category_data)
+        self.category_id_name_mapping = get_category_id_name_mapping(
+            self.category_data
+        )
+        self.category_name_id_mapping = get_category_name_id_mapping(
+            self.category_data
+        )
+
+    def _category_selected(self, event: tk.Event) -> None:
+        selected_category = self.category_name_dropdown.get()
+        self.selected_category = self.category_name_id_mapping.get(
+            selected_category
+        )
+        self.category_id_entry.delete(0, tk.END)
+        self.category_id_entry.insert(0, str(self.selected_category))
+        self.select_button.focus_set()
+
+    def _category_id_changed(self, event: tk.Event) -> None:
+        # AI: komplette Funktion
+        category_id = self.category_id_entry.get()
+        try:
+            category_name = self.category_id_name_mapping.get(int(category_id))
+        except ValueError:
+            category_name = None
+
+        if category_name is not None:
+            self.category_name_dropdown.set(category_name)
+            self.selected_category = int(category_id)
+        else:
+            self.category_name_dropdown.set("")
+            self.selected_category = None
+
+    def _category_name_changed(self, event: tk.Event) -> None:
+        # AI: komplette Funktion
+        search_text = self.category_name_dropdown.get().casefold()
+        filtered_categories = [
+            category for category in self.category_name
+            if search_text in category.casefold()
+        ]
+        self.category_name_dropdown.configure(values=filtered_categories)
+        event.widget.event_generate("<Alt-Down>")
 
     def init_ui(self) -> None:
         # ============= Footer =============
@@ -18,11 +68,20 @@ class CategorySelectionPage(BaseToplevelWindow):
         self.category_id_entry = ttk.Entry(self.selection_fram, width=10)
         self.category_id_entry.pack(pady=5, side="left")
         self.category_id_entry.focus()
+        self.category_id_entry.bind("<KeyRelease>", self._category_id_changed)
 
         self.category_name_dropdown = ttk.Combobox(
-            self.selection_fram, width=70
+            self.selection_fram, width=70,
+            values=self.category_name
         )
         self.category_name_dropdown.pack(padx=30, side="left")
+        self.category_name_dropdown.bind(
+            "<<ComboboxSelected>>", self._category_selected
+        )
+        self.category_name_dropdown.bind(
+            "<KeyRelease>", self._category_name_changed
+        )
+        # TODO: add waiting
         # endregion
 
         # ============= Footer =============
@@ -35,6 +94,10 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.destroy
         )
         self.select_button.pack(padx=0, side="left")
+        self.select_button.bind(
+            "<Return>", lambda event: self.destroy()
+        )
+        # TODO: change to save function
 
         self.cancel_button = ttk.Button(
             self.footer_fram, text="Abbrechnen",
