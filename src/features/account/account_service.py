@@ -232,7 +232,7 @@ def add_account_mt940(number: str, master: BaseWindow,
                       name: Optional[str] = None,
                       balance: Optional[float] = None,
                       difference: Optional[float] = None,
-                      record_date: date = date(2001, 1, 1),
+                      record_date: date = date(1900, 1, 1),
                       db_path: Path = config.Database.PATH
                       ) -> None:
     # FIXME: remove default None

@@ -26,6 +26,6 @@ class Account:
             number="n.a.",
             balance=0,
             difference=0,
-            record_date=date(1, 1, 1),
-            change_date=date(1, 1, 1)
+            record_date=date(1900, 1, 1),
+            change_date=date(1900, 1, 1)
         )
