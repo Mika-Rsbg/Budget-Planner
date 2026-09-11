@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Optional
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 from features.category.category_repository import get_category_data
@@ -13,6 +14,7 @@ class CategorySelectionPage(BaseToplevelWindow):
                  title: str = "Kategorie auswählen ...",
                  geometry: str = "600x160") -> None:
         self._get_category_data()
+        self.final_selected_category: Optional[int] = None
         super().__init__(master, plugin_scope, title, geometry)
 
     def _get_category_data(self) -> None:
@@ -60,7 +62,7 @@ class CategorySelectionPage(BaseToplevelWindow):
         event.widget.event_generate("<Alt-Down>")
 
     def init_ui(self) -> None:
-        # ============= Footer =============
+        # ============= Category Selection =============
         # region
         self.selection_fram = ttk.Frame(self.main_frame, padding=10)
         self.selection_fram.grid(row=0, column=0, sticky="nsew")
@@ -91,11 +93,11 @@ class CategorySelectionPage(BaseToplevelWindow):
 
         self.select_button = ttk.Button(
             self.footer_fram, text="Auswählen", width=40,
-            command=self.destroy
+            command=self.select_category
         )
         self.select_button.pack(padx=0, side="left")
         self.select_button.bind(
-            "<Return>", lambda event: self.destroy()
+            "<Return>", lambda event: self.select_category()
         )
         # TODO: change to save function
 
@@ -104,4 +106,23 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.destroy, width=40
         )
         self.cancel_button.pack(padx=30, side="left")
+        self.select_button.bind(
+            "<Return>", lambda event: self.destroy()
+        )
         # endregion
+
+    def select_category(self) -> None:
+        category_id = self.category_id_entry.get()
+        try:
+            category_name = self.category_id_name_mapping.get(int(category_id))
+        except ValueError:
+            category_name = None
+
+        if category_name is not None:
+            self.final_selected_category = int(category_id)
+            self.destroy()
+        else:
+            self.show_message(
+                "Ausgewählte Kategorie ID hat keine passende Kategorie!"
+            )
+            self.category_id_entry.focus_set()
