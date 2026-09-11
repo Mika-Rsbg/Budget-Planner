@@ -8,6 +8,8 @@ from gui.app.basewindow import BaseWindow
 from gui.pages.category.selectionpage import CategorySelectionPage
 from features.importer.mt940.importer import (import_mt940_file,
                                               insert_transactions_to_db)
+from features.importer.formater.table_formater import format_data
+from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from models.account.entity import Account
 from models.transaction.imported_view import ImportedTransactionView
 
@@ -44,6 +46,14 @@ class ImportOverview(BaseToplevelWindow):
 
     def _update_selected_count(self) -> None:
         if not hasattr(self, "number_selected_readonly_entry"):
+            return
+
+        # reload() destroys the old widgets before rebuilding the UI. The
+        # attribute can still reference a widget whose Tcl command is gone.
+        try:
+            if not self.number_selected_readonly_entry.winfo_exists():
+                return
+        except tk.TclError:
             return
 
         selected_rows = self.sheet.get_selected_rows(get_cells_as_rows=True)
@@ -219,8 +229,6 @@ class ImportOverview(BaseToplevelWindow):
         # self.sheet.add_row_selection(8)
         # self.sheet.deselect("all")
 
-        self._selected_not_already_imported()
-
         # FIXME: Add no or empty file selected support
 
         self.sheet.enable_bindings()
@@ -285,7 +293,8 @@ class ImportOverview(BaseToplevelWindow):
         self.number_selected_readonly_entry.grid(
             row=0, column=3, sticky="ew", padx=10
         )
-        self._update_selected_count()
+
+        self._selected_not_already_imported()
 
         self.refresh_selection_button = ttk.Button(
             self.selection_frame, text="Aktualisieren",
@@ -390,9 +399,9 @@ class ImportOverview(BaseToplevelWindow):
                 self.destroy()
 
             selected_transactions: List[ImportedTransactionView] = [
-                self.transactions_by_import_id[row[-1]]
+                self.transactions_by_import_id[row[0]]
                 for row in data_selected_rows
-                if row and row[-1] in self.transactions_by_import_id
+                if row and row[0] in self.transactions_by_import_id
             ]
 
             insert_transactions_to_db(
@@ -413,9 +422,43 @@ class ImportOverview(BaseToplevelWindow):
             self.parent.reload()
 
     def add_category_manual(self):
-        # get selected
-        # open selection page
-        # change importedTransactionView date
-        # re render table with new data
-        CategorySelectionPage(self.parent)
-        pass
+        # TODO: Add Docs
+        # TODO: Add logging
+        selection_page = CategorySelectionPage(self.parent)
+        self.wait_window(selection_page)
+        selected_category_id = selection_page.final_selected_category
+        if selected_category_id is not None:
+            selected_rows = self.sheet.get_selected_rows(
+                get_cells_as_rows=True
+            )
+            data_selected_rows = self.sheet.get_sheet_data(
+                only_rows=iter(selected_rows)  # type: ignore
+            )
+
+            if data_selected_rows == []:
+                self.show_message("No Transaction selected!")
+                logger.debug(
+                    "Impossible to assign category: No Transaction selected!"
+                )
+                return
+
+            for row in data_selected_rows:
+                # row[1] is the import_id
+                try:
+                    self.transactions_by_import_id[row[0]].category_id = (
+                        selected_category_id
+                    )
+                except KeyError as e:
+                    logger.exception(e)
+
+            transactions = list(self.transactions_by_import_id.values())
+
+            self.sheet_data = format_data(
+                transactions, TRANSACTION_TABLE_COLUMNS
+            )
+            print(self.sheet_data)
+            self.show_message("Kategorie erfolgreich geändert.")
+            self.reload()
+        else:
+            self.show_message("Keine Kategorie ausgewählt!")
+            # ich möchte die ursprüngliche self.transactions_by_import_id
