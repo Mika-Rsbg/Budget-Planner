@@ -1,6 +1,6 @@
 from tkinter import filedialog
 import logging
-from typing import List, Tuple, Union, Optional, Any, Dict
+from typing import List, Tuple, Union, Optional, Dict
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
 from features.account.account_repository import get_account_by_id
@@ -8,37 +8,13 @@ import features.importer.mt940.interpreter as mt940_interpreter
 import features.importer.mt940.database_service as mt940_database_service
 import features.account.account_repository as account_repository
 from features.importer.mt940.parser import pars_file
-from features.importer.mt940.table_config import (TableColumn,
-                                                  TRANSACTION_TABLE_COLUMNS)
+from features.importer.formater.table_formater import format_data
+from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from models.transaction.imported_view import ImportedTransactionView
 from models.account.entity import Account
 
 
 logger = logging.getLogger(__name__)
-
-
-def format_data(
-    data: list[ImportedTransactionView],
-    columns: list[TableColumn]
-) -> list[list[Any]]:
-    """Convert transactions into table data."""
-    formatted_data = []
-
-    for transaction in data:
-        row = []
-
-        for column in columns:
-            value = getattr(transaction, column.attribute)
-
-            if column.formatter is not None:
-                value = column.formatter(value)
-
-            row.append(value)
-
-        formatted_data.append(row)
-
-    logger.debug("Formatted ImportedTransactionView's for table view.")
-    return formatted_data
 
 
 def get_initial_selected_rows(
