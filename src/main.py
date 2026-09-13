@@ -37,7 +37,7 @@ def main_test() -> None:
     Logs in a test log file.
     """
     from gui.app.basewindow import BaseWindow
-    from gui.pages.category.selectionpage import CategorySelectionPage
+    from gui.pages.transaction.import_overview import ImportOverview
     from core.database.schema import create_database
 
     logger.info("")
@@ -52,8 +52,8 @@ def main_test() -> None:
         auto_ui_init=False
     )
     app.withdraw()  # Hide the root window
-    transaction_page = CategorySelectionPage(app)
-    app.wait_window(transaction_page)
+    tested_page = ImportOverview(app)
+    app.wait_window(tested_page)
     app.destroy()
 
 
