@@ -23,14 +23,13 @@ class ImportOverview(BaseToplevelWindow):
                  geometry="500x600", bg_color="white") -> None:
         self.parent = parent
 
-        (path, header, data, initialy_selected_rows, account_data,
+        (path, header, data, account_data,
          new_balance, transactions, history_data,
          latest, valid_file) = import_mt940_file(self.parent)
 
         self.file_path: str = path
         self.sheet_header: List[str] = header
         self.sheet_data: List[List[Union[str, Tuple[str], int, float]]] = data
-        self.rows_not_in_database = initialy_selected_rows
         self.account_data: Account = account_data
         self.new_balance: str = new_balance
         self.transactions_by_import_id: Dict[int, ImportedTransactionView] = {
@@ -41,8 +40,28 @@ class ImportOverview(BaseToplevelWindow):
         self.latest = latest
         self.valid_file_selected = valid_file
         plugin_scope = "import-overview"
+        self._calculate_selection_data()
         super().__init__(parent, plugin_scope, title, geometry, bg_color,
                          fullscreen=True)
+
+    def _calculate_selection_data(self) -> None:
+        # Indices of the transaction rows that aren't allready in the database
+        # (are initially selected)
+        self.rows_not_in_database: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+                )
+            if not transaction.in_database]
+
+        # Indices of the transaction rows that are allready in the database
+        self.rows_in_database: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+                )
+            if transaction.in_database
+        ]
 
     def _update_selected_count(self) -> None:
         if not hasattr(self, "number_selected_readonly_entry"):
@@ -71,10 +90,18 @@ class ImportOverview(BaseToplevelWindow):
             self.sheet.add_row_selection(row)
         self._update_selected_count()
 
+    def _selected_already_imported(self):
+        self.sheet.deselect("all")
+        for row in self.rows_in_database:
+            self.sheet.add_row_selection(row)
+        self._update_selected_count()
+
     def _refresh_selection(self):
         mode = self.selection_mode_dropdown.get()
         if mode == "Nicht importiert":
             self._selected_not_already_imported()
+        elif mode == "Bereits importiert":
+            self._selected_already_imported()
         else:
             self.sheet.deselect("all")
             self._update_selected_count()
@@ -366,13 +393,12 @@ class ImportOverview(BaseToplevelWindow):
         self.main_frame.grid_rowconfigure(4, weight=1)
 
     def open_file(self):
-        (path, header, data, initialy_selected_rows, account_data,
+        (path, header, data, account_data,
          new_balance, transactions, history_data,
          latest, valid_file) = import_mt940_file(self.parent)
         self.file_path = path
         self.sheet_header = header
         self.sheet_data = data
-        self.rows_not_in_database = initialy_selected_rows
         self.account_data = account_data
         self.new_balance = new_balance
         self.transactions_by_import_id = {
@@ -382,6 +408,7 @@ class ImportOverview(BaseToplevelWindow):
         self.history_data = history_data
         self.latest = latest
         self.valid_file_selected = valid_file
+        self._calculate_selection_data()
         self.reload()
 
     def import_transactions(self):

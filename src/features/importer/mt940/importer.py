@@ -17,20 +17,6 @@ from models.account.entity import Account
 logger = logging.getLogger(__name__)
 
 
-def get_initial_selected_rows(
-    data: list[ImportedTransactionView],
-) -> list[int]:
-    """
-    Return rows that should be selected initially,
-    because they aren't in the database.
-    """
-    return [
-        index
-        for index, transaction in enumerate(data)
-        if not transaction.in_database
-    ]
-
-
 @log_fn
 def import_mt940_file(
         master: BaseWindow, path: Optional[str] = None
@@ -38,7 +24,6 @@ def import_mt940_file(
                 str,
                 List[str],
                 List[List[Union[str, float]]],
-                List[int],
                 Account,
                 str,
                 List[ImportedTransactionView],
@@ -81,10 +66,6 @@ def import_mt940_file(
         - formatted_data (List[List[Union[str, float]]]):
             Transaction data formatted for display in the transaction
             table.
-
-        - initial_selected_rows (List[int]):
-            Indices of the transaction rows that should initially be
-            selected. (All Transactions that are not allready in the database)
 
         - account_data (Account):
             Account associated with the imported transactions.
@@ -143,8 +124,6 @@ def import_mt940_file(
             interpreted_data, TRANSACTION_TABLE_COLUMNS
         )
 
-        initial_selected_rows = get_initial_selected_rows(interpreted_data)
-
         (interpreted_history_data, latest
          ) = mt940_interpreter.interpret_account_history_entries(
              closing_balance)
@@ -167,16 +146,16 @@ def import_mt940_file(
             assert account_data is not None
         else:
             logger.info("Empty file selected.")
-            return ("n.a.", ["null"], [["null"]], [], Account.empty(), "n.a.",
+            return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
                     [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
                     {"": ("", 0.0, 0)}, False)
 
         return (file_path, headers, formatted_data,
-                initial_selected_rows, account_data, new_balance,
-                interpreted_data, interpreted_history_data, latest, True)
+                account_data, new_balance, interpreted_data,
+                interpreted_history_data, latest, True)
     else:
         logger.info("No file selected.")
-        return ("n.a.", ["null"], [["null"]], [], Account.empty(), "n.a.",
+        return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
                 [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
                 {"": ("", 0.0, 0)}, False)
 
