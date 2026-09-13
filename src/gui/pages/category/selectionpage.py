@@ -71,6 +71,9 @@ class CategorySelectionPage(BaseToplevelWindow):
         self.category_id_entry.pack(pady=5, side="left")
         self.category_id_entry.focus()
         self.category_id_entry.bind("<KeyRelease>", self._category_id_changed)
+        self.category_id_entry.bind(
+            "<Return>", lambda event: self.category_name_dropdown.focus_set()
+        )
 
         self.category_name_dropdown = ttk.Combobox(
             self.selection_fram, width=70,
@@ -106,7 +109,7 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.destroy, width=40
         )
         self.cancel_button.pack(padx=30, side="left")
-        self.select_button.bind(
+        self.cancel_button.bind(
             "<Return>", lambda event: self.destroy()
         )
         # endregion
