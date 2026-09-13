@@ -63,6 +63,32 @@ class ImportOverview(BaseToplevelWindow):
             if transaction.in_database
         ]
 
+        self.rows_not_in_database_undefined: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+                )
+            if not transaction.in_database and transaction.category_id == 0
+        ]
+
+        self.rows_defined: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+                )
+            if transaction.category_id == 0
+        ]
+
+        self.rows_undefined: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+                )
+            if transaction.category_id != 0
+        ]
+        # TODO: change defined to better name
+        # TODO: add docs
+
     def _update_selected_count(self) -> None:
         if not hasattr(self, "number_selected_readonly_entry"):
             return
@@ -96,12 +122,36 @@ class ImportOverview(BaseToplevelWindow):
             self.sheet.add_row_selection(row)
         self._update_selected_count()
 
+    def _selected_not_already_imported_undefined(self):
+        self.sheet.deselect("all")
+        for row in self.rows_not_in_database_undefined:
+            self.sheet.add_row_selection(row)
+        self._update_selected_count()
+
+    def _selected_undefined(self):
+        self.sheet.deselect("all")
+        for row in self.rows_undefined:
+            self.sheet.add_row_selection(row)
+        self._update_selected_count()
+
+    def _selected_defined(self):
+        self.sheet.deselect("all")
+        for row in self.rows_defined:
+            self.sheet.add_row_selection(row)
+        self._update_selected_count()
+
     def _refresh_selection(self):
         mode = self.selection_mode_dropdown.get()
         if mode == "Nicht importiert":
             self._selected_not_already_imported()
         elif mode == "Bereits importiert":
             self._selected_already_imported()
+        elif mode == "Nicht importiert, nicht zugeordnet":
+            self._selected_not_already_imported_undefined()
+        elif mode == "Nicht zugeordnet":
+            self._selected_undefined()
+        elif mode == "Bereits zugeordnet":
+            self._selected_defined
         else:
             self.sheet.deselect("all")
             self._update_selected_count()
@@ -309,6 +359,9 @@ class ImportOverview(BaseToplevelWindow):
         self.selection_mode_dropdown.grid(
             row=0, column=2, sticky="ew"
         )
+        self.selection_mode_dropdown.bind(
+            "<<ComboboxSelected>>", lambda _event: self._refresh_selection()
+        )
 
         self.selection_frame.grid_columnconfigure(2, minsize=250)
 
@@ -484,6 +537,7 @@ class ImportOverview(BaseToplevelWindow):
                 transactions, TRANSACTION_TABLE_COLUMNS
             )
             print(self.sheet_data)
+            self._calculate_selection_data()
             self.show_message("Kategorie erfolgreich geändert.")
             self.reload()
         else:

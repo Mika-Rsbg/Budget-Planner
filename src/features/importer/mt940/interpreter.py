@@ -207,7 +207,7 @@ def interpret_transactions(
             temp_counterparty_name, temp_counterparty_number
         )
 
-        rti_category_id = 1  # Default category
+        rti_category_id = 0  # Default category
         rti_user_comments = None  # No user comments
         rti_displayed_name = None  # No displayed name
 
