@@ -104,9 +104,13 @@ class BaseToplevelWindow(tk.Toplevel):
 
         button = ttk.Button(popup, text="OK", command=popup.destroy)
         button.pack(pady=10)
+        button.bind(
+            "<Return>", lambda event: popup.destroy()
+        )
 
-        popup.grab_set()
         popup.transient(self)
+        popup.grab_set()
+        button.focus_force()
         self.wait_window(popup)
 
     @log_fn
