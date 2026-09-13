@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 import logging
+from typing import List, Optional
 from core.database.connection import DatabaseConnection
 import config
 from models.transaction.entity import Transaction
@@ -20,16 +21,101 @@ class AlreadyExistsError(Exception):
     pass
 
 
-def get_transaction_dat(db_path: Path = config.Database.PATH):
-    pass
-
-
 def delete_transaction(db_path: Path = config.Database.PATH):
     pass
 
 
 def edit_transaction(db_path: Path = config.Database.PATH):
     pass
+
+
+def get_transaction_data(
+        db_path: Path = config.Database.PATH) -> List[Transaction]:
+    """Retrieve all transaction records from the database.
+
+    Args:
+        db_path (Path): Path to the SQLite database file.
+
+    Returns:
+        list[Transaction]: The transactions found in the database.
+
+    Raises:
+        Error: If an error occurs while querying the database.
+    """
+    cursor = DatabaseConnection.get_cursor(db_path)
+
+    try:
+        cursor.execute(
+            """
+            SELECT i8_TransactionID,
+                   i8_AccountID,
+                   str_Date,
+                   str_Bookingdate,
+                   i8_TransactionTypeID,
+                   real_Amount,
+                   str_Purpose,
+                   i8_CounterpartyID,
+                   i8_CategoryID,
+                   str_UserComments,
+                   str_DisplayedName
+            FROM tbl_Transaction
+            """
+        )
+        raw_transaction_data = cursor.fetchall()
+        logger.debug("Transaction data retrieved successfully.")
+    except sqlite3.Error as e:
+        logger.error(f"Error querying data: {e}")
+        raise Error(f"Error querying data: {e}")
+    finally:
+        DatabaseConnection.close_cursor()
+
+    transaction_data = []
+    for transaction in raw_transaction_data:
+        transaction_data.append(
+            Transaction(
+                transaction_id=transaction[0],
+                account_id=transaction[1],
+                date=__import__("datetime").date.fromisoformat(transaction[2]),
+                booking_date=__import__("datetime").date.fromisoformat(
+                    transaction[3]
+                ),
+                transaction_type_id=transaction[4],
+                amount=transaction[5],
+                purpose=transaction[6],
+                counterparty_id=transaction[7],
+                category_id=transaction[8],
+                user_comments=transaction[9],
+                displayed_name=transaction[10],
+            )
+        )
+
+    if not transaction_data:
+        logger.warning("No transaction data found.")
+
+    return transaction_data
+
+
+def get_transaction_by_id(
+    transaction_id: int,
+    db_path: Path = config.Database.PATH
+) -> Optional[Transaction]:
+    """
+    Returns the data of a specific transaction identified by its TransactionID.
+
+    Args:
+        transaction_id (int): ID of the transaction.
+
+    Returns:
+        Optional[Transaction]:
+            The account data if found, otherwise None.
+    """
+    transaction_data = get_transaction_data(db_path=db_path)
+
+    for transaction in transaction_data:
+        if transaction.transaction_id == transaction_id:
+            return transaction
+
+    return None
 
 
 def get_transaction_id(transaction: Transaction | ImportedTransactionView,
@@ -99,6 +185,89 @@ def get_transaction_id(transaction: Transaction | ImportedTransactionView,
                 transaction.purpose,
                 transaction.counterparty_id,
                 transaction.category_id
+            )
+        )
+        # TODO: add booking_date to query
+        # bookingdate always has the year 2020 in the database
+        # probably because of a mistake during the import
+
+        row = cursor.fetchone()
+        if row:
+            return row[0]  # transaction_id
+
+    except sqlite3.Error as e:
+        logger.error(f"Error checking for existing transaction: {e}")
+        raise Error(f"Error checking for existing transaction: {e}")
+
+    return None
+
+
+def get_transaction_id_gui(transaction: Transaction | ImportedTransactionView,
+                           db_path: Path = config.Database.PATH) -> int | None:
+    """Find the ID of an existing transaction based on its details.
+
+    Args:
+        transaction (Transaction): Transaction object to be checked.
+        db_path (Path, optional):  Path to the SQLite database file.
+
+    Raises:
+        Error: If there is an error getting the database cursor
+            or if there is any error during the SQL-Query.
+
+    Returns:
+        int | None: The ID of the existing transaction, or None if not found.
+    """
+    # TODO: specify docs
+
+    try:
+        cursor = DatabaseConnection.get_cursor(db_path)
+    except sqlite3.Error as e:
+        logger.exception(f"Error connecting to database: {e}")
+        raise Error(f"Error connecting to database: {e}")
+
+    try:
+        # cursor.execute(
+        #     '''
+        #     SELECT i8_TransactionID
+        #     FROM tbl_Transaction
+        #     WHERE i8_AccountID=?
+        #       AND str_Date=?
+        #       AND str_Bookingdate=?
+        #       AND i8_TransactionTypeID=?
+        #       AND real_Amount=?
+        #       AND str_Purpose=?
+        #       AND i8_CounterpartyID=?
+        #       AND i8_CategoryID=?;
+        #     ''',
+        #     (
+        #         transaction.account_id,
+        #         transaction.date.isoformat(),
+        #         transaction.booking_date.isoformat(), # Entfernt
+        #         transaction.transaction_type_id,
+        #         transaction.amount,
+        #         transaction.purpose,
+        #         transaction.counterparty_id,
+        #         transaction.category_id # Entfernt
+        #     )
+        # )
+        cursor.execute(
+            '''
+            SELECT i8_TransactionID
+            FROM tbl_Transaction
+            WHERE i8_AccountID=?
+              AND str_Date=?
+              AND i8_TransactionTypeID=?
+              AND real_Amount=?
+              AND str_Purpose=?
+              AND i8_CounterpartyID=?
+            ''',
+            (
+                transaction.account_id,
+                transaction.date.isoformat(),
+                transaction.transaction_type_id,
+                transaction.amount,
+                transaction.purpose,
+                transaction.counterparty_id,
             )
         )
         # TODO: add booking_date to query

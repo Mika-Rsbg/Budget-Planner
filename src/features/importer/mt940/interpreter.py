@@ -230,35 +230,66 @@ def interpret_transactions(
             displayed_name=rti_displayed_name,
         )
 
-        rti_transaction_id = transaction_repository.get_transaction_id(
+        rti_transaction_id = transaction_repository.get_transaction_id_gui(
             check_transaction
         )
         rti_in_database = rti_transaction_id is not None
 
-        transaction = ImportedTransactionView(
-            import_id=transaction_id,
-            reference=entry.reference,
-            account_number=entry.account_number,
-            account_id=rti_account_id,
-            opening_balance=entry.opening_balance,
-            date=rti_date,
-            booking_date=rti_booking_date,
-            currency=entry.currency,
-            transaction_type_name=entry.transaction_type_name,
-            transaction_type_number=entry.transaction_type_number,
-            transaction_type_id=rti_tt_id,
-            amount=float(rti_amount),
-            purpose=rti_purpose,
-            purpose_addition=entry.purpose_addition,
-            counterparty_account_number=entry.counterparty_account_number,
-            counterparty_name=entry.counterparty_name,
-            counterparty_id=rti_counterparty_id,
-            category_id=rti_category_id,
-            user_comments=rti_user_comments,
-            displayed_name=rti_displayed_name,
-            in_database=rti_in_database,
-            transaction_id=rti_transaction_id
-        )
+        if rti_in_database:
+            db_transaction = transaction_repository.get_transaction_by_id(
+                transaction_id=rti_transaction_id
+            )
+            assert db_transaction is not None
+            transaction = ImportedTransactionView(
+                import_id=transaction_id,
+                reference=entry.reference,
+                account_number=entry.account_number,
+                account_id=rti_account_id,
+                opening_balance=entry.opening_balance,
+                date=rti_date,
+                booking_date=rti_booking_date,
+                currency=entry.currency,
+                transaction_type_name=entry.transaction_type_name,
+                transaction_type_number=entry.transaction_type_number,
+                transaction_type_id=rti_tt_id,
+                amount=float(rti_amount),
+                purpose=db_transaction.purpose,
+                purpose_addition=entry.purpose_addition,
+                counterparty_account_number=entry.counterparty_account_number,
+                counterparty_name=entry.counterparty_name,
+                counterparty_id=rti_counterparty_id,
+                category_id=db_transaction.category_id,
+                user_comments=db_transaction.user_comments,
+                displayed_name=db_transaction.displayed_name,
+                in_database=rti_in_database,
+                transaction_id=rti_transaction_id
+            )
+        else:
+            transaction = ImportedTransactionView(
+                import_id=transaction_id,
+                reference=entry.reference,
+                account_number=entry.account_number,
+                account_id=rti_account_id,
+                opening_balance=entry.opening_balance,
+                date=rti_date,
+                booking_date=rti_booking_date,
+                currency=entry.currency,
+                transaction_type_name=entry.transaction_type_name,
+                transaction_type_number=entry.transaction_type_number,
+                transaction_type_id=rti_tt_id,
+                amount=float(rti_amount),
+                purpose=rti_purpose,
+                purpose_addition=entry.purpose_addition,
+                counterparty_account_number=entry.counterparty_account_number,
+                counterparty_name=entry.counterparty_name,
+                counterparty_id=rti_counterparty_id,
+                category_id=rti_category_id,
+                user_comments=rti_user_comments,
+                displayed_name=rti_displayed_name,
+                in_database=rti_in_database,
+                transaction_id=rti_transaction_id
+            )
+
         interpreted_data.append(transaction)
 
         transaction_id += 1
