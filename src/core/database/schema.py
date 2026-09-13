@@ -137,6 +137,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 VALUES (?, ?, ?)
                 ''',
                 [
+                    ('Nicht zugeordnet', 0.0, 4),
                     ('Sonstiges', 0.0, 3),
                     ('Spareinlagen', 100.0, 3)
                 ]
