@@ -425,7 +425,7 @@ class ImportOverview(BaseToplevelWindow):
         self.import_button.grid(row=0, column=0, padx=10)
 
         self.cancel_button = ttk.Button(
-            self.footer_fram, text="Abbrechnen",
+        self.footer_fram, text="Abbrechen",
             command=self.destroy, width=30
         )
         self.cancel_button.grid(row=0, column=1, padx=10)
