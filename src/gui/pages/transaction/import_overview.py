@@ -110,52 +110,29 @@ class ImportOverview(BaseToplevelWindow):
         self.number_selected_readonly_entry.insert(0, display_value)
         self.number_selected_readonly_entry.config(state="readonly")
 
-    def _selected_not_already_imported(self):
+    def _select_rows(rows: List[int]) -> None:
         self.sheet.deselect("all")
-        for row in self.rows_not_in_database:
-            self.sheet.add_row_selection(row)
-        self._update_selected_count()
-
-    def _selected_already_imported(self):
-        self.sheet.deselect("all")
-        for row in self.rows_in_database:
-            self.sheet.add_row_selection(row)
-        self._update_selected_count()
-
-    def _selected_not_already_imported_undefined(self):
-        self.sheet.deselect("all")
-        for row in self.rows_not_in_database_undefined:
-            self.sheet.add_row_selection(row)
-        self._update_selected_count()
-
-    def _selected_undefined(self):
-        self.sheet.deselect("all")
-        for row in self.rows_undefined:
-            self.sheet.add_row_selection(row)
-        self._update_selected_count()
-
-    def _selected_defined(self):
-        self.sheet.deselect("all")
-        for row in self.rows_defined:
+        for row in rows:
             self.sheet.add_row_selection(row)
         self._update_selected_count()
 
     def _refresh_selection(self):
         mode = self.selection_mode_dropdown.get()
         if mode == "Nicht importiert":
-            self._selected_not_already_imported()
+            self._select_rows(self.rows_not_in_database)
         elif mode == "Bereits importiert":
-            self._selected_already_imported()
+            self._select_rows(self.rows_in_database)
         elif mode == "Nicht importiert, nicht zugeordnet":
-            self._selected_not_already_imported_undefined()
+            self._select_rows(
+                self.rows_not_in_database_undefined
+            )
         elif mode == "Nicht zugeordnet":
-            self._selected_undefined()
+            self._select_rows(self.rows_undefined)
         elif mode == "Bereits zugeordnet":
-            self._selected_defined
+            self._select_rows(self.rows_defined)
         else:
             self.sheet.deselect("all")
             self._update_selected_count()
-        # TODO: add differnt mode support
 
     def init_ui(self) -> None:
         """
