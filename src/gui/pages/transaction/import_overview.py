@@ -475,8 +475,7 @@ class ImportOverview(BaseToplevelWindow):
             ]
 
             insert_transactions_to_db(
-                selected_transactions, self.history_data, self.latest,
-                self.master
+                selected_transactions, self.history_data, self.latest
             )
 
             self.show_message("Transactions imported succesfully.")
