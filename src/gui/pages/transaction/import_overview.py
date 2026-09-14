@@ -467,6 +467,7 @@ class ImportOverview(BaseToplevelWindow):
                 self.show_message("No Transaction to import selected.")
                 logger.debug("Close Import Overview. No Transaction selected.")
                 self.destroy()
+                return
 
             selected_transactions: List[TransactionImportView] = [
                 self.transactions_by_import_id[row[0]]
