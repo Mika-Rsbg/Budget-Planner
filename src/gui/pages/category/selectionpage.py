@@ -99,9 +99,6 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.select_category
         )
         self.select_button.pack(padx=0, side="left")
-        self.select_button.bind(
-            "<Return>", lambda event: self.select_category()
-        )
         # TODO: change to save function
 
         self.cancel_button = ttk.Button(
@@ -109,9 +106,6 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.destroy, width=40
         )
         self.cancel_button.pack(padx=30, side="left")
-        self.cancel_button.bind(
-            "<Return>", lambda event: self.destroy()
-        )
         # endregion
 
     def select_category(self) -> None:
