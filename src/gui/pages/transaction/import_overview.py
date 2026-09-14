@@ -45,48 +45,69 @@ class ImportOverview(BaseToplevelWindow):
                          fullscreen=True)
 
     def _calculate_selection_data(self) -> None:
-        # Indices of the transaction rows that aren't allready in the database
-        # (are initially selected)
+        """Calculate row indices for the different transaction selections.
+
+        The calculated indices are stored in instance attributes and are based
+        on the current state of ``transactions_by_import_id``.
+
+        The following selections are calculated:
+            rows_not_in_database:
+                Transactions that are not yet in the database.
+            rows_in_database:
+                Transactions that are already in the database.
+            rows_not_in_database_not_categorized:
+                Transactions that are not in the database and have no category.
+            rows_categorized:
+                Transactions that have no category.
+            rows_not_categorized:
+                Transactions that have a category assigned.
+        """
+        # Indices of transaction rows that are not yet in the database.
+        # These rows are initially selected.
         self.rows_not_in_database: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
-                )
-            if not transaction.in_database]
+            )
+            if not transaction.in_database
+        ]
 
-        # Indices of the transaction rows that are allready in the database
+        # Indices of transaction rows that are already in the database.
         self.rows_in_database: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
-                )
+            )
             if transaction.in_database
         ]
 
+        # Indices of transaction rows that are not in the database
+        # and have no category assigned.
         self.rows_not_in_database_not_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
-                )
+            )
             if not transaction.in_database and transaction.category_id == 0
         ]
 
+        # Indices of transaction rows that have no category assigned.
         self.rows_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
-                )
-            if transaction.category_id == 0
+            )
+            if transaction.category_id != 0
         ]
 
+        # Indices of transaction rows that have a category assigned.
         self.rows_not_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
-                )
-            if transaction.category_id != 0
+            )
+            if transaction.category_id == 0
         ]
-        # TODO: add docs
 
     def _update_selected_count(self) -> None:
         if not hasattr(self, "number_selected_readonly_entry"):
