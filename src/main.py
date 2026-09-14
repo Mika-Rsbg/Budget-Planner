@@ -79,7 +79,7 @@ def main_fn_test() -> None:
 
 
 if __name__ == "__main__":
-    TEST_MODE: bool = True
+    TEST_MODE: bool = False
     if TEST_MODE:
         config.Logging.set_to_test_mode()
     setup_logging()
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    # main()
-    main_test()
+    main()
+    # main_test()
     # main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
