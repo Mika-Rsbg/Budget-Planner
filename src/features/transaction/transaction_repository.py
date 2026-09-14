@@ -204,20 +204,30 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
 
 def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
                            db_path: Path = config.Database.PATH) -> int | None:
-    """Find the ID of an existing transaction based on its details.
+    """Return the database ID of an existing transaction
+    for the Import workflow.
+
+    This is a relaxed duplicate check used by the GUI import flow. It matches a
+    transaction by ``account``, ``date``, ``transaction type``, ``amount``,
+    ``purpose`` and ``counterparty``.
+    The returned ID can be used to avoid creating duplicate rows in
+    the database.
 
     Args:
-        transaction (Transaction): Transaction object to be checked.
-        db_path (Path, optional):  Path to the SQLite database file.
+        transaction (Transaction | TransactionImportView):
+            Transaction to compare against the database.
+        db_path (Path, optional): Path to the SQLite database. Defaults to the
+            configured application database path.
 
     Raises:
-        Error: If there is an error getting the database cursor
-            or if there is any error during the SQL-Query.
+        Error: If the database connection cannot be opened
+            or the SQL query fails.
 
     Returns:
-        int | None: The ID of the existing transaction, or None if not found.
+        int | None:
+            The matching transaction ID,
+            or None if no matching record is found.
     """
-    # TODO: specify docs
 
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
@@ -307,19 +317,22 @@ def transaction_exists(transaction: Transaction | TransactionImportView,
 def add_transaction(data: Transaction | TransactionImportView,
                     db_path: Path = config.Database.PATH) -> None:
     """
-    Adds a transaction to the database after checking for duplicates.
+    Insert a transaction into the database after checking for duplicates.
+
+    The duplicate check compares all transaction fields except
+    ``displayed_name`` and ``user_comments``.
 
     Args:
+        data (Transaction | TransactionImportView):
+            Transaction payload to save.
         db_path (Path, optional): Path to the SQLite database file.
-        data (tuple, optional): A tuple containing the transaction data.
 
     Raises:
-        Error: If an error occurs during the database operation or if a
-            duplicate is found.
-        AlreadyExistsError: If a transaction with the same details already
-            exists in the database.
+        sqlite3.Error: If the database connection or insert fails.
+        AlreadyExistsError: If an equivalent transaction already exists.
+        Error: If the repository cannot access the database or persist the
+            record.
     """
-    # TODO: update docs
     account_id = data.account_id
     date = data.date.isoformat()
     booking_date = data.booking_date.isoformat()
