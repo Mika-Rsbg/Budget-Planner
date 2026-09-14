@@ -202,8 +202,7 @@ def pars_block(
         elif block.startswith(":62F:"):
             block = block[5:]
             closing_balance_date = block[1:7]
-            closing_balance = block[10:].replace(',', '.')
-            closing_balance = closing_balance[:-1]
+            closing_balance = block[10:].replace(',', '.').rstrip('\r')
             temp_closing_balance = (temp_account_number, closing_balance_date,
                                     closing_balance)
 
