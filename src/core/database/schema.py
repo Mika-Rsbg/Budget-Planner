@@ -32,7 +32,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                     real_Amount REAL NOT NULL,
                     str_Purpose TEXT NOT NULL,
                     i8_CounterpartyID INTEGER,
-                    i8_CategoryID INTEGER DEFAULT 1,
+                    i8_CategoryID INTEGER DEFAULT 0,
                     str_UserComments TEXT,
                     str_DisplayedName TEXT,
                     FOREIGN KEY (i8_CategoryID)
@@ -133,13 +133,14 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
             cursor.executemany(
                 '''
                 INSERT OR IGNORE INTO tbl_Category
-                (str_CategoryName, real_Budget, i8_BudgetPeriodID)
-                VALUES (?, ?, ?)
+                (i8_CategoryID, str_CategoryName,
+                real_Budget, i8_BudgetPeriodID)
+                VALUES (?, ?, ?, ?)
                 ''',
                 [
-                    ('Nicht zugeordnet', 0.0, 4),
-                    ('Sonstiges', 0.0, 3),
-                    ('Spareinlagen', 100.0, 3)
+                    (0, 'Nicht zugeordnet', 0.0, 4),
+                    (1, 'Sonstiges', 0.0, 3),
+                    (2, 'Spareinlagen', 100.0, 3)
                 ]
             )
             conn.commit()
