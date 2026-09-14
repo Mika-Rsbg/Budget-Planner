@@ -101,7 +101,7 @@ class CategorySelectionPage(BaseToplevelWindow):
         self.select_button.pack(padx=0, side="left")
 
         self.cancel_button = ttk.Button(
-            self.footer_fram, text="Abbrechnen",
+            self.footer_fram, text="Abbrechen",
             command=self.destroy, width=40
         )
         self.cancel_button.pack(padx=30, side="left")
