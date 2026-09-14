@@ -1,6 +1,7 @@
 from tkinter import filedialog
 import logging
 from typing import List, Tuple, Union, Optional, Dict
+from features.importer.mt940.errors import InvalidMT940FileError
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
 from features.account.account_repository import get_account_by_id
@@ -112,34 +113,39 @@ def import_mt940_file(
         with open(file_path, 'r', encoding='utf8') as file:
             file_content = file.read()
 
-        parsed_data = pars_file(file_content)
-
-        (interpreted_data, closing_balance
-         ) = mt940_interpreter.interpret_transactions(
-            parsed_data, master
-            )
-
-        formatted_data = format_data(
-            interpreted_data, TRANSACTION_TABLE_COLUMNS
-        )
-
-        (interpreted_history_data, latest
-         ) = mt940_interpreter.interpret_account_history_entries(
-             closing_balance)
-
         try:
-            new_balance = str(next(iter(latest.values()))[1])
-            # latest: {'1077149530': ('260702', '200.00', 1)}
-        except StopIteration:
-            logging.info("Empty file selected")
-            new_balance = "n.a."
-
-        headers = [
-            column.header
-            for column in TRANSACTION_TABLE_COLUMNS
-        ]
+            parsed_data = pars_file(file_content)
+        except InvalidMT940FileError as e:
+            logger.exception(e)
+        finally:
+            parsed_data = None
 
         if parsed_data:
+            (interpreted_data, closing_balance
+             ) = mt940_interpreter.interpret_transactions(
+                parsed_data, master
+                )
+
+            formatted_data = format_data(
+                interpreted_data, TRANSACTION_TABLE_COLUMNS
+            )
+
+            (interpreted_history_data, latest
+             ) = mt940_interpreter.interpret_account_history_entries(
+                closing_balance)
+
+            try:
+                new_balance = str(next(iter(latest.values()))[1])
+                # latest: {'1077149530': ('260702', '200.00', 1)}
+            except StopIteration:
+                logging.info("Empty file selected")
+                new_balance = "n.a."
+
+            headers = [
+                column.header
+                for column in TRANSACTION_TABLE_COLUMNS
+            ]
+
             first_entry = parsed_data[0]
             account_id = account_repository.get_account_id(
                 data=["", str(first_entry.account_number), "", ""],

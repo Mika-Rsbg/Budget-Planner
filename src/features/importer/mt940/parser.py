@@ -1,5 +1,6 @@
 from typing import List, Tuple
 import logging
+from features.importer.mt940.errors import InvalidMT940FileError
 from models.transaction.imported import ImportTransaction
 from core.logging.logging_tools import log_fn
 
@@ -144,6 +145,9 @@ def pars_block(
                     break
             if amount_start is None:
                 logger.error("No amount found")
+                raise InvalidMT940FileError(
+                    "No amount found. Selected file is invalid."
+                )
             if 'S' in block:
                 amount_end_search_param = 'S'
             elif 'N' in block:
