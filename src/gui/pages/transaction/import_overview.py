@@ -479,7 +479,7 @@ class ImportOverview(BaseToplevelWindow):
                 selected_transactions, self.history_data, self.latest
             )
 
-            self.show_message("Transactions imported succesfully.")
+            self.show_message("Transactions imported successfully.")
             # TODO: improve user feedback
             logger.debug("Close Import Overview. After import.")
             self.destroy()
