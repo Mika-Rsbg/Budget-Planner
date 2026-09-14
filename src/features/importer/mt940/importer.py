@@ -10,7 +10,7 @@ import features.account.account_repository as account_repository
 from features.importer.mt940.parser import pars_file
 from features.importer.formater.table_formater import format_data
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
-from models.transaction.imported_view import ImportedTransactionView
+from models.transaction.import_view import TransactionImportView
 from models.account.entity import Account
 
 
@@ -26,7 +26,7 @@ def import_mt940_file(
                 List[List[Union[str, float]]],
                 Account,
                 str,
-                List[ImportedTransactionView],
+                List[TransactionImportView],
                 List[Tuple[int, float, str, str]],
                 Dict[str, Tuple[str, float, int]],
                 bool
@@ -73,7 +73,7 @@ def import_mt940_file(
         - new_balance (str):
             Closing balance of the imported account as a string.
 
-        - interpreted_data (List[ImportedTransactionView]):
+        - interpreted_data (List[TransactionImportView]):
             Parsed and interpreted transaction entries.
 
         - interpreted_history_data (List[Tuple[int, float, str, str]]):
@@ -150,7 +150,7 @@ def import_mt940_file(
         else:
             logger.info("Empty file selected.")
             return (file_path, ["null"], [["null"]], Account.empty(), "n.a.",
-                    [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
+                    [TransactionImportView.empty()], [(0, 0.0, "", "")],
                     {"": ("", 0.0, 0)}, False)
 
         return (file_path, headers, formatted_data,
@@ -159,12 +159,12 @@ def import_mt940_file(
     else:
         logger.info("No file selected.")
         return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
-                [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
+                [TransactionImportView.empty()], [(0, 0.0, "", "")],
                 {"": ("", 0.0, 0)}, False)
 
 
 @log_fn
-def insert_transactions_to_db(data: List[ImportedTransactionView],
+def insert_transactions_to_db(data: List[TransactionImportView],
                               history_data: List[Tuple[int, float, str, str]],
                               latest: Dict[str, Tuple[str, float, int]]
                               ) -> None:

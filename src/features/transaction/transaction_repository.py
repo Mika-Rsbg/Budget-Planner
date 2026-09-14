@@ -5,7 +5,7 @@ from typing import List, Optional
 from core.database.connection import DatabaseConnection
 import config
 from models.transaction.entity import Transaction
-from models.transaction.imported_view import ImportedTransactionView
+from models.transaction.import_view import TransactionImportView
 
 
 logger = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ def get_transaction_by_id(
     return None
 
 
-def get_transaction_id(transaction: Transaction | ImportedTransactionView,
+def get_transaction_id(transaction: Transaction | TransactionImportView,
                        db_path: Path = config.Database.PATH) -> int | None:
     """Find the ID of an existing transaction based on its details.
 
@@ -202,7 +202,7 @@ def get_transaction_id(transaction: Transaction | ImportedTransactionView,
     return None
 
 
-def get_transaction_id_gui(transaction: Transaction | ImportedTransactionView,
+def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
                            db_path: Path = config.Database.PATH) -> int | None:
     """Find the ID of an existing transaction based on its details.
 
@@ -285,7 +285,7 @@ def get_transaction_id_gui(transaction: Transaction | ImportedTransactionView,
     return None
 
 
-def transaction_exists(transaction: Transaction | ImportedTransactionView,
+def transaction_exists(transaction: Transaction | TransactionImportView,
                        db_path: Path = config.Database.PATH) -> bool:
     """Check if a transaction with the same details
     (except displayed_name and user_comments) exists
@@ -304,7 +304,7 @@ def transaction_exists(transaction: Transaction | ImportedTransactionView,
     return get_transaction_id(transaction, db_path) is not None
 
 
-def add_transaction(data: Transaction | ImportedTransactionView,
+def add_transaction(data: Transaction | TransactionImportView,
                     db_path: Path = config.Database.PATH) -> None:
     """
     Adds a transaction to the database after checking for duplicates.

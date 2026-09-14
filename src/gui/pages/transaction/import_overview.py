@@ -11,7 +11,7 @@ from features.importer.mt940.importer import (import_mt940_file,
 from features.importer.formater.table_formater import format_data
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from models.account.entity import Account
-from models.transaction.imported_view import ImportedTransactionView
+from models.transaction.import_view import TransactionImportView
 
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class ImportOverview(BaseToplevelWindow):
         self.sheet_data: List[List[Union[str, Tuple[str], int, float]]] = data
         self.account_data: Account = account_data
         self.new_balance: str = new_balance
-        self.transactions_by_import_id: Dict[int, ImportedTransactionView] = {
+        self.transactions_by_import_id: Dict[int, TransactionImportView] = {
             transaction.import_id: transaction
             for transaction in transactions
         }
@@ -468,7 +468,7 @@ class ImportOverview(BaseToplevelWindow):
                 logger.debug("Close Import Overview. No Transaction selected.")
                 self.destroy()
 
-            selected_transactions: List[ImportedTransactionView] = [
+            selected_transactions: List[TransactionImportView] = [
                 self.transactions_by_import_id[row[0]]
                 for row in data_selected_rows
                 if row and row[0] in self.transactions_by_import_id

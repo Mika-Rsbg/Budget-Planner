@@ -1,6 +1,6 @@
 from typing import List, Tuple
 import logging
-from models.transaction.imported import ImportedTransaction
+from models.transaction.imported import ImportTransaction
 from core.logging.logging_tools import log_fn
 
 
@@ -46,7 +46,7 @@ def split_toblocks(file_content: str) -> List[str]:
 @log_fn
 def pars_block(
         blocks: List[str]
-        ) -> List[ImportedTransaction]:
+        ) -> List[ImportTransaction]:
     """Parse a List of "blocks" (aka a Line from the .txt) from a mt940 file.
 
     Args:
@@ -54,9 +54,9 @@ def pars_block(
             from the Transactions
 
     Returns:
-        List: A List of ImportedTransaction objects containing the parsed data.
+        List: A List of ImportTransaction objects containing the parsed data.
     """
-    parsed_data: List[ImportedTransaction] = []
+    parsed_data: List[ImportTransaction] = []
     number_parsed_transactions: int = 0
     last_block_86: bool = False
 
@@ -100,7 +100,7 @@ def pars_block(
             if last_block_86:
                 last_block_86 = False
                 # =========== Gathering all data ===========
-                transaction = ImportedTransaction(
+                transaction = ImportTransaction(
                     reference=temp_reference,
                     account_number=temp_account_number,
                     opening_balance=temp_opening_balance,
@@ -208,7 +208,7 @@ def pars_block(
                                     closing_balance)
 
             # =========== Gathering all data ===========
-            transaction = ImportedTransaction(
+            transaction = ImportTransaction(
                 reference=temp_reference,
                 account_number=temp_account_number,
                 opening_balance=temp_opening_balance,
@@ -248,7 +248,7 @@ def pars_block(
 
 def pars_file(
         file_content: str
-        ) -> List[ImportedTransaction]:
+        ) -> List[ImportTransaction]:
     # TODO: add docs
     logger.info("Start file parsing.")
     split_content = split_toblocks(file_content)

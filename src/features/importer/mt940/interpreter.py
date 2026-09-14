@@ -11,16 +11,16 @@ from features.transaction import (transaction_typ_repository
 from features.transaction import transaction_repository
 from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
-from models.transaction.imported import ImportedTransaction
+from models.transaction.imported import ImportTransaction
 from models.transaction.entity import Transaction
-from models.transaction.imported_view import ImportedTransactionView
+from models.transaction.import_view import TransactionImportView
 
 
 logger = logging.getLogger(__name__)
 
 
 def get_account_id(account_number: str,
-                   entry: ImportedTransaction, window: BaseWindow) -> int:
+                   entry: ImportTransaction, window: BaseWindow) -> int:
     """
     Retrieve the account ID for a given account number.
 
@@ -145,9 +145,9 @@ def get_counterparty_id(counterparty_name: str,
 
 
 def interpret_transactions(
-        data: List[ImportedTransaction],
+        data: List[ImportTransaction],
         window: BaseWindow
-        ) -> Tuple[List[ImportedTransactionView],
+        ) -> Tuple[List[TransactionImportView],
                    List[Tuple[str, str, str]]]:
     # TODO: update docs
     """
@@ -177,7 +177,7 @@ def interpret_transactions(
     logger.info("Start interpreting bank statment.")
     closing_balance: List[Tuple[str, str, str]] = []
 
-    interpreted_data: List[ImportedTransactionView] = []
+    interpreted_data: List[TransactionImportView] = []
 
     transaction_id = 0
 
@@ -240,7 +240,7 @@ def interpret_transactions(
                 transaction_id=rti_transaction_id
             )
             assert db_transaction is not None
-            transaction = ImportedTransactionView(
+            transaction = TransactionImportView(
                 import_id=transaction_id,
                 reference=entry.reference,
                 account_number=entry.account_number,
@@ -265,7 +265,7 @@ def interpret_transactions(
                 transaction_id=rti_transaction_id
             )
         else:
-            transaction = ImportedTransactionView(
+            transaction = TransactionImportView(
                 import_id=transaction_id,
                 reference=entry.reference,
                 account_number=entry.account_number,

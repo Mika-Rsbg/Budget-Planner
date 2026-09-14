@@ -3,7 +3,7 @@ from datetime import date as datetime
 
 
 @dataclass
-class ImportedTransactionView:
+class TransactionImportView:
     import_id: int  # different in ImportedTransaction
     reference: str
 
@@ -41,7 +41,7 @@ class ImportedTransactionView:
     transaction_id: int | None = None  # different in ImportedTransaction
 
     @classmethod
-    def empty(cls) -> "ImportedTransactionView":
+    def empty(cls) -> "TransactionImportView":
         return cls(
             import_id=-1,
             reference="",

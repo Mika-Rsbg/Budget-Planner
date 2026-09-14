@@ -9,13 +9,13 @@ import features.account.account_service as account_service
 from features.importer.mt940.errors import DatabaseMT940Error
 from shared.date_utils import get_iso_date
 from models.transaction.entity import Transaction
-from models.transaction.imported_view import ImportedTransactionView
+from models.transaction.import_view import TransactionImportView
 
 
 logger = logging.getLogger(__name__)
 
 
-def add_transactions(data: Sequence[Transaction | ImportedTransactionView]):
+def add_transactions(data: Sequence[Transaction | TransactionImportView]):
     """
     Insert transaction data into the database.
 

@@ -3,7 +3,7 @@ from typing import Tuple
 
 
 @dataclass
-class ImportedTransaction:
+class ImportTransaction:
     reference: str
 
     account_number: str
