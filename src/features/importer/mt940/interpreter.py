@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_account_id(account_number: str,
-                   entry: ImportTransaction, window: BaseWindow) -> int:
+                   opening_balance: float,
+                   window: BaseWindow,
+                   create_missing: bool = True) -> int | None:
     """
     Retrieve the account ID for a given account number.
 
@@ -53,9 +55,11 @@ def get_account_id(account_number: str,
         logger.warning(
             f"Account {account_number} not found in database."
         )
+        if not create_missing:
+            return None
         account_service.add_account_mt940(
             master=window,
-            number=account_number, balance=float(entry.opening_balance)
+            number=account_number, balance=opening_balance
         )
         rti_account_id = account_repository.get_account_id(
             data=[None, account_number, None, None],
@@ -65,7 +69,9 @@ def get_account_id(account_number: str,
     return rti_account_id
 
 
-def get_tt_id(tt_name: str, tt_number: str) -> int:
+def get_tt_id(tt_name: str,
+              tt_number: str,
+              create_missing: bool = True) -> int | None:
     """
     Retrieve the transaction type ID from the database.
 
@@ -91,6 +97,8 @@ def get_tt_id(tt_name: str, tt_number: str) -> int:
         logger.warning(
             f"Transaction type {tt_name} not found in database."
         )
+        if not create_missing:
+            return None
         transaction_typ_repository.add_transaction_typ(
             name=tt_name, number=tt_number
         )
@@ -103,7 +111,8 @@ def get_tt_id(tt_name: str, tt_number: str) -> int:
 
 
 def get_counterparty_id(counterparty_name: str,
-                        counterparty_number: str) -> int:
+                        counterparty_number: str,
+                        create_missing: bool = True) -> int | None:
     """
     Retrieve the counterparty ID from the database.
 
@@ -130,6 +139,8 @@ def get_counterparty_id(counterparty_name: str,
             f"Counterparty {counterparty_name} not found in "
             "database."
         )
+        if not create_missing:
+            return None
         counterparty_repository.add_counterparty(
             name=counterparty_name, number=counterparty_number
         )
@@ -146,7 +157,8 @@ def get_counterparty_id(counterparty_name: str,
 
 def interpret_transactions(
         data: List[ImportTransaction],
-        window: BaseWindow
+        window: BaseWindow,
+        create_missing: bool = True
         ) -> Tuple[List[TransactionImportView],
                    List[Tuple[str, str, str]]]:
     """
@@ -182,7 +194,13 @@ def interpret_transactions(
         # rti: ready to insert
 
         temp_account_number = entry.account_number
-        rti_account_id = get_account_id(temp_account_number, entry, window)
+        account_id = get_account_id(
+            temp_account_number,
+            opening_balance=entry.opening_balance,
+            window=window,
+            create_missing=create_missing
+        )
+        rti_account_id = account_id if account_id is not None else -1
 
         temp_date = entry.date
         rti_date = datetime.strptime(temp_date, "%y%m%d").date()
@@ -192,7 +210,12 @@ def interpret_transactions(
 
         temp_tt_number = entry.transaction_type_number
         temp_tt_name = entry.transaction_type_name
-        rti_tt_id = get_tt_id(temp_tt_name, temp_tt_number)
+        tt_id = get_tt_id(
+            temp_tt_name,
+            temp_tt_number,
+            create_missing=create_missing
+        )
+        rti_tt_id = tt_id if tt_id is not None else -1
 
         rti_amount = str(entry.amount)
         rti_purpose = entry.purpose
@@ -200,7 +223,9 @@ def interpret_transactions(
         temp_counterparty_number = entry.counterparty_account_number
         temp_counterparty_name = entry.counterparty_name
         rti_counterparty_id = get_counterparty_id(
-            temp_counterparty_name, temp_counterparty_number
+            temp_counterparty_name,
+            temp_counterparty_number,
+            create_missing=create_missing
         )
 
         rti_category_id = 0  # Default category

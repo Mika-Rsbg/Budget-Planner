@@ -1,7 +1,7 @@
 from tkinter import filedialog
 import logging
 from typing import List, Tuple, Union, Optional, Dict
-from features.importer.mt940.errors import InvalidMT940FileError
+from features.importer.mt940.errors import InvalidMT940FileError, DatabaseMT940Error
 from gui.app.basewindow import BaseWindow
 from core.logging.logging_tools import log_fn
 from features.account.account_repository import get_account_by_id
@@ -28,7 +28,7 @@ def import_mt940_file(
                 Account,
                 str,
                 List[TransactionImportView],
-                List[Tuple[int, float, str, str]],
+                List[Tuple[str, str, str]],
                 Dict[str, Tuple[str, float, int]],
                 bool
             ]:
@@ -123,23 +123,20 @@ def import_mt940_file(
         if parsed_data:
             (interpreted_data, closing_balance
              ) = mt940_interpreter.interpret_transactions(
-                parsed_data, master
-                )
+                parsed_data, master, create_missing=False
+             )
 
             formatted_data = format_data(
                 interpreted_data, TRANSACTION_TABLE_COLUMNS
             )
 
-            (interpreted_history_data, latest
-             ) = mt940_interpreter.interpret_account_history_entries(
-                closing_balance)
-
-            try:
-                new_balance = str(next(iter(latest.values()))[1])
-                # latest: {'1077149530': ('260702', '200.00', 1)}
-            except StopIteration:
+            balance_entries = [entry for entry in closing_balance if entry != ("", "", "")]
+            if balance_entries:
+                new_balance = str(balance_entries[-1][2])
+            else:
                 logging.info("Empty file selected")
                 new_balance = "n.a."
+            latest: Dict[str, Tuple[str, float, int]] = {}
 
             headers = [
                 column.header
@@ -147,44 +144,83 @@ def import_mt940_file(
             ]
 
             first_entry = parsed_data[0]
-            account_id = account_repository.get_account_id(
-                data=["", str(first_entry.account_number), "", ""],
-                supplied_data=[False, True, False, False]
+            try:
+                account_id = account_repository.get_account_id(
+                    data=["", str(first_entry.account_number), "", ""],
+                    supplied_data=[False, True, False, False]
                 )
-            account_data = get_account_by_id(account_id)
-            assert account_data is not None
+                account_data = get_account_by_id(account_id)
+                assert account_data is not None
+            except account_repository.NoAccountFoundError:
+                account_data = Account.empty()
+                account_data.number = str(first_entry.account_number)
+                account_data.balance = float(first_entry.opening_balance)
         else:
             logger.info("Empty file selected.")
             return (file_path, ["null"], [["null"]], Account.empty(), "n.a.",
-                    [TransactionImportView.empty()], [(0, 0.0, "", "")],
+                    [TransactionImportView.empty()], [("", "", "")],
                     {"": ("", 0.0, 0)}, False)
 
         return (file_path, headers, formatted_data,
                 account_data, new_balance, interpreted_data,
-                interpreted_history_data, latest, True)
+                closing_balance, latest, True)
     else:
         logger.info("No file selected.")
         return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
-                [TransactionImportView.empty()], [(0, 0.0, "", "")],
+                [TransactionImportView.empty()], [("", "", "")],
                 {"": ("", 0.0, 0)}, False)
 
 
 @log_fn
 def insert_transactions_to_db(data: List[TransactionImportView],
-                              history_data: List[Tuple[int, float, str, str]],
-                              latest: Dict[str, Tuple[str, float, int]]
+                              history_data: List[Tuple[str, str, str]],
+                              master: BaseWindow
                               ) -> None:
     """Persist import transactions, history entries, and account balances.
 
     Args:
         data: Imported transactions to add to the database.
-        history_data: Account history entries to add to the database.
-        latest: Latest account balances keyed by account identifier.
+        history_data: Raw closing balance entries from the parsed file.
+        master: Parent window used for account creation dialogs.
     """
+    for transaction in data:
+        if transaction.account_id < 0:
+            account_id = mt940_interpreter.get_account_id(
+                account_number=transaction.account_number,
+                opening_balance=transaction.opening_balance,
+                window=master,
+            )
+            if account_id is None:
+                raise DatabaseMT940Error(
+                    "Could not resolve account ID during import."
+                )
+            transaction.account_id = account_id
+
+        if transaction.transaction_type_id < 0:
+            transaction_type_id = mt940_interpreter.get_tt_id(
+                tt_name=transaction.transaction_type_name,
+                tt_number=transaction.transaction_type_number,
+            )
+            if transaction_type_id is None:
+                raise DatabaseMT940Error(
+                    "Could not resolve transaction type ID during import."
+                )
+            transaction.transaction_type_id = transaction_type_id
+
+        if transaction.counterparty_id is None or transaction.counterparty_id < 0:
+            transaction.counterparty_id = mt940_interpreter.get_counterparty_id(
+                counterparty_name=transaction.counterparty_name,
+                counterparty_number=transaction.counterparty_account_number,
+            )
+
     mt940_database_service.add_transactions(data)
 
+    interpreted_history_data, latest = (
+        mt940_interpreter.interpret_account_history_entries(history_data)
+    )
+
     # Add the closing balance to the database
-    mt940_database_service.add_account_history_entries(history_data)
+    mt940_database_service.add_account_history_entries(interpreted_history_data)
 
     mt940_database_service.update_account_balances(latest)
     logger.debug("Bank statement successfully inserted to database.")
