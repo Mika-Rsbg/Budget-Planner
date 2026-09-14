@@ -149,30 +149,26 @@ def interpret_transactions(
         window: BaseWindow
         ) -> Tuple[List[TransactionImportView],
                    List[Tuple[str, str, str]]]:
-    # TODO: update docs
     """
-    Convert parsed MT940 transactions into database-ready structures.
+    Interpret parsed MT940 entries into import view records.
 
-    This function:
-        - Resolves or creates accounts, transaction types, and counterparties
-        - Converts raw MT940 fields into normalized database IDs
-        - Builds RTI (Ready-To-Insert) transaction tuples
-        - Collects closing balance entries for account history processing
+    This function resolves related database IDs (account, transaction type,
+    counterparty), converts MT940 values into application-specific Python
+    objects and checks whether each transaction already exists in the database.
+    It also collects closing balance records for follow-up account history
+    processing.
 
     Args:
-        data (List[Dict[str, Union[str, Tuple[str], int, float]]]):
-            Parsed MT940 transaction data.
+        data (List[ImportTransaction]):
+            Parsed MT940 transactions to interpret.
         window (BaseWindow):
-            Main application window used for account creation
-            and context handling.
+            Main application window used to resolve or create accounts.
 
     Returns:
-        Tuple containing:
-            - List[RTIData]:
-                Normalized transaction data ready for database insertion.
-            - List[Tuple[str, str, str]]:
-                Closing balance entries in format:
-                (account_number, record_date, balance)
+        Tuple[List[TransactionImportView], List[Tuple[str, str, str]]]:
+            - A list of import-ready transaction view objects.
+            - Closing balance entries in the format
+              (account_number, record_date, balance).
     """
     logger.info("Start interpreting bank statment.")
     closing_balance: List[Tuple[str, str, str]] = []

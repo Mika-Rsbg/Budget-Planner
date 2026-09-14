@@ -17,21 +17,22 @@ logger = logging.getLogger(__name__)
 
 def add_transactions(data: Sequence[Transaction | TransactionImportView]):
     """
-    Insert transaction data into the database.
+    Insert imported transactions into the database.
 
-    This function iterates over prepared RTIData entries and attempts
-    to insert each transaction into the database. It tracks successful
-    inserts and skipped entries (already existing records).
+    This function iterates over a sequence of transaction objects created
+    during MT940 import and attempts to persist each one. It tracks how many
+    records were inserted successfully and how many were skipped because the
+    transaction already existed.
 
     Args:
-        data (List[Transaction]):
-            List of transaction objects ready for database insertion.
+        data (Sequence[Transaction | TransactionImportView]):
+            Transaction entries ready for database insertion, including
+            imported view objects and persisted transaction entities.
 
     Raises:
         DatabaseMT940Error:
-            If an unexpected database error occurs during insertion.
+            If an unexpected database error occurs while saving a transaction.
     """
-    # TODO: update docs
     # Initialize counters
     number_skipped_transactions = 0
     number_inserted_transactions = 0

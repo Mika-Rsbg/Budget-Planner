@@ -249,7 +249,15 @@ def pars_block(
 def pars_file(
         file_content: str
         ) -> List[ImportTransaction]:
-    # TODO: add docs
+    """Parse a raw MT940 file into import transaction objects.
+
+    Args:
+        file_content: The raw MT940 bank statement content as a string.
+
+    Returns:
+        List[ImportTransaction]:
+            A list of parsed import transactions extracted from the statement.
+    """
     logger.info("Start file parsing.")
     split_content = split_toblocks(file_content)
     parsed_content = pars_block(split_content)
