@@ -151,8 +151,8 @@ class AccountPage(BaseToplevelWindow):
             else:
                 return False
         data = account_repository.get_account_data()
-        # TODO: check if data typ date changes use
-        data = list(filter(filter_list, data))
+        data = [account for account in data
+                if account.id == self.selected_account_id]
         print(data)
         self.account_name_entry.delete(0, "end")
         self.account_number_entry.delete(0, "end")
