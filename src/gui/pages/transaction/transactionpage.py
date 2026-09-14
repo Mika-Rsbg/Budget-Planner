@@ -83,7 +83,7 @@ class TransactionPage(BaseToplevelWindow):
             date=rti_date,
             booking_date=rti_bookingdate,
             transaction_type_id=rti_tt_id,
-            amount=rti_amount,
+            amount=float(rti_amount),
             purpose=rti_purpose,
             counterparty_id=rti_counterparty_id,
             category_id=rti_category_id,
