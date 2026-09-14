@@ -63,7 +63,7 @@ class ImportOverview(BaseToplevelWindow):
             if transaction.in_database
         ]
 
-        self.rows_not_in_database_undefined: List[int] = [
+        self.rows_not_in_database_not_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -71,7 +71,7 @@ class ImportOverview(BaseToplevelWindow):
             if not transaction.in_database and transaction.category_id == 0
         ]
 
-        self.rows_defined: List[int] = [
+        self.rows_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -79,14 +79,13 @@ class ImportOverview(BaseToplevelWindow):
             if transaction.category_id == 0
         ]
 
-        self.rows_undefined: List[int] = [
+        self.rows_not_categorized: List[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
                 )
             if transaction.category_id != 0
         ]
-        # TODO: change defined to better name
         # TODO: add docs
 
     def _update_selected_count(self) -> None:
@@ -124,12 +123,12 @@ class ImportOverview(BaseToplevelWindow):
             self._select_rows(self.rows_in_database)
         elif mode == "Nicht importiert, nicht zugeordnet":
             self._select_rows(
-                self.rows_not_in_database_undefined
+                self.rows_not_in_database_not_categorized
             )
         elif mode == "Nicht zugeordnet":
-            self._select_rows(self.rows_undefined)
+            self._select_rows(self.rows_not_categorized)
         elif mode == "Bereits zugeordnet":
-            self._select_rows(self.rows_defined)
+            self._select_rows(self.rows_categorized)
         else:
             self.sheet.deselect("all")
             self._update_selected_count()
