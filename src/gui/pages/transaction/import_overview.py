@@ -110,7 +110,7 @@ class ImportOverview(BaseToplevelWindow):
         self.number_selected_readonly_entry.insert(0, display_value)
         self.number_selected_readonly_entry.config(state="readonly")
 
-    def _select_rows(rows: List[int]) -> None:
+    def _select_rows(self, rows: List[int]) -> None:
         self.sheet.deselect("all")
         for row in rows:
             self.sheet.add_row_selection(row)
@@ -351,7 +351,7 @@ class ImportOverview(BaseToplevelWindow):
             row=0, column=3, sticky="ew", padx=10
         )
 
-        self._selected_not_already_imported()
+        self._select_rows(self.rows_not_in_database)
 
         self.refresh_selection_button = ttk.Button(
             self.selection_frame, text="Aktualisieren",
