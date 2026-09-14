@@ -43,4 +43,4 @@ Budget-Planner is a simple yet powerful tool designed to help individuals track 
 
 ---
 
-**Not all features are available right now, but the will probably come in future releases or commits.**
+**Not all features are available right now, but they will probably come in future releases or commits.**

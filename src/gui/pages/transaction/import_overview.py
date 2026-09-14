@@ -1,0 +1,564 @@
+import logging
+import tksheet
+from tkinter import ttk
+import tkinter as tk
+from typing import List, Tuple, Union, Dict
+from gui.app.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
+from gui.pages.category.selectionpage import CategorySelectionPage
+from features.importer.mt940.importer import (import_mt940_file,
+                                              insert_transactions_to_db)
+from features.importer.formater.table_formater import format_data
+from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
+from models.account.entity import Account
+from models.transaction.import_view import TransactionImportView
+
+
+logger = logging.getLogger(__name__)
+
+
+class ImportOverview(BaseToplevelWindow):
+    def __init__(self, parent: BaseWindow,
+                 title="Transactions Importer Page",
+                 geometry="500x600", bg_color="white") -> None:
+        self.parent = parent
+
+        (path, header, data, account_data,
+         new_balance, transactions, history_data,
+         latest, valid_file) = import_mt940_file(self.parent)
+
+        self.file_path: str = path
+        self.sheet_header: List[str] = header
+        self.sheet_data: List[List[Union[str, Tuple[str], int, float]]] = data
+        self.account_data: Account = account_data
+        self.new_balance: str = new_balance
+        self.transactions_by_import_id: Dict[int, TransactionImportView] = {
+            transaction.import_id: transaction
+            for transaction in transactions
+        }
+        self.history_data = history_data
+        self.latest = latest
+        self.valid_file_selected = valid_file
+        plugin_scope = "import-overview"
+        self._calculate_selection_data()
+        super().__init__(parent, plugin_scope, title, geometry, bg_color,
+                         fullscreen=True)
+
+    def _calculate_selection_data(self) -> None:
+        """Calculate row indices for the different transaction selections.
+
+        The calculated indices are stored in instance attributes and are based
+        on the current state of ``transactions_by_import_id``.
+
+        The following selections are calculated:
+            rows_not_in_database:
+                Transactions that are not yet in the database.
+            rows_in_database:
+                Transactions that are already in the database.
+            rows_not_in_database_not_categorized:
+                Transactions that are not in the database and have no category.
+            rows_categorized:
+                Transactions that have no category.
+            rows_not_categorized:
+                Transactions that have a category assigned.
+        """
+        # Indices of transaction rows that are not yet in the database.
+        # These rows are initially selected.
+        self.rows_not_in_database: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+            )
+            if not transaction.in_database
+        ]
+
+        # Indices of transaction rows that are already in the database.
+        self.rows_in_database: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+            )
+            if transaction.in_database
+        ]
+
+        # Indices of transaction rows that are not in the database
+        # and have no category assigned.
+        self.rows_not_in_database_not_categorized: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+            )
+            if not transaction.in_database and transaction.category_id == 0
+        ]
+
+        # Indices of transaction rows that have no category assigned.
+        self.rows_categorized: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+            )
+            if transaction.category_id != 0
+        ]
+
+        # Indices of transaction rows that have a category assigned.
+        self.rows_not_categorized: List[int] = [
+            index
+            for index, transaction in enumerate(
+                self.transactions_by_import_id.values()
+            )
+            if transaction.category_id == 0
+        ]
+
+    def _update_selected_count(self) -> None:
+        if not hasattr(self, "number_selected_readonly_entry"):
+            return
+
+        # reload() destroys the old widgets before rebuilding the UI. The
+        # attribute can still reference a widget whose Tcl command is gone.
+        try:
+            if not self.number_selected_readonly_entry.winfo_exists():
+                return
+        except tk.TclError:
+            return
+
+        selected_rows = self.sheet.get_selected_rows(get_cells_as_rows=True)
+        count = len(selected_rows)
+        display_value = f"{count}/{len(self.sheet_data)}"
+
+        self.number_selected_readonly_entry.config(state="normal")
+        self.number_selected_readonly_entry.delete(0, tk.END)
+        self.number_selected_readonly_entry.insert(0, display_value)
+        self.number_selected_readonly_entry.config(state="readonly")
+
+    def _select_rows(self, rows: List[int]) -> None:
+        self.sheet.deselect("all")
+        for row in rows:
+            self.sheet.add_row_selection(row)
+        self._update_selected_count()
+
+    def _refresh_selection(self):
+        mode = self.selection_mode_dropdown.get()
+        if mode == "Nicht importiert":
+            self._select_rows(self.rows_not_in_database)
+        elif mode == "Bereits importiert":
+            self._select_rows(self.rows_in_database)
+        elif mode == "Nicht importiert, nicht zugeordnet":
+            self._select_rows(
+                self.rows_not_in_database_not_categorized
+            )
+        elif mode == "Nicht zugeordnet":
+            self._select_rows(self.rows_not_categorized)
+        elif mode == "Bereits zugeordnet":
+            self._select_rows(self.rows_categorized)
+        else:
+            self.sheet.deselect("all")
+            self._update_selected_count()
+
+    def init_ui(self) -> None:
+        """
+        Init the UI for the Import Overview Page.
+        """
+        # ============= File Info =============
+        # region
+        self.file_info_frame = ttk.Frame(self.main_frame, padding=10)
+        self.file_info_frame.grid(row=0, column=0, sticky="nsew")
+        self.path_readonly_entry = ttk.Entry(
+            self.file_info_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.path_readonly_entry.config(state="normal")
+        self.path_readonly_entry.delete(0, tk.END)
+        self.path_readonly_entry.insert(0, self.file_path)
+        self.path_readonly_entry.config(state="readonly")
+        self.path_readonly_entry.grid(row=0, column=0, sticky="ew")
+        self.file_info_frame.grid_columnconfigure(0, minsize=550)
+        self.open_file_button = ttk.Button(
+            self.file_info_frame, text="Öffne andere Datei",
+            command=self.open_file
+        )
+        self.open_file_button.grid(row=0, column=1, padx=10)
+
+        # ============= Separator =============
+        self.separator = ttk.Separator(
+            self.main_frame,
+            orient="horizontal"
+        )
+        self.separator.grid(row=1, column=0, sticky="ew", padx=10)
+        # endregion
+
+        # ============= Account Info =============
+        # region
+        account_name = self.account_data.name
+        account_number = self.account_data.number
+        last_database_entry = self.account_data.record_date.strftime(
+            "%d.%m.%Y"
+            )
+
+        account_balance = self.account_data.balance
+
+        self.account_info_frame = ttk.Frame(self.main_frame, padding=10)
+        self.account_info_frame.grid(row=2, column=0, sticky="nsew")
+
+        # ====== Old Balance ======
+        self.account_balance_label = ttk.Label(
+            self.account_info_frame, text="Alter Kontostand:",
+            background=self.bg_color, foreground="black", compound="right"
+        )
+        self.account_balance_label.grid(row=0, column=0, sticky="ew", pady=10)
+        self.acc_old_balance_readonly_entry = ttk.Entry(
+            self.account_info_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.acc_old_balance_readonly_entry.config(state="normal")
+        self.acc_old_balance_readonly_entry.delete(0, tk.END)
+        self.acc_old_balance_readonly_entry.insert(0, str(account_balance))
+        self.acc_old_balance_readonly_entry.config(state="readonly")
+        self.acc_old_balance_readonly_entry.grid(
+            row=0, column=1, sticky="ew", padx=10
+        )
+
+        # ====== Account Name ======
+        self.account_name_label = ttk.Label(
+            self.account_info_frame, text="Konto Name:",
+            background=self.bg_color, foreground="black", compound="right"
+        )
+        self.account_name_label.grid(row=0, column=2, sticky="ew")
+        self.acc_name_readonly_entry = ttk.Entry(
+            self.account_info_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.acc_name_readonly_entry.config(state="normal")
+        self.acc_name_readonly_entry.delete(0, tk.END)
+        self.acc_name_readonly_entry.insert(0, account_name)
+        self.acc_name_readonly_entry.config(state="readonly")
+        self.acc_name_readonly_entry.grid(
+            row=0, column=3, sticky="ew", padx=10
+        )
+
+        # ====== Account Number ======
+        self.account_number_label = ttk.Label(
+            self.account_info_frame, text="Konto Nummer:",
+            background=self.bg_color, foreground="black", compound="right"
+        )
+        self.account_number_label.grid(row=0, column=4, sticky="ew")
+        self.acc_number_readonly_entry = ttk.Entry(
+            self.account_info_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.acc_number_readonly_entry.config(state="normal")
+        self.acc_number_readonly_entry.delete(0, tk.END)
+        self.acc_number_readonly_entry.insert(0, account_number)
+        self.acc_number_readonly_entry.config(state="readonly")
+        self.acc_number_readonly_entry.grid(
+            row=0, column=5, sticky="ew", padx=10
+        )
+
+        # ====== Last Database Entry ======
+        self.last_db_entry_date_label = ttk.Label(
+            self.account_info_frame, text="Letzter Eintrag vom:",
+            background=self.bg_color, foreground="black", compound="right"
+        )
+        self.last_db_entry_date_label.grid(row=0, column=6, sticky="ew")
+        self.last_db_entry_readonly_entry = ttk.Entry(
+            self.account_info_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.last_db_entry_readonly_entry.config(state="normal")
+        self.last_db_entry_readonly_entry.delete(0, tk.END)
+        self.last_db_entry_readonly_entry.insert(0, last_database_entry)
+        self.last_db_entry_readonly_entry.config(state="readonly")
+        self.last_db_entry_readonly_entry.grid(
+            row=0, column=7, sticky="ew", padx=10
+        )
+
+        # ============= Separator =============
+        self.separator = ttk.Separator(
+            self.main_frame,
+            orient="horizontal"
+        )
+        self.separator.grid(row=3, column=0, sticky="ew", padx=10)
+        # endregion
+
+        # ============= Sheet =============
+        # region
+        self.sheet_frame = ttk.Frame(self.main_frame, padding=10)
+        self.sheet_frame.grid(row=4, column=0, sticky="nsew", columnspan=2)
+        self.sheet = tksheet.Sheet(
+            self.sheet_frame,
+            headers=self.sheet_header,
+            data=self.sheet_data,
+            # auto_resize_columns=20
+        )
+        self.sheet.set_all_column_widths()
+        if self.sheet_data[0].__len__() > 5:
+            self.sheet.column_width(
+                column=5,
+                width=500,
+            )
+        self.sheet.readonly(True)
+
+        self.sheet.enable_bindings()
+        self.sheet.bind(
+            "<<SheetSelect>>",
+            lambda event=None: self._update_selected_count()
+        )
+        self.sheet.pack(fill="both", expand=True)
+
+        # ============= Separator =============
+        self.separator = ttk.Separator(
+            self.main_frame,
+            orient="horizontal"
+        )
+        self.separator.grid(row=5, column=0, sticky="ew", padx=10)
+        # endregion
+
+        # ============= Selection =============
+        # region
+        self.selection_frame = ttk.Frame(self.main_frame, padding=10)
+        self.selection_frame.grid(row=6, column=0, sticky="nsew")
+
+        # ====== New Balance ======
+        self.new_account_balance_label = ttk.Label(
+            self.selection_frame, text="Neuer Kontostand:",
+            background=self.bg_color, foreground="black", compound="right"
+        )
+        self.new_account_balance_label.grid(row=0, column=0, sticky="ew")
+        self.acc_new_balance_readonly_entry = ttk.Entry(
+            self.selection_frame, state="readonly",
+            background=self.bg_color, foreground="black"
+        )
+        self.acc_new_balance_readonly_entry.config(state="normal")
+        self.acc_new_balance_readonly_entry.delete(0, tk.END)
+        self.acc_new_balance_readonly_entry.insert(0, self.new_balance)
+        self.acc_new_balance_readonly_entry.config(state="readonly")
+        self.acc_new_balance_readonly_entry.grid(
+            row=0, column=1, sticky="ew", padx=10
+        )
+
+        # ====== Selection Mode ======
+        self.selection_mode_dropdown = ttk.Combobox(
+            self.selection_frame, state="readonly",
+            values=[
+                "Bereits importiert", "Nicht importiert",
+                "Nicht importiert, nicht zugeordnet",
+                "Nicht zugeordnet", "Bereits zugeordnet"
+                ]
+        )
+        self.selection_mode_dropdown.current(1)
+        self.selection_mode_dropdown.grid(
+            row=0, column=2, sticky="ew"
+        )
+        self.selection_mode_dropdown.bind(
+            "<<ComboboxSelected>>", lambda _event: self._refresh_selection()
+        )
+
+        self.selection_frame.grid_columnconfigure(2, minsize=250)
+
+        self.number_selected_readonly_entry = ttk.Entry(
+            self.selection_frame, state="readonly",
+            background=self.bg_color, foreground="black", width=10
+        )
+        self.number_selected_readonly_entry.config(justify="center")
+        self.number_selected_readonly_entry.grid(
+            row=0, column=3, sticky="ew", padx=10
+        )
+
+        self._select_rows(self.rows_not_in_database)
+
+        self.refresh_selection_button = ttk.Button(
+            self.selection_frame, text="Aktualisieren",
+            command=self._refresh_selection
+        )
+        self.refresh_selection_button.grid(row=0, column=4)
+
+        # ============= Separator =============
+        self.separator = ttk.Separator(
+            self.main_frame,
+            orient="horizontal"
+        )
+        self.separator.grid(row=7, column=0, sticky="ew", padx=10)
+        # endregion
+
+        # ============= Categorization =============
+        # region
+        self.categoration_frame = ttk.Frame(self.main_frame, padding=10)
+        self.categoration_frame.grid(row=8, column=0, sticky="nsew")
+
+        # ====== Manage Categorization ======
+        self.manage_categorization_button = ttk.Button(
+            self.categoration_frame, text="Zuordnungen verwalten",
+            # command=self.open_file
+        )
+        self.manage_categorization_button.grid(row=0, column=0, padx=10)
+
+        # ====== Add Categorization ======
+        self.add_categorization_button = ttk.Button(
+            self.categoration_frame, text="Zuordnungen anlegen",
+            # command=self.add_category_manual
+        )
+        self.add_categorization_button.grid(row=0, column=1, padx=10)
+
+        # ====== Manual Categorization ======
+        self.manual_categorization_button = ttk.Button(
+            self.categoration_frame, text="Manuell Zuordnen",
+            command=self.assign_category_to_selected
+        )
+        self.manual_categorization_button.grid(row=0, column=2, padx=10)
+
+        # ====== Toggle Categorization ======
+        self.toggle_categorization_button = ttk.Checkbutton(
+            self.categoration_frame, text="Automatische Zuordnung",
+            variable=tk.BooleanVar(value=True)
+        )
+        self.toggle_categorization_button.grid(row=0, column=3, padx=10)
+        # endregion
+
+        # ============= Footer =============
+        # region
+        self.footer_fram = ttk.Frame(self.main_frame, padding=10)
+        self.footer_fram.grid(row=9, column=0, sticky="nsew")
+
+        self.import_button = ttk.Button(
+            self.footer_fram, text="Importieren", width=30,
+            command=self.import_transactions
+        )
+        self.import_button.grid(row=0, column=0, padx=10)
+
+        self.cancel_button = ttk.Button(
+            self.footer_fram, text="Abbrechen",
+            command=self.destroy, width=30
+        )
+        self.cancel_button.grid(row=0, column=1, padx=10)
+        # endregion
+
+        self.import_button.focus_set()
+        self.main_frame.columnconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(4, weight=1)
+
+    def open_file(self):
+        (path, header, data, account_data,
+         new_balance, transactions, history_data,
+         latest, valid_file) = import_mt940_file(self.parent)
+        self.file_path = path
+        self.sheet_header = header
+        self.sheet_data = data
+        self.account_data = account_data
+        self.new_balance = new_balance
+        self.transactions_by_import_id = {
+            transaction.import_id: transaction
+            for transaction in transactions
+        }
+        self.history_data = history_data
+        self.latest = latest
+        self.valid_file_selected = valid_file
+        self._calculate_selection_data()
+        self.reload()
+
+    def import_transactions(self):
+        if self.valid_file_selected:
+            selected_rows = self.sheet.get_selected_rows(
+                get_cells_as_rows=True
+            )
+            data_selected_rows = self.sheet.get_sheet_data(
+                only_rows=iter(selected_rows)  # type: ignore
+            )
+
+            if data_selected_rows == []:
+                self.show_message("No Transaction to import selected.")
+                logger.debug("Close Import Overview. No Transaction selected.")
+                self.destroy()
+                return
+
+            selected_transactions: List[TransactionImportView] = [
+                self.transactions_by_import_id[row[0]]
+                for row in data_selected_rows
+                if row and row[0] in self.transactions_by_import_id
+            ]
+
+            insert_transactions_to_db(
+                selected_transactions, self.history_data, self.latest
+            )
+
+            self.show_message("Transactions imported successfully.")
+            # TODO: improve user feedback
+            logger.debug("Close Import Overview. After import.")
+            self.destroy()
+            self.parent.reload()
+        else:
+            self.show_message("Empty or invalid file selected.")
+            logger.info("Empty or invalid file selected. No import possible.")
+            logger.debug("Close Import Overview.")
+            self.destroy()
+            self.parent.reload()
+
+    def assign_category_to_selected(self):
+        """Assign the selected category to the selected transactions.
+
+        Opens the category selection page and assigns the chosen category to
+        every selected transaction. The transaction table and selection data
+        are updated afterwards.
+
+        If no category or transaction is selected, the operation is cancelled.
+        A KeyError is logged if a selected transaction cannot be found by its
+        import ID.
+        """
+        logger.debug("Starting category assignment for selected transactions.")
+
+        selection_page = CategorySelectionPage(self.parent)
+        self.wait_window(selection_page)
+        selected_category_id = selection_page.final_selected_category
+
+        if selected_category_id is not None:
+            selected_rows = self.sheet.get_selected_rows(
+                get_cells_as_rows=True
+            )
+            data_selected_rows = self.sheet.get_sheet_data(
+                only_rows=iter(selected_rows)  # type: ignore
+            )
+
+            if not data_selected_rows:
+                self.show_message("No Transaction selected!")
+                logger.debug(
+                    "Category assignment cancelled: No transaction selected."
+                )
+                return
+
+            logger.debug(
+                "Assigning category ID %s to %d selected transactions.",
+                selected_category_id,
+                len(data_selected_rows),
+            )
+
+            for row in data_selected_rows:
+                import_id = row[0]
+                try:
+                    self.transactions_by_import_id[import_id].category_id = (
+                        selected_category_id
+                    )
+                except KeyError:
+                    logger.exception(
+                        "Transaction with import ID %s not found.", import_id
+                    )
+
+            transactions = list(self.transactions_by_import_id.values())
+
+            self.sheet_data = format_data(
+                transactions, TRANSACTION_TABLE_COLUMNS
+            )
+
+            self._calculate_selection_data()
+
+            self.show_message("Kategorie erfolgreich geändert.")
+
+            self.reload()
+
+            logger.debug(
+                "Category ID %s successfully" +
+                "assigned to selected transactions.",
+                selected_category_id,
+            )
+        else:
+            self.show_message("Keine Kategorie ausgewählt!")
+            logger.debug(
+                "Category assignment cancelled: No category selected."
+            )

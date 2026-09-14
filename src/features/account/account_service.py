@@ -3,11 +3,11 @@ import string
 import random
 from pathlib import Path
 from typing import List, Optional, Union, cast
+from datetime import date
 import logging
 from gui.app.basewindow import BaseWindow
 from gui.pages.account.name_input_page import NameInputDialog
 from core.database.connection import DatabaseConnection
-from shared.date_utils import get_iso_date
 from features.account.account_repository import add_account
 import config
 
@@ -47,6 +47,7 @@ def update_account(account_id: int,
     Raises:
         Error: If no update is needed or if any database error occurs.
     """
+    # TODO: adapt datetime.date data typ for date
     # Define the column names corresponding to the new values.
     columns = ["i8_WidgetPosition", "str_AccountName", "str_AccountNumber",
                "real_AccountBalance", "real_AccountDifference",
@@ -69,8 +70,6 @@ def update_account(account_id: int,
         )
         current_record = cursor.fetchone()
         logger.debug("Current record fetched successfully.")
-        # Remove the following logging statement.
-        print("Current record:", current_record)
         # Check if the new record date is older than the current record date
         if current_record is not None:
             if current_record[5] is not None:
@@ -231,10 +230,12 @@ def add_account_mt940(number: str, master: BaseWindow,
                       name: Optional[str] = None,
                       balance: Optional[float] = None,
                       difference: Optional[float] = None,
-                      record_date: str = get_iso_date(date="010101"),
+                      record_date: date = date(1900, 1, 1),
                       db_path: Path = config.Database.PATH
                       ) -> None:
     # FIXME: remove default None
+    # TODO: adapt a new ImportAccount datatyp
+    # TODO: remove record_date default
     """
     Adds a new account to the database, is used for MT940 import.
     If the name is not provided, it prompts the user to input a name.
@@ -245,7 +246,7 @@ def add_account_mt940(number: str, master: BaseWindow,
         name (str, Optional): Name of the account.
         balance (float, Optional): Balance of the account.
         difference (float, Optional): Difference of the account.
-        record_date (str): Date of the record in ISO format.
+        record_date (date): Date of the record as datetime.date().
         db_path (Path, Optional): Path to the SQLite database file.
     Raises:
         Error: If the account number is not provided or if any database error

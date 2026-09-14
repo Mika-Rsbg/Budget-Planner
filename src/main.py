@@ -22,7 +22,7 @@ def main() -> None:
 
     create_database()
 
-    app = Homepage(fullscreen=True)
+    app = Homepage(fullscreen=False)
     app.run()
 
     logger.info("")
@@ -37,7 +37,7 @@ def main_test() -> None:
     Logs in a test log file.
     """
     from gui.app.basewindow import BaseWindow
-    from gui.pages.transaction.transactionpage import TransactionPage
+    from gui.pages.transaction.import_overview import ImportOverview
     from core.database.schema import create_database
 
     logger.info("")
@@ -48,12 +48,13 @@ def main_test() -> None:
         title="Test Transaction Page",
         geometry="500x600",
         bg_color="white",
-        plugin_scope="test"
+        plugin_scope="test",
+        auto_ui_init=False
     )
     app.withdraw()  # Hide the root window
-    transaction_page = TransactionPage(parent=app, plugin_scope="test")
-    print(transaction_page)
-    app.mainloop()
+    tested_page = ImportOverview(app)
+    app.wait_window(tested_page)
+    app.destroy()
 
 
 def main_fn_test() -> None:
@@ -62,6 +63,7 @@ def main_fn_test() -> None:
     It creates the database.
     Logs in a test log file.
     """
+    from datetime import date
     from core.database.schema import create_database
     from features.account.account_history_repository import (
         get_total_cash_history
@@ -73,7 +75,7 @@ def main_fn_test() -> None:
     )
     logger.info("")
     create_database()
-    print(get_total_cash_history("2024-12-01", ""))
+    print(get_total_cash_history(start_date=date(2024, 12, 1)))
 
 
 if __name__ == "__main__":

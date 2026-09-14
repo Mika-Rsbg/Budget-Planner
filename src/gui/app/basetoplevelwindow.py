@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class BaseToplevelWindow(tk.Toplevel):
     def __init__(self, master: BaseWindow, plugin_scope: str = "",
                  title: str = "Fenster", geometry: str = "600x400",
-                 bg_color: str = "white") -> None:
+                 bg_color: str = "white", fullscreen: bool = False) -> None:
         """
         Init an instance of the BaseToplevelWindow class.
 
@@ -29,12 +29,15 @@ class BaseToplevelWindow(tk.Toplevel):
         self.title(title)
         self.geometry(geometry)
         self.bg_color = bg_color
+        if fullscreen:
+            self.state("zoomed")
         self.configure(bg=bg_color)
         self._apply_styles()
         self._setup_main_frame()
         self._setup_status_bar()
         self._setup_menu()
         self.init_ui()
+        self.bind_all("<Return>", self.on_enter)
 
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
@@ -73,6 +76,12 @@ class BaseToplevelWindow(tk.Toplevel):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
 
+    def on_enter(self, event: tk.Event) -> None:
+        widget = event.widget.focus_get()
+
+        if isinstance(widget, ttk.Button):
+            widget.invoke()
+
     @log_fn
     def init_ui(self) -> None:
         """
@@ -102,9 +111,14 @@ class BaseToplevelWindow(tk.Toplevel):
 
         button = ttk.Button(popup, text="OK", command=popup.destroy)
         button.pack(pady=10)
+        button.bind(
+            "<Return>", lambda event: popup.destroy()
+        )
 
-        popup.grab_set()
         popup.transient(self)
+        popup.grab_set()
+        button.focus_force()
+        self.wait_window(popup)
 
     @log_fn
     def reload(self) -> None:
@@ -115,4 +129,5 @@ class BaseToplevelWindow(tk.Toplevel):
             widget.destroy()
         logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        self.bind_all("<Return>", self.on_enter)
         logger.info("Reloaded the UI.")

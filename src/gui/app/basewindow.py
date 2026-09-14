@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class BaseWindow(tk.Tk):
     def __init__(self, plugin_scope: str, title: str = "Fenster",
                  geometry: str = "800x600", bg_color: str = "white",
-                 fullscreen: bool = False) -> None:
+                 fullscreen: bool = False, auto_ui_init: bool = True) -> None:
         """
         Base class for all windows in the application.
         Initializes the main window and sets up the menu, status bar,
@@ -37,7 +37,9 @@ class BaseWindow(tk.Tk):
         self._setup_main_frame()
         self._setup_status_bar()
         self._setup_menu()
-        self.init_ui()
+        if auto_ui_init:
+            self.init_ui()
+            self.bind_all("<Return>", self.on_enter)
 
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
@@ -75,6 +77,12 @@ class BaseWindow(tk.Tk):
         for plugin in load_plugins("menu", self.plugin_scope):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
+
+    def on_enter(self, event: tk.Event) -> None:
+        widget = event.widget.focus_get()
+
+        if isinstance(widget, ttk.Button):
+            widget.invoke()
 
     @log_fn
     def init_ui(self) -> None:
@@ -185,4 +193,5 @@ class BaseWindow(tk.Tk):
             widget.destroy()
         logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        self.bind_all("<Return>", self.on_enter)
         logger.info("Reloaded the UI.")

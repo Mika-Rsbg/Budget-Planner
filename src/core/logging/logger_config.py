@@ -46,6 +46,13 @@ def setup_logging():
     last_handler.setLevel(logging.DEBUG)
     last_handler.setFormatter(formatter)
 
+    # Output to file (Info level) → last_no_debug.log
+    last_info_handler = logging.FileHandler(
+        config.Logging.get_log_file_last_no_debug(), mode="w", encoding="utf-8"
+    )
+    last_info_handler.setLevel(logging.INFO)
+    last_info_handler.setFormatter(formatter)
+
     # Output to console (DEBUG level)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)  # Change back to DEBUG
@@ -59,4 +66,5 @@ def setup_logging():
     logger.addHandler(debug_handler)
     logger.addHandler(info_handler)
     logger.addHandler(last_handler)
+    logger.addHandler(last_info_handler)
     # logger.addHandler(console_handler)

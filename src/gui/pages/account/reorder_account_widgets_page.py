@@ -28,20 +28,16 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         save_btn = ttk.Button(self.main_frame, text="Speichern",
                               command=self.save_order)
         save_btn.grid(row=1, column=0, sticky="nswe", padx=10, pady=10)
-        account_list = list(account_repository.get_account_data())
-        print(account_list)
+        account_list = account_repository.get_account_data()
 
         # ============= Konto-Widgets (Row 1) =============
-        for (i8_AccountID, i8_WidgetPosition, str_AccountName,
-             str_AccountNumber, real_AccountBalance,
-             real_AccountDifference, str_RecordDate,
-             str_ChangeDate) in account_list:
+        for account in account_list:
             self.create_account_widget(
-                row=0, column=i8_WidgetPosition,
-                account_name=str_AccountName,
-                current_value=real_AccountBalance,
-                difference_value=real_AccountDifference,
-                account_id=i8_AccountID
+                row=0, column=account.widget_position,
+                account_name=account.name,
+                current_value=account.balance,
+                difference_value=account.difference,
+                account_id=account.id
             )
 
         total_columns = len(account_list)

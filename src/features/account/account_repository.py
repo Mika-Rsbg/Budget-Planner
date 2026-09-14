@@ -1,10 +1,11 @@
 import sqlite3
 from pathlib import Path
-from typing import List, Tuple, Optional, Union, cast
+from typing import List, Optional, cast
 import logging
+from datetime import date
 from core.database.connection import DatabaseConnection
-from shared.date_utils import get_iso_date
 import config
+from models.account.entity import Account
 
 
 logger = logging.getLogger(__name__)
@@ -31,56 +32,80 @@ class RecordTooOldError(Exception):
 
 
 def get_account_data(
-        selected_columns: Optional[List[bool]] = None,
         db_path: Path = config.Database.PATH,
-) -> List[Tuple[Union[str, float, int], ...]]:
+) -> List[Account]:
     """
-        Retrieves account data from the database based on selected columns.
+        Retrieves account data from the database.
         Args:
-            selected_columns (List[bool]): List of booleans indicating which
-                columns to select. [AccountID(int), WidgetPosition(int),
-                AccountName(str), AccountNumber(str), AccountBalance(float),
-                AccountDifference(float), RecordDate(str), ChangeDate(str)]
             db_path (Path): Path to the SQLite database file.
         Return:
-            List of tuples containing account data (AccountID, AccountName).
+            List of Account containing account data. Empty if no Account found.
         Raises:
-            Error: If the number of selected columns does not match the
-                expected number of columns.
-            NoAccountFoundError: If no account data is found in the database.
+            Error: If there is an error with the SQL Query.
     """
-    if selected_columns is None:
-        selected_columns = [True, True, True, True, True, True, True, True]
-
     cursor = DatabaseConnection.get_cursor(db_path)
     columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
                "str_AccountNumber", "real_AccountBalance",
                "real_AccountDifference", "str_RecordDate", "str_ChangeDate"]
 
-    if len(columns) != len(selected_columns):
-        logger.error("Wrong number of selected columns provided."
-                     f"Expected {len(columns)}, got {len(selected_columns)}.")
-        raise Error("Wrong number of  values provided."
-                    f"Expected {len(columns)}, got {len(selected_columns)}.")
-
     query = 'SELECT '
     for i, col in enumerate(columns):
-        if selected_columns[i]:
-            query += f'{col}, '
+        query += f'{col}, '
     query = query[:-2] + ' FROM tbl_Account'
 
     try:
         cursor.execute(query)
-        account_data = cursor.fetchall()
+        raw_account_data = cursor.fetchall()
         logger.debug("Account data retrieved successfully.")
     except sqlite3.Error as e:
         logger.error(f"Error querying data: {e}")
         raise Error(f"Error querying data: {e}")
     finally:
         DatabaseConnection.close_cursor()
-    if not account_data:
+
+    account_data: List[Account] = []
+
+    if not raw_account_data:
         logger.warning("No account data found.")
+    else:
+        for account in raw_account_data:
+            account_data.append(
+                Account(
+                    id=account[0],
+                    widget_position=account[1],
+                    name=account[2],
+                    number=account[3],
+                    balance=account[4],
+                    difference=account[5],
+                    record_date=date.fromisoformat(account[6]),
+                    change_date=date.fromisoformat(account[7])
+                )
+            )
+
     return account_data
+
+
+def get_account_by_id(
+    account_id: int,
+    db_path: Path = config.Database.PATH
+) -> Optional[Account]:
+    """
+    Returns the data of a specific account identified by its AccountID.
+
+    Args:
+        account_id (int): ID of the account.
+
+    Returns:
+        Optional[Account]:
+            The account data if found, otherwise None.
+    """
+    account_data = get_account_data(db_path=db_path)
+
+    for account in account_data:
+        if account.id == account_id:
+            return account
+
+    return None
 
 
 def get_total_account_balance(db_path: Path = config.Database.PATH) -> float:
@@ -155,12 +180,13 @@ def add_account(
         number: str,
         balance: float,
         difference: float,
-        record_date: Optional[str] = None,
+        record_date: Optional[date] = None,
         position: Optional[int] = None,
-        change_date: Optional[str] = None,
+        change_date: Optional[date] = None,
         db_path: Path = config.Database.PATH,
 ) -> None:
     # FIXME: remove default None
+    # TODO: consider ImportAccount datatyp
     """
     Adds an account to the database.
 
@@ -169,16 +195,16 @@ def add_account(
         number (str): Number of the account.
         balance (float): Balance of the account.
         difference (float): Difference of the account.
-        record_date (str): Date of the record in ISO format.
+        record_date (date): Date of the record as datetime.date.
         position (int, optional): Position of the account in the widget.
-        change_date (str, optional): Date of the change in ISO format.
+        change_date (date, optional): Date of the change as datetime.date.
         db_path (Path, optional): Path to the SQLite database file.
     Raises:
         Error: If any of the required parameters are missing or if an error
               occurs during the database operation.
     """
     if not record_date:
-        record_date = get_iso_date(today=True)
+        record_date = date.today()
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
@@ -197,7 +223,7 @@ def add_account(
             position = 0
 
     if change_date is None:
-        change_date = get_iso_date(today=True)
+        change_date = date.today()
 
     try:
         cursor.execute(
@@ -207,8 +233,8 @@ def add_account(
             str_RecordDate, str_ChangeDate)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ''',
-            (position, name, number, balance, difference, record_date,
-             change_date))
+            (position, name, number, balance, difference,
+             record_date.isoformat(), change_date.isoformat()))
         conn.commit()
         logger.debug("Account added successfully.")
     except sqlite3.Error as e:

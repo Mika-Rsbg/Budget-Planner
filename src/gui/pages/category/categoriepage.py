@@ -17,7 +17,6 @@ class CategoryPage(BaseToplevelWindow):
         self.parent = parent
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
         super().__init__(parent, plugin_scope, title, geometry, bg_color)
-        self.init_ui()
 
     def _clear_placeholder(self, event, placeholder: str):
         """

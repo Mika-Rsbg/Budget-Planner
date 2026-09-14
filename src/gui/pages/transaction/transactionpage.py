@@ -2,6 +2,7 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Union, cast
+from datetime import date
 from functools import partial
 from gui.app.basewindow import BaseWindow
 from gui.app.basetoplevelwindow import BaseToplevelWindow
@@ -12,6 +13,7 @@ from features.transaction.transaction_repository import add_transaction
 from features.account.account_history_repository import (
     add_account_history
 )
+from models.transaction.entity import Transaction
 
 
 logger = logging.getLogger(__name__)
@@ -25,20 +27,14 @@ class TransactionPage(BaseToplevelWindow):
                  geometry="500x600", bg_color="white"):
         self.parent = parent
         self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
-        self.account_data = get_account_data(
-            selected_columns=[True, False, True, True, True,
-                              False, False, False]
-        )
+        self.account_data = get_account_data()
         """List[Tuple[int, str, str, float]]"""
         self.counterparty_data = get_counterparty_data()
         """List[Tuple[int, str, str]]"""
-        self.category_data = get_category_data(
-            selected_columns=[True, True, True, False]
-        )
+        self.category_data = get_category_data()
         """List[Tuple[int, str, float]]"""
-        super().__init__(parent, plugin_scope, title, geometry, bg_color)
         logger.debug(f"Account data: {self.account_data}")
-        self.init_ui()
+        super().__init__(parent, plugin_scope, title, geometry, bg_color)
 
     def _clear_placeholder(self, event, placeholder: str):
         """
@@ -61,10 +57,10 @@ class TransactionPage(BaseToplevelWindow):
     def save_transaction(self):
         temp_account_name = self.account_name_var.get()
         for account in self.account_data:
-            if account[1] == temp_account_name:
-                rti_account_id = cast(int, account[0])
+            if account.name == temp_account_name:
+                rti_account_id = cast(int, account.id)
                 break
-        rti_date = self.date_entry.get()
+        rti_date = date.fromisoformat(self.date_entry.get())
         rti_bookingdate = rti_date
         rti_amount = self.amount_entry.get()
         rti_tt_id = 1  # ================================================
@@ -76,15 +72,24 @@ class TransactionPage(BaseToplevelWindow):
                 break
         temp_category_name = self.category_name_var.get()
         for category in self.category_data:
-            if category[1] == temp_category_name:
-                rti_category_id = category[0]
+            if category.name == temp_category_name:
+                rti_category_id = category.id
                 break
         rti_user_comments = None
         rti_displayed_name = None
 
-        rti_data = (rti_account_id, rti_date, rti_bookingdate, rti_tt_id,
-                    rti_amount, rti_purpose, rti_counterparty_id,
-                    rti_category_id, rti_user_comments, rti_displayed_name)
+        rti_data = Transaction(
+            account_id=rti_account_id,
+            date=rti_date,
+            booking_date=rti_bookingdate,
+            transaction_type_id=rti_tt_id,
+            amount=float(rti_amount),
+            purpose=rti_purpose,
+            counterparty_id=rti_counterparty_id,
+            category_id=rti_category_id,
+            user_comments=rti_user_comments,
+            displayed_name=rti_displayed_name
+        )
 
         try:
             add_transaction(
@@ -124,7 +129,7 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.account_name_label.grid(row=0, column=0)  # , sticky="nsew")
         account_names: List[str] = [
-            cast(str, account[1]) for account in self.account_data
+            cast(str, account.name) for account in self.account_data
         ]
         self.account_name_var = tk.StringVar(value="Select Account")
         self.account_name_dropdown = ttk.Combobox(
@@ -138,14 +143,14 @@ class TransactionPage(BaseToplevelWindow):
         def on_account_selected(event):
             selected_name = self.account_name_var.get()
             for account in self.account_data:
-                if account[1] == selected_name:
+                if account.name == selected_name:
                     self.account_number_entry.config(state="normal")
                     self.account_number_entry.delete(0, tk.END)
-                    self.account_number_entry.insert(0, str(account[2]))
+                    self.account_number_entry.insert(0, account.number)
                     self.account_number_entry.config(state="readonly")
                     self.account_balance_entry.config(state="normal")
                     self.account_balance_entry.delete(0, tk.END)
-                    self.account_balance_entry.insert(0, str(account[3]))
+                    self.account_balance_entry.insert(0, str(account.balance))
                     self.account_balance_entry.config(state="readonly")
                     break
 
@@ -236,8 +241,8 @@ class TransactionPage(BaseToplevelWindow):
             try:
                 account_name = self.account_name_var.get()
                 for account in self.account_data:
-                    if account[1] == account_name:
-                        current_balance = float(account[3])
+                    if account.name == account_name:
+                        current_balance = account.balance
                         amount = float(self.amount_entry.get())
                         future_balance = round(
                             current_balance + amount, 2
@@ -383,7 +388,7 @@ class TransactionPage(BaseToplevelWindow):
         )
         self.category_label.grid(row=0, column=0)
         category_names: List[str] = [
-            cast(str, category[1]) for category in self.category_data
+            cast(str, category.name) for category in self.category_data
         ]
         self.category_name_var = tk.StringVar(value="Select Category")
         self.category_name_dropdown = ttk.Combobox(
@@ -397,10 +402,10 @@ class TransactionPage(BaseToplevelWindow):
         def on_category_selected(event):
             selected_name = self.category_name_var.get()
             for category in self.category_data:
-                if category[1] == selected_name:
+                if category.name == selected_name:
                     self.category_budget_entry.config(state="normal")
                     self.category_budget_entry.delete(0, tk.END)
-                    self.category_budget_entry.insert(0, str(category[2]))
+                    self.category_budget_entry.insert(0, str(category.budget))
                     self.category_budget_entry.config(state="readonly")
                     break
 

@@ -32,7 +32,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                     real_Amount REAL NOT NULL,
                     str_Purpose TEXT NOT NULL,
                     i8_CounterpartyID INTEGER,
-                    i8_CategoryID INTEGER DEFAULT 1,
+                    i8_CategoryID INTEGER DEFAULT 0,
                     str_UserComments TEXT,
                     str_DisplayedName TEXT,
                     FOREIGN KEY (i8_CategoryID)
@@ -133,12 +133,14 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
             cursor.executemany(
                 '''
                 INSERT OR IGNORE INTO tbl_Category
-                (str_CategoryName, real_Budget, i8_BudgetPeriodID)
-                VALUES (?, ?, ?)
+                (i8_CategoryID, str_CategoryName,
+                real_Budget, i8_BudgetPeriodID)
+                VALUES (?, ?, ?, ?)
                 ''',
                 [
-                    ('Sonstiges', 0.0, 3),
-                    ('Spareinlagen', 100.0, 3)
+                    (0, 'Nicht zugeordnet', 0.0, 4),
+                    (1, 'Sonstiges', 0.0, 3),
+                    (2, 'Spareinlagen', 100.0, 3)
                 ]
             )
             conn.commit()
@@ -156,7 +158,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 '''
                 CREATE TABLE IF NOT EXISTS tbl_Counterparty (
                     i8_CounterpartyID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    str_CounterpartyName TEXT UNIQUE NOT NULL,
+                    str_CounterpartyName TEXT NOT NULL,
                     str_CounterpartyNumber TEXT UNIQUE NOT NULL
                 );
                 '''
@@ -226,6 +228,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 str_ChangeDate INTEGER
                 );
             ''')
+            # TODO: change Date format to iso
             conn.commit()
             logger.debug("Account table created successfully.")
         except sqlite3.Error as e:
