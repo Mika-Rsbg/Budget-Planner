@@ -4,6 +4,7 @@ from datetime import date
 
 @dataclass
 class Account:
+    # FIXME: add clear typ declaration
     id: int
 
     widget_position: int

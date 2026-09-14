@@ -128,8 +128,12 @@ def import_mt940_file(
          ) = mt940_interpreter.interpret_account_history_entries(
              closing_balance)
 
-        new_balance = str(next(iter(latest.values()))[1])
-        # latest: {'1077149530': ('260702', '200.00', 1)}
+        try:
+            new_balance = str(next(iter(latest.values()))[1])
+            # latest: {'1077149530': ('260702', '200.00', 1)}
+        except StopIteration:
+            logging.info("Empty file selected")
+            new_balance = "n.a."
 
         headers = [
             column.header
@@ -146,7 +150,7 @@ def import_mt940_file(
             assert account_data is not None
         else:
             logger.info("Empty file selected.")
-            return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
+            return (file_path, ["null"], [["null"]], Account.empty(), "n.a.",
                     [ImportedTransactionView.empty()], [(0, 0.0, "", "")],
                     {"": ("", 0.0, 0)}, False)
 

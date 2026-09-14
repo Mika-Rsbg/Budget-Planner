@@ -173,7 +173,6 @@ class ImportOverview(BaseToplevelWindow):
             "%d.%m.%Y"
             )
 
-        # FIXME: add clear typ declaration
         account_balance = self.account_data.balance
 
         self.account_info_frame = ttk.Frame(self.main_frame, padding=10)
@@ -276,13 +275,6 @@ class ImportOverview(BaseToplevelWindow):
                 width=500,
             )
         self.sheet.readonly(True)
-
-        # self.sheet.select_row(1)
-        # self.sheet.add_row_selection(5)
-        # self.sheet.add_row_selection(8)
-        # self.sheet.deselect("all")
-
-        # FIXME: Add no or empty file selected support
 
         self.sheet.enable_bindings()
         self.sheet.bind(
@@ -388,7 +380,7 @@ class ImportOverview(BaseToplevelWindow):
         # ====== Manual Categorization ======
         self.manual_categorization_button = ttk.Button(
             self.categoration_frame, text="Manuell Zuordnen",
-            command=self.add_category_manual
+            command=self.assign_category_to_selected
         )
         self.manual_categorization_button.grid(row=0, column=2, padx=10)
 
@@ -418,6 +410,7 @@ class ImportOverview(BaseToplevelWindow):
         self.cancel_button.grid(row=0, column=1, padx=10)
         # endregion
 
+        self.import_button.focus_set()
         self.main_frame.columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(4, weight=1)
 
@@ -477,12 +470,23 @@ class ImportOverview(BaseToplevelWindow):
             self.destroy()
             self.parent.reload()
 
-    def add_category_manual(self):
-        # TODO: Add Docs
-        # TODO: Add logging
+    def assign_category_to_selected(self):
+        """Assign the selected category to the selected transactions.
+
+        Opens the category selection page and assigns the chosen category to
+        every selected transaction. The transaction table and selection data
+        are updated afterwards.
+
+        If no category or transaction is selected, the operation is cancelled.
+        A KeyError is logged if a selected transaction cannot be found by its
+        import ID.
+        """
+        logger.debug("Starting category assignment for selected transactions.")
+
         selection_page = CategorySelectionPage(self.parent)
         self.wait_window(selection_page)
         selected_category_id = selection_page.final_selected_category
+
         if selected_category_id is not None:
             selected_rows = self.sheet.get_selected_rows(
                 get_cells_as_rows=True
@@ -491,31 +495,49 @@ class ImportOverview(BaseToplevelWindow):
                 only_rows=iter(selected_rows)  # type: ignore
             )
 
-            if data_selected_rows == []:
+            if not data_selected_rows:
                 self.show_message("No Transaction selected!")
                 logger.debug(
-                    "Impossible to assign category: No Transaction selected!"
+                    "Category assignment cancelled: No transaction selected."
                 )
                 return
 
+            logger.debug(
+                "Assigning category ID %s to %d selected transactions.",
+                selected_category_id,
+                len(data_selected_rows),
+            )
+
             for row in data_selected_rows:
-                # row[1] is the import_id
+                import_id = row[0]
                 try:
-                    self.transactions_by_import_id[row[0]].category_id = (
+                    self.transactions_by_import_id[import_id].category_id = (
                         selected_category_id
                     )
-                except KeyError as e:
-                    logger.exception(e)
+                except KeyError:
+                    logger.exception(
+                        "Transaction with import ID %s not found.", import_id
+                    )
 
             transactions = list(self.transactions_by_import_id.values())
 
             self.sheet_data = format_data(
                 transactions, TRANSACTION_TABLE_COLUMNS
             )
-            print(self.sheet_data)
+
             self._calculate_selection_data()
+
             self.show_message("Kategorie erfolgreich geändert.")
+
             self.reload()
+
+            logger.debug(
+                "Category ID %s successfully" +
+                "assigned to selected transactions.",
+                selected_category_id,
+            )
         else:
             self.show_message("Keine Kategorie ausgewählt!")
-            # ich möchte die ursprüngliche self.transactions_by_import_id
+            logger.debug(
+                "Category assignment cancelled: No category selected."
+            )
