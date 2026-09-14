@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
 import logging
-from typing import Dict
 from core.database.connection import DatabaseConnection
 import config
 from models.transaction_typ.entity import TransactionTyp
@@ -15,9 +14,8 @@ class Error(Exception):
     pass
 
 
-def add_transaction_typ(db_path: Path = config.Database.PATH,
-                        name: str = None, number: str = None) -> None:
-    # FIXME: remove default None
+def add_transaction_typ(name: str, number: str,
+                        db_path: Path = config.Database.PATH) -> None:
     """
     Adds a transaction type to the database.
 

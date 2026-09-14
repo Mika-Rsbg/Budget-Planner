@@ -99,7 +99,6 @@ class CategorySelectionPage(BaseToplevelWindow):
             command=self.select_category
         )
         self.select_button.pack(padx=0, side="left")
-        # TODO: change to save function
 
         self.cancel_button = ttk.Button(
             self.footer_fram, text="Abbrechnen",
