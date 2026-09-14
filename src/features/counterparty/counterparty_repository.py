@@ -77,7 +77,6 @@ def get_counterparty_id(data: List[Union[str, None]],
     Raises:
         Error: If there is a database error.
     """
-    # FIXME: Remove None from return
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:

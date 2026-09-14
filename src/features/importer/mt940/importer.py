@@ -166,9 +166,15 @@ def import_mt940_file(
 @log_fn
 def insert_transactions_to_db(data: List[ImportedTransactionView],
                               history_data: List[Tuple[int, float, str, str]],
-                              latest: Dict[str, Tuple[str, float, int]],
-                              window: BaseWindow) -> None:
-    # TODO: add docs
+                              latest: Dict[str, Tuple[str, float, int]]
+                              ) -> None:
+    """Persist import transactions, history entries, and account balances.
+
+    Args:
+        data: Imported transactions to add to the database.
+        history_data: Account history entries to add to the database.
+        latest: Latest account balances keyed by account identifier.
+    """
     mt940_database_service.add_transactions(data)
 
     # Add the closing balance to the database

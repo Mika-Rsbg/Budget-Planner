@@ -46,8 +46,7 @@ def add_transactions(data: Sequence[Transaction | ImportedTransactionView]):
             number_skipped_transactions += 1
             # TODO: add Transaction id addtion to transaction
             # If a transaction is already in the database the the coresponding
-            # id should be added to later use it as indicator if the
-            # transaction is already in the database
+            # id should be added to later use it as indicator.
             # This information will be used for selection tools during the
             # import.
             # As this function is used to import the transactions another

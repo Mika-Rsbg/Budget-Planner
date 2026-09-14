@@ -70,8 +70,6 @@ def update_account(account_id: int,
         )
         current_record = cursor.fetchone()
         logger.debug("Current record fetched successfully.")
-        # TODO: Remove the following logging statement.
-        print("Current record:", current_record)
         # Check if the new record date is older than the current record date
         if current_record is not None:
             if current_record[5] is not None:
