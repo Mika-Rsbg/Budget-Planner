@@ -40,8 +40,8 @@ def import_mt940_file(
 
     The selected file is read using UTF-8 encoding and parsed into
     structured transaction data. The transactions are then formatted
-    for display in the transaction table. Account information, the
-    initial selected rows, the new account balance, and account history
+    for display in the transaction table. Account information,
+    the new account balance, and account history
     information are also extracted.
 
     Args:
@@ -93,7 +93,6 @@ def import_mt940_file(
         parsable account data, a default result indicating an unsuccessful
         import is returned.
     """
-    # TODO: update docs
 
     if path is None:
         logger.debug("No file path was provided. Open filedialog.")
