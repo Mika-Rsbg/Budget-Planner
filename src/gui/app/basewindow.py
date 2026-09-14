@@ -39,6 +39,7 @@ class BaseWindow(tk.Tk):
         self._setup_menu()
         if auto_ui_init:
             self.init_ui()
+            self.bind_all("<Return>", self.on_enter)
 
     def _apply_styles(self) -> None:
         style = ttk.Style(self)
@@ -76,6 +77,12 @@ class BaseWindow(tk.Tk):
         for plugin in load_plugins("menu", self.plugin_scope):
             if hasattr(plugin, "add_to_menu"):
                 plugin.add_to_menu(self, menu_bar)
+
+    def on_enter(self, event: tk.Event) -> None:
+        widget = event.widget.focus_get()
+
+        if isinstance(widget, ttk.Button):
+            widget.invoke()
 
     @log_fn
     def init_ui(self) -> None:
@@ -186,4 +193,5 @@ class BaseWindow(tk.Tk):
             widget.destroy()
         logger.debug("Destroyed all widgets in the main frame.")
         self.init_ui()
+        self.bind_all("<Return>", self.on_enter)
         logger.info("Reloaded the UI.")
