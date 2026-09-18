@@ -1,57 +1,60 @@
-import sqlite3
-from pathlib import Path
-from typing import List, Optional, cast
 import logging
+import sqlite3
 from datetime import date
-from core.database.connection import DatabaseConnection
-import config
-from models.account.entity import Account
+from pathlib import Path
+from typing import cast
 
+import config
+from core.database.connection import DatabaseConnection
+from models.account.entity import Account
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
 class NoChangesDetectedError(Exception):
     """Exception raised when no changes are detected during an update."""
-    pass
 
 
 class NoAccountFoundError(Exception):
     """Exception raised when no account is found."""
-    pass
 
 
 class RecordTooOldError(Exception):
     """Exception raised when the record date is too old."""
-    pass
 
 
 def get_account_data(
-        db_path: Path = config.Database.PATH,
-) -> List[Account]:
+    db_path: Path = config.Database.PATH,
+) -> list[Account]:
     """
-        Retrieves account data from the database.
-        Args:
-            db_path (Path): Path to the SQLite database file.
-        Return:
-            List of Account containing account data. Empty if no Account found.
-        Raises:
-            Error: If there is an error with the SQL Query.
+    Retrieves account data from the database.
+    Args:
+        db_path (Path): Path to the SQLite database file.
+    Return:
+        List of Account containing account data. Empty if no Account found.
+    Raises:
+        Error: If there is an error with the SQL Query.
     """
     cursor = DatabaseConnection.get_cursor(db_path)
-    columns = ["i8_AccountID", "i8_WidgetPosition", "str_AccountName",
-               "str_AccountNumber", "real_AccountBalance",
-               "real_AccountDifference", "str_RecordDate", "str_ChangeDate"]
+    columns = [
+        "i8_AccountID",
+        "i8_WidgetPosition",
+        "str_AccountName",
+        "str_AccountNumber",
+        "real_AccountBalance",
+        "real_AccountDifference",
+        "str_RecordDate",
+        "str_ChangeDate",
+    ]
 
-    query = 'SELECT '
+    query = "SELECT "
     for i, col in enumerate(columns):
-        query += f'{col}, '
-    query = query[:-2] + ' FROM tbl_Account'
+        query += f"{col}, "
+    query = query[:-2] + " FROM tbl_Account"
 
     try:
         cursor.execute(query)
@@ -63,7 +66,7 @@ def get_account_data(
     finally:
         DatabaseConnection.close_cursor()
 
-    account_data: List[Account] = []
+    account_data: list[Account] = []
 
     if not raw_account_data:
         logger.warning("No account data found.")
@@ -78,7 +81,7 @@ def get_account_data(
                     balance=account[4],
                     difference=account[5],
                     record_date=date.fromisoformat(account[6]),
-                    change_date=date.fromisoformat(account[7])
+                    change_date=date.fromisoformat(account[7]),
                 )
             )
 
@@ -86,9 +89,8 @@ def get_account_data(
 
 
 def get_account_by_id(
-    account_id: int,
-    db_path: Path = config.Database.PATH
-) -> Optional[Account]:
+    account_id: int, db_path: Path = config.Database.PATH
+) -> Account | None:
     """
     Returns the data of a specific account identified by its AccountID.
 
@@ -110,15 +112,15 @@ def get_account_by_id(
 
 def get_total_account_balance(db_path: Path = config.Database.PATH) -> float:
     """
-        Retrieve and calculate the total cash balance
-        by summing all real account balances.
-        Args:
-            db_path (Path): Path to the SQLite database file.
-        Return:
-            float: The total cash balance. Returns 0.0 if no data is found.
-        Raises:
-            sqlite3.Error: If there is an error
-                           executing the query on the database.
+    Retrieve and calculate the total cash balance
+    by summing all real account balances.
+    Args:
+        db_path (Path): Path to the SQLite database file.
+    Return:
+        float: The total cash balance. Returns 0.0 if no data is found.
+    Raises:
+        sqlite3.Error: If there is an error
+                       executing the query on the database.
     """
     cursor = DatabaseConnection.get_cursor(db_path)
 
@@ -141,8 +143,9 @@ def get_total_account_balance(db_path: Path = config.Database.PATH) -> float:
     return total_cash
 
 
-def delete_account(account_id: int,
-                   db_path: Path = config.Database.PATH) -> None:
+def delete_account(
+    account_id: int, db_path: Path = config.Database.PATH
+) -> None:
     """
     Deletes an account from the database.
     Args:
@@ -156,34 +159,35 @@ def delete_account(account_id: int,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logger.exception(f"Error connecting to database: {e}")
+        logger.exception("Error connecting to database:")
         raise Error(f"Error connecting to database: {e}")
     try:
         cursor.execute(
-            '''
+            """
             DELETE FROM tbl_Account WHERE i8_AccountID = ?
-            ''',
-            (account_id,))
+            """,
+            (account_id,),
+        )
 
         conn.commit()
         logger.debug(f"Account with ID {account_id} deleted successfully.")
         print("Account deleted successfully.")
     except sqlite3.Error as e:
-        logger.exception(f"Error deleting account: {e}")
+        logger.exception("Error deleting account: ")
         raise Error(f"Error deleting account: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
 def add_account(
-        name: str,
-        number: str,
-        balance: float,
-        difference: float,
-        record_date: Optional[date] = None,
-        position: Optional[int] = None,
-        change_date: Optional[date] = None,
-        db_path: Path = config.Database.PATH,
+    name: str,
+    number: str,
+    balance: float,
+    difference: float,
+    record_date: date | None = None,
+    position: int | None = None,
+    change_date: date | None = None,
+    db_path: Path = config.Database.PATH,
 ) -> None:
     # FIXME: remove default None
     # TODO: consider ImportAccount datatyp
@@ -227,25 +231,36 @@ def add_account(
 
     try:
         cursor.execute(
-            '''
+            """
             INSERT INTO tbl_Account (i8_WidgetPosition, str_AccountName,
             str_AccountNumber, real_AccountBalance, real_AccountDifference,
             str_RecordDate, str_ChangeDate)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''',
-            (position, name, number, balance, difference,
-             record_date.isoformat(), change_date.isoformat()))
+            """,
+            (
+                position,
+                name,
+                number,
+                balance,
+                difference,
+                record_date.isoformat(),
+                change_date.isoformat(),
+            ),
+        )
         conn.commit()
         logger.debug("Account added successfully.")
     except sqlite3.Error as e:
-        logger.exception(f"Error creating account: {e}")
+        logger.exception("Error creating account:")
         raise Error(f"Error creating account: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
-def get_account_id(data: List, supplied_data=[False, False, False, False],
-                   db_path: Path = config.Database.PATH) -> int:
+def get_account_id(
+    data: list,
+    supplied_data=[False, False, False, False],
+    db_path: Path = config.Database.PATH,
+) -> int:
     """
     Retrieves the account ID from the database based on the provided filtering
     criteria.
@@ -270,11 +285,17 @@ def get_account_id(data: List, supplied_data=[False, False, False, False],
         Error: If an error occurs during the database query.
     """
     if data is None or len(data) != 4:
-        raise Error("Data must be provided as a list"
-                    "of 4 elements: [Name, Number, Balance, Difference].")
-    columns = ["str_AccountName", "str_AccountNumber", "real_AccountBalance",
-               "real_AccountDifference"]
-    conditions: List = []
+        raise Error(
+            "Data must be provided as a list"
+            "of 4 elements: [Name, Number, Balance, Difference]."
+        )
+    columns = [
+        "str_AccountName",
+        "str_AccountNumber",
+        "real_AccountBalance",
+        "real_AccountDifference",
+    ]
+    conditions: list = []
     parameters = []
     for col, should_filter, value in zip(columns, supplied_data, data):
         if should_filter:
@@ -285,10 +306,7 @@ def get_account_id(data: List, supplied_data=[False, False, False, False],
         raise Error("No criteria provided to query account ID.")
     # Build the SQL query dynamically based on the provided criteria.
     where_clause = " AND ".join(conditions)
-    query = (
-        "SELECT i8_AccountID FROM tbl_Account "
-        f"WHERE {where_clause}"
-    )
+    query = f"SELECT i8_AccountID FROM tbl_Account WHERE {where_clause}"
 
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
@@ -299,7 +317,7 @@ def get_account_id(data: List, supplied_data=[False, False, False, False],
             raise NoAccountFoundError("No matching account found.")
         return result[0]
     except sqlite3.Error as e:
-        logger.exception(f"Error querying account ID: {e}")
+        logger.exception("Error querying account ID:")
         raise Error(f"Error querying account ID: {e}")
     finally:
         DatabaseConnection.close_cursor()

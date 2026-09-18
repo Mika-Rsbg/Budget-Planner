@@ -1,38 +1,37 @@
+import logging
+import random
 import sqlite3
 import string
-import random
-from pathlib import Path
-from typing import List, Optional, Union, cast
 from datetime import date
-import logging
-from gui.app.basewindow import BaseWindow
-from gui.pages.account.name_input_page import NameInputDialog
+from pathlib import Path
+from typing import cast
+
+import config
 from core.database.connection import DatabaseConnection
 from features.account.account_repository import add_account
-import config
-
+from gui.app.basewindow import BaseWindow
+from gui.pages.account.name_input_page import NameInputDialog
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
 class NoChangesDetectedError(Exception):
     """Exception raised when no changes are detected during an update."""
-    pass
 
 
 class RecordTooOldError(Exception):
     """Exception raised when the record date is too old."""
-    pass
 
 
-def update_account(account_id: int,
-                   new_values: List[Union[str, float]],
-                   db_path: Path = config.Database.PATH) -> None:
+def update_account(
+    account_id: int,
+    new_values: list[str | float],
+    db_path: Path = config.Database.PATH,
+) -> None:
     """
     Edits an account in the database after verifying that at least one of the
     values is different from the current database values.
@@ -49,15 +48,25 @@ def update_account(account_id: int,
     """
     # TODO: adapt datetime.date data typ for date
     # Define the column names corresponding to the new values.
-    columns = ["i8_WidgetPosition", "str_AccountName", "str_AccountNumber",
-               "real_AccountBalance", "real_AccountDifference",
-               "str_RecordDate", "str_ChangeDate"]
+    columns = [
+        "i8_WidgetPosition",
+        "str_AccountName",
+        "str_AccountNumber",
+        "real_AccountBalance",
+        "real_AccountDifference",
+        "str_RecordDate",
+        "str_ChangeDate",
+    ]
 
     if len(columns) != len(new_values):
-        logger.error("Wrong number of new values provided."
-                     f"Expected {len(columns)}, got {len(new_values)}.")
-        raise Error("Wrong number of new values provided.",
-                    f"Expected {len(columns)}, got {len(new_values)}.")
+        logger.error(
+            "Wrong number of new values provided."
+            f"Expected {len(columns)}, got {len(new_values)}."
+        )
+        raise Error(
+            "Wrong number of new values provided.",
+            f"Expected {len(columns)}, got {len(new_values)}.",
+        )
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
@@ -66,28 +75,30 @@ def update_account(account_id: int,
         cursor.execute(
             f"SELECT {', '.join(columns)} FROM "
             "tbl_Account WHERE i8_AccountID = ?",
-            (account_id,)
+            (account_id,),
         )
         current_record = cursor.fetchone()
         logger.debug("Current record fetched successfully.")
         # Check if the new record date is older than the current record date
         if current_record is not None:
-            if current_record[5] is not None:
-                if new_values[5] < current_record[5]:
-                    logger.debug("New record date is older than the one in "
-                                 "the database.")
-                    raise RecordTooOldError("New record date is older than "
-                                            "the one in the database.")
+            valid_record = current_record[5] is not None
+            if valid_record and new_values[5] < current_record[5]:
+                logger.debug(
+                    "New record date is older than the one in the database."
+                )
+                raise RecordTooOldError(
+                    "New record date is older than the one in the database."
+                )
         else:
             logger.exception("No account found with the given ID.")
             raise Error("No account found with the given ID.")
     except sqlite3.Error as e:
-        logger.exception(f"Error fetching current account data: {e}")
+        logger.exception("Error fetching current account data:")
         raise Error(f"Error fetching current account data: {e}")
 
     # Build the SET part of the SQL query dynamically only for changed values.
-    updates: List[str] = []
-    parameters: List[Union[str, int, float]] = []
+    updates: list[str] = []
+    parameters: list[str | int | float] = []
     for col, new_val, current_val in zip(columns, new_values, current_record):
         if new_val != "":
             try:
@@ -107,8 +118,9 @@ def update_account(account_id: int,
         logger.debug("No changes detected, update aborted.")
         raise NoChangesDetectedError("No changes detected, update aborted.")
 
-    query = (f"UPDATE tbl_Account SET {', '.join(updates)} "
-             "WHERE i8_AccountID = ?")
+    query = (
+        f"UPDATE tbl_Account SET {', '.join(updates)} WHERE i8_AccountID = ?"
+    )
     parameters.append(cast(int, account_id))
 
     try:
@@ -117,14 +129,18 @@ def update_account(account_id: int,
         logger.debug(f"Account with ID {account_id} updated successfully.")
         print("Account edited successfully.")
     except sqlite3.Error as e:
-        logger.exception(f"Error editing account: {e}")
+        logger.exception("Error editing account:")
         raise Error(f"Error editing account: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
-def shift_widget_positions(account_id: int, old_pos: int, new_pos: int,
-                           db_path: Path = config.Database.PATH) -> None:
+def shift_widget_positions(
+    account_id: int,
+    old_pos: int,
+    new_pos: int,
+    db_path: Path = config.Database.PATH,
+) -> None:
     """
     Shifts the widget positions of accounts in the database to make room
     for a new account or to reorder existing accounts.
@@ -152,28 +168,33 @@ def shift_widget_positions(account_id: int, old_pos: int, new_pos: int,
         # Check if the old and new positions are similar
         if old_pos == new_pos:
             logger.warning("Old position is the same as new position.")
-            raise NoChangesDetectedError("No changes detected, "
-                                         "update aborted.")
+            raise NoChangesDetectedError(
+                "No changes detected, update aborted."
+            )
         else:
             # Get the current widget position of the account
             cursor.execute(
                 "SELECT i8_WidgetPosition FROM tbl_Account "
                 "WHERE i8_AccountID = ?",
-                (account_id,)
+                (account_id,),
             )
             temp_current_postion = cursor.fetchall()
-            logger.debug("Positon in database before change: "
-                         f"{temp_current_postion[0][0]}")
+            logger.debug(
+                "Positon in database before change: "
+                f"{temp_current_postion[0][0]}"
+            )
             if temp_current_postion[0][0] == new_pos:
                 logger.warning("New position is the same as current position.")
-                raise NoChangesDetectedError("No changes detected, "
-                                             "update aborted.")
+                raise NoChangesDetectedError(
+                    "No changes detected, update aborted."
+                )
             if temp_current_postion[0][0] != old_pos:
                 # raise Error("The current position of the account does not "
                 #             "match the provided old position.")
                 old_pos = temp_current_postion[0][0]
-                logger.debug("Old position updated to current position:"
-                             f" {old_pos}")
+                logger.debug(
+                    f"Old position updated to current position: {old_pos}"
+                )
         # Temporarily offset the positions of the accounts
         cursor.execute(
             """
@@ -216,23 +237,25 @@ def shift_widget_positions(account_id: int, old_pos: int, new_pos: int,
         )
         logger.debug("Widget positions shifted successfully.")
     except sqlite3.IntegrityError as e:
-        logger.exception(f"IntegrityError: {e}")
+        logger.exception("IntegrityError:")
         raise Error(f"IntegrityError: {e}")
     except sqlite3.Error as e:
-        logger.exception(f"Error shifting widget positions: {e}")
+        logger.exception("Error shifting widget positions:")
         raise Error(f"Error shifting widget positions: {e}")
     finally:
         conn.commit()
         DatabaseConnection.close_cursor()
 
 
-def add_account_mt940(number: str, master: BaseWindow,
-                      name: Optional[str] = None,
-                      balance: Optional[float] = None,
-                      difference: Optional[float] = None,
-                      record_date: date = date(1900, 1, 1),
-                      db_path: Path = config.Database.PATH
-                      ) -> None:
+def add_account_mt940(
+    number: str,
+    master: BaseWindow,
+    name: str | None = None,
+    balance: float | None = None,
+    difference: float | None = None,
+    record_date: date = date(1900, 1, 1),
+    db_path: Path = config.Database.PATH,
+) -> None:
     # FIXME: remove default None
     # TODO: adapt a new ImportAccount datatyp
     # TODO: remove record_date default
@@ -259,7 +282,7 @@ def add_account_mt940(number: str, master: BaseWindow,
         name = dialog.name
         if not name:
             logger.debug("No name provided. Generating random name.")
-            name = ''.join(random.choices(string.ascii_letters, k=8))
+            name = "".join(random.choices(string.ascii_letters, k=8))
             logger.debug(f"Random name generated: {name}")
     if number is None:
         logger.error("add_account_mt940: Account number is required.")
@@ -270,5 +293,11 @@ def add_account_mt940(number: str, master: BaseWindow,
     if difference is None:
         logger.debug("No difference provided. Setting difference to 0.0.")
         difference = 0.0
-    add_account(db_path=db_path, name=name, number=number, balance=balance,
-                difference=difference, record_date=record_date)
+    add_account(
+        db_path=db_path,
+        name=name,
+        number=number,
+        balance=balance,
+        difference=difference,
+        record_date=record_date,
+    )

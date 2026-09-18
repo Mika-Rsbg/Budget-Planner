@@ -1,39 +1,37 @@
 import sqlite3
-from datetime import date, timedelta
-from pathlib import Path
-from logging import getLogger
 from collections import defaultdict
-from typing import List, Tuple, cast, Optional
+from datetime import date, timedelta
+from logging import getLogger
+from pathlib import Path
+from typing import cast
+
+import config
 from core.database.connection import DatabaseConnection
 from features.account.account_repository import (
-    get_account_data, NoAccountFoundError
+    NoAccountFoundError,
+    get_account_data,
 )
-import config
-
 
 logger = getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
 class ExistingAccountHistoryError(Exception):
     """Exception raised when account history already exists."""
-    pass
 
 
 class NoAccountHistoryFoundError(Exception):
     """Exception raised when no account history is found."""
-    pass
 
 
 def get_total_cash_history(
     start_date: date | None = None,
     end_date: date | None = None,
     db_path: Path = config.Database.PATH,
-) -> List[Tuple[date, float]]:
+) -> list[tuple[date, float]]:
     """
     Retrieves the total cash history for all accounts within a specified date
     range.
@@ -54,7 +52,7 @@ def get_total_cash_history(
     try:
         account_data = get_account_data(db_path=db_path)
         all_account_histories = get_balance_history(
-            cast(List[int], [account.id for account in account_data]),
+            cast(list[int], [account.id for account in account_data]),
             db_path,
         )
     except NoAccountFoundError as e:
@@ -62,9 +60,7 @@ def get_total_cash_history(
         raise NoAccountHistoryFoundError("No accounts found.")
     except Error as e:
         logger.error(f"Error retrieving account history: {e}")
-        raise NoAccountHistoryFoundError(
-            "Error retrieving account history."
-        )
+        raise NoAccountHistoryFoundError("Error retrieving account history.")
 
     current_values = defaultdict(float)
     all_dates = set()
@@ -108,9 +104,9 @@ def get_total_cash_history(
 
 
 def get_balance_history(
-    account_id: List[int],
+    account_id: list[int],
     db_path: Path = config.Database.PATH,
-) -> List[List[Tuple[int, float, date]]]:
+) -> list[list[tuple[int, float, date]]]:
     """
     Retrieves the balance history for the specified account IDs.
 
@@ -134,7 +130,7 @@ def get_balance_history(
         raise Error(f"Error connecting to database: {e}")
 
     try:
-        result: List[List[Tuple[int, float, date]]] = []
+        result: list[list[tuple[int, float, date]]] = []
 
         for account_id_value in account_id:
             cursor.execute(
@@ -175,8 +171,9 @@ def get_balance_history(
         DatabaseConnection.close_cursor()
 
 
-def get_last_balance(account_id: int,
-                     db_path: Path = config.Database.PATH) -> float:
+def get_last_balance(
+    account_id: int, db_path: Path = config.Database.PATH
+) -> float:
     """
     Retrieves the last balance of the specified account.
 
@@ -204,15 +201,15 @@ def get_last_balance(account_id: int,
         raise Error(f"Error connecting to database: {e}")
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT real_Balance FROM tbl_AccountHistory
             WHERE i8_AccountID = ?
             AND str_RecordDate < ?
             ORDER BY str_RecordDate DESC LIMIT 1
-        """, (
-            account_id,
-            last_day_last_month.isoformat()
-        ))
+        """,
+            (account_id, last_day_last_month.isoformat()),
+        )
         result = cursor.fetchone()
         if result is not None:
             logger.debug("Last balance found.")
@@ -227,10 +224,14 @@ def get_last_balance(account_id: int,
         DatabaseConnection.close_cursor()
 
 
-def add_account_history(account_id: int, balance: float, record_date: date,
-                        change_date: Optional[date] = None,
-                        manual_entry: bool = False,
-                        db_path: Path = config.Database.PATH) -> None:
+def add_account_history(
+    account_id: int,
+    balance: float,
+    record_date: date,
+    change_date: date | None = None,
+    manual_entry: bool = False,
+    db_path: Path = config.Database.PATH,
+) -> None:
     """
     Adds a new account history record to the database for the specified
     account. If the record already exists, raises an error.
@@ -263,11 +264,11 @@ def add_account_history(account_id: int, balance: float, record_date: date,
 
     try:
         cursor.execute(
-            '''
+            """
             SELECT * FROM tbl_AccountHistory
             WHERE i8_AccountID = ? AND str_RecordDate = ?
-            ''',
-            (account_id, record_date)
+            """,
+            (account_id, record_date),
         )
         if cursor.fetchone() is not None and not manual_entry:
             logger.error(
@@ -279,12 +280,12 @@ def add_account_history(account_id: int, balance: float, record_date: date,
             )
 
         cursor.execute(
-            '''
+            """
             INSERT INTO tbl_AccountHistory (i8_AccountID, real_Balance,
             str_RecordDate, str_ChangeDate)
             VALUES (?, ?, ?, ?)
-            ''',
-            (account_id, balance, record_date, change_date)
+            """,
+            (account_id, balance, record_date, change_date),
         )
         conn.commit()
         logger.debug("Account history record created successfully.")
