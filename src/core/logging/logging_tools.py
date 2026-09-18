@@ -1,7 +1,9 @@
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Any
+from typing import Any
+
 # import newrelic.agent
 
 
@@ -19,17 +21,18 @@ def log_fn(func: Callable[..., Any]) -> Callable[..., Any]:
     Returns:
         Callable[..., Any]: The decorated function.
     """
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Set New Relic background task dynamically
         # @newrelic.agent.background_task(name=func.__name__)
         def inner(*i_args: Any, **i_kwargs: Any) -> Any:
-            logger.debug(f'Start: {func.__name__}')
+            logger.debug(f"Start: {func.__name__}")
             start: float = time.time()
             result: Any = func(*i_args, **i_kwargs)
             end: float = time.time()
             logger.debug(
-                f'End: {func.__name__} (Duration: {end - start:.2f}s)'
+                f"End: {func.__name__} (Duration: {end - start:.2f}s)"
             )
             return result
 

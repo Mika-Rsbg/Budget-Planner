@@ -1,6 +1,8 @@
 # from pathlib import Path
 import logging
+
 import config
+
 # import newrelic.agent
 
 
@@ -16,8 +18,7 @@ def setup_logging():
     logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(funcName)s - [%(levelname)s] -"
-        " %(message)s"
+        "%(asctime)s - %(name)s - %(funcName)s - [%(levelname)s] - %(message)s"
     )
 
     # formatter = logging.Formatter(
