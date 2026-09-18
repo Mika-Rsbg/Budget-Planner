@@ -1,12 +1,14 @@
-import tkinter as tk
-from tkinter import ttk
 import locale
 import logging
+import tkinter as tk
+from tkinter import ttk
+
 from core.logging.logging_tools import log_fn
-from gui.app.basewindow import BaseWindow
-from shared.date_utils import get_month_literal
 from features.account.account_repository import (get_account_data,
                                                  get_total_account_balance)
+from gui.app.basewindow import BaseWindow
+from shared.date_utils import get_month_literal
+
 
 logger = logging.getLogger(__name__)
 

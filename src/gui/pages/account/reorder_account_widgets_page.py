@@ -1,10 +1,15 @@
+import locale
+import logging
 import tkinter as tk
 from tkinter import ttk
-import locale
-from gui.app.basewindow import BaseWindow
-from gui.app.basetoplevelwindow import BaseToplevelWindow
+
 import features.account.account_repository as account_repository
 import features.account.account_service as account_service
+from gui.app.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReorderAccountWidgetsWindow(BaseToplevelWindow):
