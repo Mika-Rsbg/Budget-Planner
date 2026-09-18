@@ -69,8 +69,9 @@ class Homepage(BaseWindow):
         """
         Init the UI for the homepage.
         """
-        # TODO: add desciption when hovering
+        # TODO: add desciption when hovering over widgets
         # ============= Heanding =============
+        # region
         self.heading_frame = ttk.Frame(self.main_frame, padding=10)
         self.heading_frame.grid(row=0, column=0, sticky="nsew")
         self.homepage_heading_label = ttk.Label(
@@ -82,8 +83,10 @@ class Homepage(BaseWindow):
         self.homepage_heading_label.grid(row=0, column=0, sticky="nsew")
         # Update the heading with the current month
         self.homepage_heading_label.config(text=get_month_literal())
+        # endregion
 
-        # ============= Balance Frame (Row 1, Column 0) =============
+        # ============= Total Balance (Row 1, Column 0) =============
+        # region
         self.balance_frame = tk.Frame(self.main_frame, width=80, height=150)
         self.balance_frame.configure(padx=10, pady=10)
         self.balance_frame.grid_propagate(False)
@@ -96,8 +99,10 @@ class Homepage(BaseWindow):
         )
         self.balance_label.pack(expand=True)
         self._get_total_balance()
+        # endregion
 
-        # ============= Konto-Widgets (Row 1, Columns 1 - ...) =============
+        # ============= Konto-Widgets (Row 2, Columns 1 - ...) =============
+        # region
         # Get the account data from the database
         account_list = get_account_data()
         logger.info(f"Retrieved {len(account_list)} accounts from database.")
@@ -116,6 +121,7 @@ class Homepage(BaseWindow):
         total_columns = len(account_list) if len(account_list) > 0 else 1
         for i in range(total_columns):
             self.main_frame.columnconfigure(i, weight=1)
+        # endregion
 
         # Set columnspan for heading and buttons
         self.heading_frame.grid_configure(columnspan=total_columns)
