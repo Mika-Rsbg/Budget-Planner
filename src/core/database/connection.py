@@ -1,16 +1,15 @@
+import logging
 import sqlite3
 from pathlib import Path
-from typing import Optional
-import logging
-import config
 
+import config
 
 logger = logging.getLogger(__name__)
 
 
 class DatabaseConnection:
-    _instance: Optional[sqlite3.Connection] = None
-    _cursor: Optional[sqlite3.Cursor] = None
+    _instance: sqlite3.Connection | None = None
+    _cursor: sqlite3.Cursor | None = None
 
     @staticmethod
     def get_connection(

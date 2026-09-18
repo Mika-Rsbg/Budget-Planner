@@ -1,16 +1,16 @@
-from pathlib import Path
-import sqlite3
 import logging
-from core.logging.logging_tools import log_fn
-from core.database.connection import DatabaseConnection
+import sqlite3
+from pathlib import Path
+
 import config
+from core.database.connection import DatabaseConnection
+from core.logging.logging_tools import log_fn
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
 @log_fn
@@ -22,7 +22,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Creating transactions table...")
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_Transaction (
                     i8_TransactionID INTEGER PRIMARY KEY AUTOINCREMENT,
                     i8_AccountID INTEGER NOT NULL,
@@ -48,7 +48,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                         REFERENCES tbl_TransactionTyp(i8_TransactionTypID)
                         ON DELETE SET NULL
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Transactions table created successfully.")
@@ -63,7 +63,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_budget_period_table(cursor, conn)
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_Category (
                     i8_CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
                     str_CategoryName TEXT UNIQUE NOT NULL,
@@ -72,7 +72,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                     FOREIGN KEY (i8_BudgetPeriodID)
                         REFERENCES tbl_BudgetPeriod(i8_BudgetPeriodID)
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Category table created successfully.")
@@ -87,12 +87,12 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Creating budget period table...")
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_BudgetPeriod (
                     i8_BudgetPeriodID INTEGER PRIMARY KEY,
                     str_Name TEXT UNIQUE
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Budget period table created successfully.")
@@ -107,17 +107,12 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Inserting initial budget periods...")
         try:
             cursor.executemany(
-                '''
+                """
                 INSERT OR IGNORE INTO tbl_BudgetPeriod
                 (i8_BudgetPeriodID, str_Name)
                 VALUES (?, ?)
-                ''',
-                [
-                    (1, 'daily'),
-                    (2, 'weekly'),
-                    (3, 'monthly'),
-                    (4, 'yearly')
-                ]
+                """,
+                [(1, "daily"), (2, "weekly"), (3, "monthly"), (4, "yearly")],
             )
             conn.commit()
             logger.debug("Initial budget periods inserted successfully.")
@@ -131,17 +126,17 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Inserting initial categories...")
         try:
             cursor.executemany(
-                '''
+                """
                 INSERT OR IGNORE INTO tbl_Category
                 (i8_CategoryID, str_CategoryName,
                 real_Budget, i8_BudgetPeriodID)
                 VALUES (?, ?, ?, ?)
-                ''',
+                """,
                 [
-                    (0, 'Nicht zugeordnet', 0.0, 4),
-                    (1, 'Sonstiges', 0.0, 3),
-                    (2, 'Spareinlagen', 100.0, 3)
-                ]
+                    (0, "Nicht zugeordnet", 0.0, 4),
+                    (1, "Sonstiges", 0.0, 3),
+                    (2, "Spareinlagen", 100.0, 3),
+                ],
             )
             conn.commit()
             logger.debug("Initial categories inserted successfully.")
@@ -155,13 +150,13 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Creating counterparty table...")
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_Counterparty (
                     i8_CounterpartyID INTEGER PRIMARY KEY AUTOINCREMENT,
                     str_CounterpartyName TEXT NOT NULL,
                     str_CounterpartyNumber TEXT UNIQUE NOT NULL
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Counterparty table created successfully.")
@@ -175,13 +170,13 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Creating transaction type table...")
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_TransactionTyp (
                     i8_TransactionTypID INTEGER PRIMARY KEY AUTOINCREMENT,
                     str_TransactionTypName TEXT NOT NULL,
                     str_TransactionTypNumber TEXT NOT NULL
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Transaction type table created successfully.")
@@ -196,14 +191,12 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Inserting initial transaction types...")
         try:
             cursor.executemany(
-                '''
+                """
                 INSERT OR IGNORE INTO tbl_TransactionTyp
                 (str_TransactionTypName, str_TransactionTypNumber)
                 VALUES (?, ?)
-                ''',
-                [
-                    ('Manuelle Transaktion', '1000')
-                ]
+                """,
+                [("Manuelle Transaktion", "1000")],
             )
             conn.commit()
             logger.debug("Initial transaction types inserted successfully.")
@@ -216,7 +209,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         """
         logger.debug("Creating account table...")
         try:
-            cursor.execute('''
+            cursor.execute("""
             CREATE TABLE IF NOT EXISTS tbl_Account (
                 i8_AccountID INTEGER PRIMARY KEY AUTOINCREMENT,
                 i8_WidgetPosition INTEGER UNIQUE NOT NULL,
@@ -227,7 +220,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 str_RecordDate INTEGER,
                 str_ChangeDate INTEGER
                 );
-            ''')
+            """)
             # TODO: change Date format to iso
             conn.commit()
             logger.debug("Account table created successfully.")
@@ -241,7 +234,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         logger.debug("Creating account history table...")
         try:
             cursor.execute(
-                '''
+                """
                 CREATE TABLE IF NOT EXISTS tbl_AccountHistory (
                     i8_AccountHistoryID INTEGER PRIMARY KEY AUTOINCREMENT,
                     i8_AccountID INTEGER NOT NULL,
@@ -252,7 +245,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                         REFERENCES tbl_Account(i8_AccountID)
                         ON DELETE CASCADE
                 );
-                '''
+                """
             )
             conn.commit()
             logger.debug("Account history table created successfully.")
@@ -264,27 +257,27 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         Create indexes for the transaction table.
         """
         logger.debug("Creating indexes for transaction table...")
-        cursor.execute('''
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_transaction_account_date
             ON tbl_Transaction(i8_AccountID, str_Date);
-        ''')
+        """)
         # cursor.execute('''
         #     CREATE INDEX IF NOT EXISTS idx_transaction_bookingdate
         #     ON tbl_Transaction(str_Bookingdate);
         # ''')
-        cursor.execute('''
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_transaction_category
             ON tbl_Transaction(i8_AccountID, i8_CategoryID, str_Date);
-        ''')
-        cursor.execute('''
+        """)
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_transaction_counterparty_date
             ON tbl_Transaction(i8_CounterpartyID, str_Date);
-        ''')
-        cursor.execute('''
+        """)
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS
                 idx_transaction_account_counterparty_date
             ON tbl_Transaction(i8_AccountID, i8_CounterpartyID, str_Date);
-        ''')
+        """)
         logger.debug("Indexes for transaction table created successfully.")
 
     def create_indexes_for_account_table(cursor) -> None:
@@ -292,10 +285,10 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         Create indexes for the account table.
         """
         logger.debug("Creating indexes for account table...")
-        cursor.execute('''
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_account_widget_position
             ON tbl_Account(i8_WidgetPosition);
-        ''')
+        """)
         logger.debug("Indexes for account table created successfully.")
 
     def create_indexes_for_account_history_table(cursor) -> None:
@@ -303,10 +296,10 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         Create indexes for the account history table.
         """
         logger.debug("Creating indexes for account history table...")
-        cursor.execute('''
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_accounthistory_account
             ON tbl_AccountHistory(i8_AccountID);
-        ''')
+        """)
         logger.debug("Indexes for account history table created successfully.")
 
     def create_indexes_for_category_table(cursor) -> None:
@@ -314,10 +307,10 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         Create indexes for the category table.
         """
         logger.debug("Creating indexes for category table...")
-        cursor.execute('''
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_category_budgetperiod
             ON tbl_Category(i8_BudgetPeriodID);
-        ''')
+        """)
         logger.debug("Indexes for category table created successfully.")
 
     def create_all_indexes(cursor, conn) -> None:
@@ -345,7 +338,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_transaction_typ_table(cursor, conn)
         create_transactions_table(cursor, conn)
 
-        logger.info('Tables created successfully.')
+        logger.info("Tables created successfully.")
 
         # Indizes erstellen
         create_all_indexes(cursor, conn)
@@ -372,13 +365,15 @@ def delete_database(db_path: Path = config.Database.PATH) -> None:
     try:
         DatabaseConnection.close_connection()
         db_path.unlink()
-        logger.info(f'Database deleted: {db_path}')
+        logger.info(f"Database deleted: {db_path}")
         # print(f'Datenbank wurde gelöscht: {db_path}')
     except FileNotFoundError:
         logger.error(f"Database not found: {db_path}")
-        raise Error(f'Database not found: {db_path}')
-    except Exception as e:
+        raise Error(f"Database not found: {db_path}")
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Database couldn't be deleted: {e}")
         raise Error(f"Database couldn't be deleted: {e}")
+
+
 # TODO: implement reset_database
 # (delete_database -> create_database)
