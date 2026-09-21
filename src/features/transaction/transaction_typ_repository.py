@@ -1,21 +1,21 @@
+import logging
 import sqlite3
 from pathlib import Path
-import logging
-from core.database.connection import DatabaseConnection
-import config
-from models.transaction_typ.entity import TransactionTyp
 
+import config
+from core.database.connection import DatabaseConnection
+from models.transaction_typ.entity import TransactionTyp
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
-def add_transaction_typ(name: str, number: str,
-                        db_path: Path = config.Database.PATH) -> None:
+def add_transaction_typ(
+    name: str, number: str, db_path: Path = config.Database.PATH
+) -> None:
     """
     Adds a transaction type to the database.
 
@@ -30,32 +30,34 @@ def add_transaction_typ(name: str, number: str,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logging.error(f"Error connecting to database: {e}")
+        logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
     try:
         cursor.execute(
-            '''
+            """
             INSERT INTO tbl_TransactionTyp (
                 str_TransactionTypName,
                 str_TransactionTypNumber
             ) VALUES (?, ?);
-            ''',
-            (name, number)
+            """,
+            (name, number),
         )
         conn.commit()
         logger.debug("Transaction type added successfully.")
         print("Transaction type added successfully.")
     except sqlite3.Error as e:
-        logger.exception(f"Error inserting data: {e}")
+        logger.exception("Error inserting data:")
         raise Error(f"Error inserting data: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
-def get_transaction_typ_id(db_path: Path = config.Database.PATH,
-                           data: list = ["", ""],
-                           supplied_data=[False, False]) -> int:
+def get_transaction_typ_id(
+    db_path: Path = config.Database.PATH,
+    data: list = ["", ""],
+    supplied_data=[False, False],
+) -> int:
     """
     Retrieves the transaction type ID from the database based on the provided
     data.
@@ -103,15 +105,15 @@ def get_transaction_typ_id(db_path: Path = config.Database.PATH,
             raise Error("No matching transaction type found.")
         return row[0]
     except sqlite3.Error as e:
-        logger.exception(f"Error querying data: {e}")
+        logger.exception("Error querying data:")
         raise Error(f"Error querying data: {e}")
     finally:
         DatabaseConnection.close_cursor()
 
 
-def get_transaction_typ_by_id(transaction_typ_id: int,
-                              db_path: Path = config.Database.PATH
-                              ) -> TransactionTyp:
+def get_transaction_typ_by_id(
+    transaction_typ_id: int, db_path: Path = config.Database.PATH
+) -> TransactionTyp:
     """
     Retrieves transaction type data by its ID.
 
@@ -136,27 +138,25 @@ def get_transaction_typ_by_id(transaction_typ_id: int,
 
     try:
         cursor.execute(
-            '''
+            """
             SELECT *
             FROM tbl_TransactionTyp
             WHERE i8_TransactionTypID = ?;
-            ''',
-            (transaction_typ_id,)
+            """,
+            (transaction_typ_id,),
         )
         row = cursor.fetchone()
         if row is None:
-            logger.error("No transaction type found "
-                         f"for ID {transaction_typ_id}.")
-            raise Error("No transaction type found"
-                        f"for ID {transaction_typ_id}.")
+            logger.error(
+                f"No transaction type found for ID {transaction_typ_id}."
+            )
+            raise Error(
+                f"No transaction type foundfor ID {transaction_typ_id}."
+            )
 
-        return TransactionTyp(
-            id=row[0],
-            name=row[1],
-            number=row[2]
-        )
+        return TransactionTyp(id=row[0], name=row[1], number=row[2])
     except sqlite3.Error as e:
-        logger.exception(f"Error querying data: {e}")
+        logger.exception("Error querying data:")
         raise Error(f"Error querying data: {e}")
     finally:
         DatabaseConnection.close_cursor()
