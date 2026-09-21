@@ -1,18 +1,23 @@
-from typing import List
+import logging
 import tkinter as tk
 from tkinter import ttk
-import logging
-from gui.plugins.__init__ import load_plugins
-from core.logging.logging_tools import log_fn
 
+from core.logging.logging_tools import log_fn
+from gui.plugins.__init__ import load_plugins
 
 logger = logging.getLogger(__name__)
 
 
 class BaseWindow(tk.Tk):
-    def __init__(self, plugin_scope: str, title: str = "Fenster",
-                 geometry: str = "800x600", bg_color: str = "white",
-                 fullscreen: bool = False, auto_ui_init: bool = True) -> None:
+    def __init__(
+        self,
+        plugin_scope: str,
+        title: str = "Fenster",
+        geometry: str = "800x600",
+        bg_color: str = "white",
+        fullscreen: bool = False,
+        auto_ui_init: bool = True,
+    ) -> None:
         """
         Base class for all windows in the application.
         Initializes the main window and sets up the menu, status bar,
@@ -61,8 +66,9 @@ class BaseWindow(tk.Tk):
         by changing the value of the StringVar `self.status_var`.
         """
         self.status_var = tk.StringVar(value="Bereit")
-        self.status_bar = ttk.Label(self, textvariable=self.status_var,
-                                    relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar = ttk.Label(
+            self, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W
+        )
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     def _setup_menu(self) -> None:
@@ -118,8 +124,7 @@ class BaseWindow(tk.Tk):
         popup.transient(self)
 
     @log_fn
-    def ask_permission(self, message: str,
-                       focus_on: List[bool]) -> None:
+    def ask_permission(self, message: str, focus_on: list[bool]) -> None:
         """
         Ask the user for permission to perform an action.
 
@@ -138,13 +143,15 @@ class BaseWindow(tk.Tk):
         button_frame.pack(pady=10)
 
         yes_button = ttk.Button(
-            button_frame, text="Ja",
-            command=lambda: self._set_permission(popup, True)
+            button_frame,
+            text="Ja",
+            command=lambda: self._set_permission(popup, True),
         )
         yes_button.pack(side=tk.LEFT, padx=5)
         no_button = ttk.Button(
-            button_frame, text="Nein",
-            command=lambda: self._set_permission(popup, False)
+            button_frame,
+            text="Nein",
+            command=lambda: self._set_permission(popup, False),
         )
         no_button.pack(side=tk.LEFT, padx=5)
 
