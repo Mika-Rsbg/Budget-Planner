@@ -1,22 +1,21 @@
+import logging
 import sqlite3
 from pathlib import Path
-import logging
-from typing import List, Tuple, Union, Optional
-from core.database.connection import DatabaseConnection
-import config
-from models.counterparty.entity import Counterparty
 
+import config
+from core.database.connection import DatabaseConnection
+from models.counterparty.entity import Counterparty
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
-def add_counterparty(name: str, number: str,
-                     db_path: Path = config.Database.PATH) -> None:
+def add_counterparty(
+    name: str, number: str, db_path: Path = config.Database.PATH
+) -> None:
     """
     Adds a counterparty to the database.
 
@@ -36,13 +35,13 @@ def add_counterparty(name: str, number: str,
 
     try:
         cursor.execute(
-            '''
+            """
             INSERT INTO tbl_Counterparty (
                 str_CounterpartyName,
                 str_CounterpartyNumber
             ) VALUES (?, ?);
-            ''',
-            (name, number)
+            """,
+            (name, number),
         )
         conn.commit()
         logger.debug("Counterparty added successfully.")
@@ -53,9 +52,11 @@ def add_counterparty(name: str, number: str,
         DatabaseConnection.close_cursor()
 
 
-def get_counterparty_id(data: List[Union[str, None]],
-                        supplied_data: List[bool] = [False, False],
-                        db_path: Path = config.Database.PATH) -> Optional[int]:
+def get_counterparty_id(
+    data: list[str | None],
+    supplied_data: list[bool] = [False, False],
+    db_path: Path = config.Database.PATH,
+) -> int | None:
     """
     Retrieves the ID of a counterparty from the database based on supplied
     search criteria.
@@ -97,8 +98,11 @@ def get_counterparty_id(data: List[Union[str, None]],
     if not conditions:
         return None
 
-    query = ("SELECT i8_CounterpartyID FROM tbl_Counterparty WHERE " +
-             " AND ".join(conditions) + " LIMIT 1;")
+    query = (
+        "SELECT i8_CounterpartyID FROM tbl_Counterparty WHERE "
+        + " AND ".join(conditions)
+        + " LIMIT 1;"
+    )
 
     try:
         cursor.execute(query, tuple(values))
@@ -116,9 +120,10 @@ def get_counterparty_id(data: List[Union[str, None]],
         raise Error("No matching counterparty found.")
 
 
-def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
-                          db_path: Path = config.Database.PATH
-                          ) -> List[Tuple[Union[str, int], ...]]:
+def get_counterparty_data(
+    selected_columns: list[bool] = [True, True, True],
+    db_path: Path = config.Database.PATH,
+) -> list[tuple[str | int, ...]]:
     """
     Retrieves counterparty data from the database based on selected columns.
     Args:
@@ -138,20 +143,27 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
         logger.error(f"Error connecting to database: {e}")
         raise Error(f"Error connecting to database: {e}")
 
-    columns = ["i8_CounterpartyID", "str_CounterpartyName",
-               "str_CounterpartyNumber"]
+    columns = [
+        "i8_CounterpartyID",
+        "str_CounterpartyName",
+        "str_CounterpartyNumber",
+    ]
 
     if len(columns) != len(selected_columns):
-        logger.error("Wrong number of selected columns provided."
-                     f"Expected {len(columns)}, got {len(selected_columns)}.")
-        raise Error("Wrong number of values provided."
-                    f"Expected {len(columns)}, got {len(selected_columns)}.")
+        logger.error(
+            "Wrong number of selected columns provided."
+            f"Expected {len(columns)}, got {len(selected_columns)}."
+        )
+        raise Error(
+            "Wrong number of values provided."
+            f"Expected {len(columns)}, got {len(selected_columns)}."
+        )
 
-    query = 'SELECT '
+    query = "SELECT "
     for i, col in enumerate(columns):
         if selected_columns[i]:
-            query += f'{col}, '
-    query = query[:-2] + ' FROM tbl_Counterparty'
+            query += f"{col}, "
+    query = query[:-2] + " FROM tbl_Counterparty"
 
     try:
         cursor.execute(query)
@@ -168,9 +180,8 @@ def get_counterparty_data(selected_columns: List[bool] = [True, True, True],
 
 
 def get_counterparty_by_id(
-    counterparty_id: int,
-    db_path: Path = config.Database.PATH
-) -> Optional[Counterparty]:
+    counterparty_id: int, db_path: Path = config.Database.PATH
+) -> Counterparty | None:
     """
     Returns the data of a specific account identified by its AccountID.
 
@@ -191,7 +202,7 @@ def get_counterparty_by_id(
             return Counterparty(
                 id=int(counterparty[0]),
                 name=str(counterparty[1]),
-                number=str(counterparty[2])
+                number=str(counterparty[2]),
             )
 
     return None
