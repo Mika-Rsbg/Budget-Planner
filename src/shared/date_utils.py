@@ -1,7 +1,6 @@
-import datetime
 import calendar
+import datetime
 import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ def get_month_literal(month: int = 0, en: bool = False) -> str:
         str: Month name in the selected language.
     """
     if month == 0:
-        month = datetime.datetime.now().month
+        month = datetime.datetime.now(datetime.UTC).month
 
     if en:
         return calendar.month_name[month]
@@ -31,9 +30,21 @@ def get_month_literal(month: int = 0, en: bool = False) -> str:
     else:
         # German month names:
         # Index 0 is kept empty for convenient indexing (1-12)
-        german_months = ["", "Januar", "Februar", "März", "April", "Mai",
-                         "Juni", "Juli", "August", "September", "Oktober",
-                         "November", "Dezember"]
+        german_months = [
+            "",
+            "Januar",
+            "Februar",
+            "März",
+            "April",
+            "Mai",
+            "Juni",
+            "Juli",
+            "August",
+            "September",
+            "Oktober",
+            "November",
+            "Dezember",
+        ]
         return german_months[month]
 
 
@@ -50,7 +61,7 @@ def get_iso_date(date: str = "", today: bool = False) -> str:
         str: Date string in ISO format YYYY-MM-DD.
     """
     if today:
-        return datetime.datetime.now().strftime("%Y-%m-%d")
+        return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d")
 
     if len(date) != 6 or not date.isdigit():
         logger.error("Invalid date format. Expected YYMMDD.")
@@ -63,7 +74,7 @@ def get_iso_date(date: str = "", today: bool = False) -> str:
     # Year 00–69 => 2000–2069, Year 70–99 => 1970–1999
     full_year = 2000 + year if year < 70 else 1900 + year
 
-    dt = datetime.datetime(full_year, month, day)
+    dt = datetime.datetime(full_year, month, day, tzinfo=datetime.UTC)
     return dt.strftime("%Y-%m-%d")
 
 
