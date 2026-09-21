@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import cast
 
@@ -208,13 +208,13 @@ def add_account(
               occurs during the database operation.
     """
     if not record_date:
-        record_date = date.today()
+        record_date = datetime.now(tz=UTC).date()
 
     try:
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logger.exception(f"Error connecting to database: {e}")
+        logger.exception("Error connecting to database:")
         raise Error(f"Error connecting to database: {e}")
 
     if position is None:
@@ -227,7 +227,7 @@ def add_account(
             position = 0
 
     if change_date is None:
-        change_date = date.today()
+        change_date = datetime.now(tz=UTC).date()
 
     try:
         cursor.execute(

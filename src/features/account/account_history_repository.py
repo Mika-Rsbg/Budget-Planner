@@ -1,6 +1,6 @@
 import sqlite3
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from logging import getLogger
 from pathlib import Path
 from typing import cast
@@ -190,7 +190,7 @@ def get_last_balance(
             query or connection.
     """
     # Determine the first and last day of the previous month.
-    today = date.today()
+    today = datetime.now(tz=UTC).date()
     first_day_this_month = date(today.year, today.month, 1)
     last_day_last_month = first_day_this_month - timedelta(days=1)
 
@@ -260,7 +260,7 @@ def add_account_history(
         raise Error(f"Error connecting to database: {e}")
 
     if change_date is None:
-        change_date = date.today()
+        change_date = datetime.now(tz=UTC).date()
 
     try:
         cursor.execute(
