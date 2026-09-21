@@ -13,7 +13,7 @@ class DatabaseConnection:
 
     @staticmethod
     def get_connection(
-        db_path: Path = config.Database.PATH
+        db_path: Path = config.Database.PATH,
     ) -> sqlite3.Connection:
         """
         Returns a singleton instance of the database connection.
@@ -31,9 +31,7 @@ class DatabaseConnection:
         return DatabaseConnection._instance
 
     @staticmethod
-    def get_cursor(
-        db_path: Path = config.Database.PATH
-    ) -> sqlite3.Cursor:
+    def get_cursor(db_path: Path = config.Database.PATH) -> sqlite3.Cursor:
         """
         Returns a singleton instance of the database cursor.
         If the cursor does not exist, it creates a new one.
