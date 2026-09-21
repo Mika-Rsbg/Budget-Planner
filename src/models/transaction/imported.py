@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Tuple
 
 
 @dataclass
@@ -9,7 +8,7 @@ class ImportTransaction:
     account_number: str
 
     opening_balance: float
-    closing_balance: Tuple[str, str, str]
+    closing_balance: tuple[str, str, str]
 
     date: str
     booking_date: str

@@ -62,6 +62,7 @@ class TransactionImportView:
             counterparty_id=-1,
             category_id=-1,
             user_comments=None,
-            displayed_name=None
+            displayed_name=None,
         )
+
     # TODO: add better default values
