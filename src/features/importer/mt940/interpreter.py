@@ -1,26 +1,27 @@
 import logging
-from typing import List, Dict, Tuple
-from datetime import datetime
-from gui.app.basewindow import BaseWindow
-from features.account import account_repository as account_repository
-from features.account import account_service as account_service
-from features.counterparty import (counterparty_repository
-                                   as counterparty_repository)
-from features.transaction import (transaction_typ_repository
-                                  as transaction_typ_repository)
-from features.transaction import transaction_repository
+from datetime import UTC, datetime
+
+from features.account import account_repository, account_service
+from features.counterparty import (
+    counterparty_repository,
+)
 from features.importer.mt940.errors import DatabaseMT940Error
-from shared.date_utils import get_iso_date
-from models.transaction.imported import ImportTransaction
+from features.transaction import (
+    transaction_repository,
+    transaction_typ_repository,
+)
+from gui.app.basewindow import BaseWindow
 from models.transaction.entity import Transaction
 from models.transaction.import_view import TransactionImportView
-
+from models.transaction.imported import ImportTransaction
+from shared.date_utils import get_iso_date
 
 logger = logging.getLogger(__name__)
 
 
-def get_account_id(account_number: str,
-                   entry: ImportTransaction, window: BaseWindow) -> int:
+def get_account_id(
+    account_number: str, entry: ImportTransaction, window: BaseWindow
+) -> int:
     """
     Retrieve the account ID for a given account number.
 
@@ -47,19 +48,18 @@ def get_account_id(account_number: str,
     try:
         rti_account_id = account_repository.get_account_id(
             data=[None, account_number, None, None],
-            supplied_data=[False, True, False, False]
+            supplied_data=[False, True, False, False],
         )
     except account_repository.NoAccountFoundError:
-        logger.warning(
-            f"Account {account_number} not found in database."
-        )
+        logger.warning(f"Account {account_number} not found in database.")
         account_service.add_account_mt940(
             master=window,
-            number=account_number, balance=float(entry.opening_balance)
+            number=account_number,
+            balance=float(entry.opening_balance),
         )
         rti_account_id = account_repository.get_account_id(
             data=[None, account_number, None, None],
-            supplied_data=[False, True, False, False]
+            supplied_data=[False, True, False, False],
         )
     logger.debug("Got account id from database.")
     return rti_account_id
@@ -84,26 +84,23 @@ def get_tt_id(tt_name: str, tt_number: str) -> int:
     """
     try:
         rti_tt_id = transaction_typ_repository.get_transaction_typ_id(
-            data=[tt_name, tt_number],
-            supplied_data=[True, True]
+            data=[tt_name, tt_number], supplied_data=[True, True]
         )
     except transaction_typ_repository.Error:
-        logger.warning(
-            f"Transaction type {tt_name} not found in database."
-        )
+        logger.warning(f"Transaction type {tt_name} not found in database.")
         transaction_typ_repository.add_transaction_typ(
             name=tt_name, number=tt_number
         )
         rti_tt_id = transaction_typ_repository.get_transaction_typ_id(
-            data=[tt_name, tt_number],
-            supplied_data=[True, True]
+            data=[tt_name, tt_number], supplied_data=[True, True]
         )
     logger.debug("Got transaction typ id from database.")
     return rti_tt_id
 
 
-def get_counterparty_id(counterparty_name: str,
-                        counterparty_number: str) -> int:
+def get_counterparty_id(
+    counterparty_name: str, counterparty_number: str
+) -> int:
     """
     Retrieve the counterparty ID from the database.
 
@@ -123,19 +120,18 @@ def get_counterparty_id(counterparty_name: str,
     try:
         rti_counterparty_id = counterparty_repository.get_counterparty_id(
             data=[counterparty_name, counterparty_number],
-            supplied_data=[False, True]
+            supplied_data=[False, True],
         )
     except counterparty_repository.Error:
         logger.warning(
-            f"Counterparty {counterparty_name} not found in "
-            "database."
+            f"Counterparty {counterparty_name} not found in database."
         )
         counterparty_repository.add_counterparty(
             name=counterparty_name, number=counterparty_number
         )
         rti_counterparty_id = counterparty_repository.get_counterparty_id(
             data=[counterparty_name, counterparty_number],
-            supplied_data=[True, True]
+            supplied_data=[True, True],
         )
     if rti_counterparty_id is None:
         # wird nicht passieren, da None nie eintreten kann
@@ -145,10 +141,8 @@ def get_counterparty_id(counterparty_name: str,
 
 
 def interpret_transactions(
-        data: List[ImportTransaction],
-        window: BaseWindow
-        ) -> Tuple[List[TransactionImportView],
-                   List[Tuple[str, str, str]]]:
+    data: list[ImportTransaction], window: BaseWindow
+) -> tuple[list[TransactionImportView], list[tuple[str, str, str]]]:
     """
     Interpret parsed MT940 entries into import view records.
 
@@ -171,13 +165,13 @@ def interpret_transactions(
               (account_number, record_date, balance).
     """
     logger.info("Start interpreting bank statment.")
-    closing_balance: List[Tuple[str, str, str]] = []
+    closing_balance: list[tuple[str, str, str]] = []
 
-    interpreted_data: List[TransactionImportView] = []
+    interpreted_data: list[TransactionImportView] = []
 
     transaction_id = 0
 
-    for entry in data:
+    for transaction_id, entry in enumerate(data):
         # temp: not ready for the database
         # rti: ready to insert
 
@@ -185,10 +179,16 @@ def interpret_transactions(
         rti_account_id = get_account_id(temp_account_number, entry, window)
 
         temp_date = entry.date
-        rti_date = datetime.strptime(temp_date, "%y%m%d").date()
+        rti_date = (
+            datetime.strptime(temp_date, "%y%m%d").astimezone(UTC).date()
+        )
 
         temp_bookingdate = entry.booking_date
-        rti_booking_date = datetime.strptime(temp_bookingdate, "%y%m%d").date()
+        rti_booking_date = (
+            datetime.strptime(temp_bookingdate, "%y%m%d")
+            .astimezone(UTC)
+            .date()
+        )
 
         temp_tt_number = entry.transaction_type_number
         temp_tt_name = entry.transaction_type_name
@@ -258,7 +258,7 @@ def interpret_transactions(
                 user_comments=db_transaction.user_comments,
                 displayed_name=db_transaction.displayed_name,
                 in_database=rti_in_database,
-                transaction_id=rti_transaction_id
+                transaction_id=rti_transaction_id,
             )
         else:
             transaction = TransactionImportView(
@@ -283,21 +283,20 @@ def interpret_transactions(
                 user_comments=rti_user_comments,
                 displayed_name=rti_displayed_name,
                 in_database=rti_in_database,
-                transaction_id=rti_transaction_id
+                transaction_id=rti_transaction_id,
             )
 
         interpreted_data.append(transaction)
-
-        transaction_id += 1
 
     logger.debug("Bank statment succesfully interpreted.")
     return (interpreted_data, closing_balance)
 
 
 def interpret_account_history_entries(
-    closing_balance: List[Tuple[str, str, str]]
-) -> Tuple[List[Tuple[int, float, str, str]],
-           Dict[str, Tuple[str, float, int]]]:
+    closing_balance: list[tuple[str, str, str]],
+) -> tuple[
+    list[tuple[int, float, str, str]], dict[str, tuple[str, float, int]]
+]:
     """
     Convert closing balance entries into database-ready account history data.
 
@@ -322,39 +321,33 @@ def interpret_account_history_entries(
                 account_number -> (record_date, balance, account_id)
     """
     logger.debug("Start interpreting account history entries.")
-    latest: Dict = {}
-    interpreted_data: List[Tuple[int, float, str, str]] = []
+    latest: dict = {}
+    interpreted_data: list[tuple[int, float, str, str]] = []
 
     today = get_iso_date(today=True)
 
     for account_number, record_date, balance in closing_balance:
-        if (account_number, record_date, balance) == ('', '', ''):
+        if (account_number, record_date, balance) == ("", "", ""):
             continue
         try:
             account_id = account_repository.get_account_id(
                 data=[None, account_number, None, None],
-                supplied_data=[False, True, False, False]
+                supplied_data=[False, True, False, False],
             )
         except account_repository.NoAccountFoundError:
-            logger.warning(
-                f"Account {account_number} not found in database."
-            )
+            logger.warning(f"Account {account_number} not found in database.")
             raise DatabaseMT940Error(
                 f"Account {account_number} not found in database. "
                 "Even though it was in the MT940 file."
             )
 
         interpreted_data.append(
-            (
-                account_id,
-                float(balance),
-                get_iso_date(record_date),
-                today
-            )
+            (account_id, float(balance), get_iso_date(record_date), today)
         )
-        if account_number not in latest:
-            latest[account_number] = (record_date, balance, account_id)
-        elif record_date > latest[account_number][0]:
+        if (
+            account_number not in latest
+            or record_date > latest[account_number][0]
+        ):
             latest[account_number] = (record_date, balance, account_id)
     logger.debug("Succesfully interpreted account history_entries.")
     return (interpreted_data, latest)

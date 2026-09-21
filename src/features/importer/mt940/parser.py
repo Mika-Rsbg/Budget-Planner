@@ -1,15 +1,14 @@
-from typing import List, Tuple
 import logging
+
+from core.logging.logging_tools import log_fn
 from features.importer.mt940.errors import InvalidMT940FileError
 from models.transaction.imported import ImportTransaction
-from core.logging.logging_tools import log_fn
-
 
 logger = logging.getLogger(__name__)
 
 
 @log_fn
-def split_toblocks(file_content: str) -> List[str]:
+def split_toblocks(file_content: str) -> list[str]:
     """
     Split the file content into blocks based on the ":" character at the
     beginning of the line.
@@ -21,15 +20,15 @@ def split_toblocks(file_content: str) -> List[str]:
         List: A List of blocks.
     """
     # Split after new line
-    lines = file_content.split('\n')
+    lines = file_content.split("\n")
     blocks = []
     current_block = []
 
     for line in lines:
-        if line.startswith(':'):
+        if line.startswith(":"):
             # If a block is already in current_block, add it to blocks
             if current_block:
-                blocks.append(''.join(current_block))
+                blocks.append("".join(current_block))
             # Add current line to current_block to start a new block
             current_block = [line]
         # If the line does not start with ":", then it is part of the current
@@ -39,15 +38,13 @@ def split_toblocks(file_content: str) -> List[str]:
 
     # Add the last block
     if current_block:
-        blocks.append(''.join(current_block))
+        blocks.append("".join(current_block))
     logger.debug("Bank statement successfully split into blocks.")
     return blocks
 
 
 @log_fn
-def pars_block(
-        blocks: List[str]
-        ) -> List[ImportTransaction]:
+def pars_block(blocks: list[str]) -> list[ImportTransaction]:
     """Parse a List of "blocks" (aka a Line from the .txt) from a mt940 file.
 
     Args:
@@ -57,7 +54,7 @@ def pars_block(
     Returns:
         List: A List of ImportTransaction objects containing the parsed data.
     """
-    parsed_data: List[ImportTransaction] = []
+    parsed_data: list[ImportTransaction] = []
     number_parsed_transactions: int = 0
     last_block_86: bool = False
 
@@ -76,7 +73,7 @@ def pars_block(
     temp_purpose: str = ""
     temp_counterparty_name: str = ""
     temp_counterparty_account: str = ""
-    temp_closing_balance: Tuple[str, str, str] = ("", "", "")
+    temp_closing_balance: tuple[str, str, str] = ("", "", "")
 
     logger.debug("Start parsing split blocks.")
 
@@ -93,7 +90,7 @@ def pars_block(
         # =========== Opening balance ===========
         elif block.startswith(":60F:"):
             # Opening balance of the account
-            temp_opening_balance = float(block[15:].replace(',', '.'))
+            temp_opening_balance = float(block[15:].replace(",", "."))
             if block[6] == "D":
                 temp_opening_balance *= -1
         #  =========== (Booking-)Date and Amount of the transaction ===========
@@ -127,8 +124,9 @@ def pars_block(
             temp_booking_date = block[6:10]
             # =========== Amount-Type (+/-) ===========
             # 1 => +; 0 => -
-            temp_amount_type = (1 if block[10] == 'C' or
-                                block[10:12] == 'RD' else -1)
+            temp_amount_type = (
+                1 if block[10] == "C" or block[10:12] == "RD" else -1
+            )
             # =========== Currency ===========
             if block[10:12] == "RC" or block[10:12] == "RD":
                 currency_position = 12
@@ -148,32 +146,32 @@ def pars_block(
                 raise InvalidMT940FileError(
                     "No amount found. Selected file is invalid."
                 )
-            if 'S' in block:
-                amount_end_search_param = 'S'
-            elif 'N' in block:
-                amount_end_search_param = 'N'
+            if "S" in block:
+                amount_end_search_param = "S"
+            elif "N" in block:
+                amount_end_search_param = "N"
             else:  # 'F'
-                amount_end_search_param = 'F'
+                amount_end_search_param = "F"
             amount_end = block.find(amount_end_search_param, amount_start)
-            temp_amount_str = block[amount_start:amount_end].replace(',', '.')
+            temp_amount_str = block[amount_start:amount_end].replace(",", ".")
             temp_amount = float(temp_amount_str) * temp_amount_type
         # =========== TransacationTyp, Purpose and Counterparty ===========
         elif block.startswith(":86:"):
             block = block[4:]
             # =========== TransactionType ===========
             temp_transaction_type_number = block[:3]
-            temp_transaction_type_name = block[6:block.find('?', 6)]
+            temp_transaction_type_name = block[6 : block.find("?", 6)]
 
             # =========== Purpose and Purposeadition ===========
             purpose_fields = []
             for i in range(20, 30):  # Geht durch die Felder von ?20 bis ?29
-                field_tag = f'?{i}'
+                field_tag = f"?{i}"
                 if block.find(field_tag) != -1:
                     start = block.find(field_tag) + 3
-                    next_qmark = block.find('?', start)
+                    next_qmark = block.find("?", start)
                     end = next_qmark if next_qmark != -1 else len(block)
                     purpose_fields.append(block[start:end])
-            temp_purpose = ''.join(purpose_fields)
+            temp_purpose = "".join(purpose_fields)
 
             if temp_purpose.startswith("SVWZ+"):
                 temp_purpose_addition = "SVWZ"
@@ -181,24 +179,24 @@ def pars_block(
                 temp_purpose_addition = "EREF"
             elif temp_purpose.startswith("KREF+"):
                 temp_purpose_addition = "KREF"
-            temp_purpose = temp_purpose.replace('SVWZ+', '')
-            temp_purpose = temp_purpose.replace('EREF+', '')
-            temp_purpose = temp_purpose.replace('KREF+', '')
+            temp_purpose = temp_purpose.replace("SVWZ+", "")
+            temp_purpose = temp_purpose.replace("EREF+", "")
+            temp_purpose = temp_purpose.replace("KREF+", "")
 
             # =========== CounterpartyAccount ===========
-            cp_account_start = block.find('?31') + 3
-            cp_account_end = block.find('?', cp_account_start)
+            cp_account_start = block.find("?31") + 3
+            cp_account_end = block.find("?", cp_account_start)
             temp_counterparty_account = block[cp_account_start:cp_account_end]
 
             # =========== CounterpartyName ===========
-            cp_name_start = block.find('?32') + 3
-            cp_name_end = block.find('?', cp_name_start)
+            cp_name_start = block.find("?32") + 3
+            cp_name_end = block.find("?", cp_name_start)
             temp_counterparty_name = block[cp_name_start:cp_name_end]
 
             # If the Counterparty (cp) Name is split into two parts
-            if block.find('?33') != -1:
-                second_start = block.find('?33') + 3
-                second_end = block.find('?', second_start)
+            if block.find("?33") != -1:
+                second_start = block.find("?33") + 3
+                second_end = block.find("?", second_start)
                 temp_counterparty_name += "" + block[second_start:second_end]
 
             last_block_86 = True
@@ -206,10 +204,13 @@ def pars_block(
         elif block.startswith(":62F:"):
             block = block[5:]
             closing_balance_date = block[1:7]
-            closing_balance = block[10:].replace(',', '.')
+            closing_balance = block[10:].replace(",", ".")
             closing_balance = closing_balance[:-1]
-            temp_closing_balance = (temp_account_number, closing_balance_date,
-                                    closing_balance)
+            temp_closing_balance = (
+                temp_account_number,
+                closing_balance_date,
+                closing_balance,
+            )
 
             # =========== Gathering all data ===========
             transaction = ImportTransaction(
@@ -250,9 +251,7 @@ def pars_block(
     return parsed_data
 
 
-def pars_file(
-        file_content: str
-        ) -> List[ImportTransaction]:
+def pars_file(file_content: str) -> list[ImportTransaction]:
     """Parse a raw MT940 file into import transaction objects.
 
     Args:

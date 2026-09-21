@@ -1,8 +1,9 @@
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
-from shared.date_utils import format_mt940_date
 from shared.currency_utils import format_mt940_currency
+from shared.date_utils import format_mt940_date
 
 
 @dataclass(frozen=True)

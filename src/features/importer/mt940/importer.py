@@ -1,37 +1,36 @@
-from tkinter import filedialog
 import logging
-from typing import List, Tuple, Union, Optional, Dict
-from features.importer.mt940.errors import InvalidMT940FileError
-from gui.app.basewindow import BaseWindow
-from core.logging.logging_tools import log_fn
-from features.account.account_repository import get_account_by_id
-import features.importer.mt940.interpreter as mt940_interpreter
-import features.importer.mt940.database_service as mt940_database_service
-import features.account.account_repository as account_repository
-from features.importer.mt940.parser import pars_file
-from features.importer.formater.table_formater import format_data
-from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
-from models.transaction.import_view import TransactionImportView
-from models.account.entity import Account
+from tkinter import filedialog
 
+import features.importer.mt940.database_service as mt940_database_service
+import features.importer.mt940.interpreter as mt940_interpreter
+from core.logging.logging_tools import log_fn
+from features.account import account_repository
+from features.account.account_repository import get_account_by_id
+from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
+from features.importer.formater.table_formater import format_data
+from features.importer.mt940.errors import InvalidMT940FileError
+from features.importer.mt940.parser import pars_file
+from gui.app.basewindow import BaseWindow
+from models.account.entity import Account
+from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
 
 
 @log_fn
 def import_mt940_file(
-        master: BaseWindow, path: Optional[str] = None
-        ) -> Tuple[
-                str,
-                List[str],
-                List[List[Union[str, float]]],
-                Account,
-                str,
-                List[TransactionImportView],
-                List[Tuple[int, float, str, str]],
-                Dict[str, Tuple[str, float, int]],
-                bool
-            ]:
+    master: BaseWindow, path: str | None = None
+) -> tuple[
+    str,
+    list[str],
+    list[list[str | float]],
+    Account,
+    str,
+    list[TransactionImportView],
+    list[tuple[int, float, str, str]],
+    dict[str, tuple[str, float, int]],
+    bool,
+]:
     """
     Import and parse an MT940 bank statement file.
 
@@ -100,7 +99,7 @@ def import_mt940_file(
         file_path = filedialog.askopenfilename(
             parent=master,
             title="Select MT940 Text File",
-            filetypes=(("Text Files", "*.txt"), ("All Files", "*.*"))
+            filetypes=(("Text Files", "*.txt"), ("All Files", "*.*")),
         )
         logger.debug("Filedialog closed.")
     else:
@@ -110,70 +109,93 @@ def import_mt940_file(
     if file_path:
         logger.info("Start importing bank statment.")
 
-        with open(file_path, 'r', encoding='utf8') as file:
+        with open(file_path, "r", encoding="utf8") as file:
             file_content = file.read()
 
         try:
             parsed_data = pars_file(file_content)
-        except InvalidMT940FileError as e:
-            logger.exception(e)
+        except InvalidMT940FileError:
+            logger.exception("")
         finally:
             parsed_data = None
 
         if parsed_data:
-            (interpreted_data, closing_balance
-             ) = mt940_interpreter.interpret_transactions(
-                parsed_data, master
-                )
+            (interpreted_data, closing_balance) = (
+                mt940_interpreter.interpret_transactions(parsed_data, master)
+            )
 
             formatted_data = format_data(
                 interpreted_data, TRANSACTION_TABLE_COLUMNS
             )
 
-            (interpreted_history_data, latest
-             ) = mt940_interpreter.interpret_account_history_entries(
-                closing_balance)
+            (interpreted_history_data, latest) = (
+                mt940_interpreter.interpret_account_history_entries(
+                    closing_balance
+                )
+            )
 
             try:
                 new_balance = str(next(iter(latest.values()))[1])
                 # latest: {'1077149530': ('260702', '200.00', 1)}
             except StopIteration:
-                logging.info("Empty file selected")
+                logger.info("Empty file selected")
                 new_balance = "n.a."
 
-            headers = [
-                column.header
-                for column in TRANSACTION_TABLE_COLUMNS
-            ]
+            headers = [column.header for column in TRANSACTION_TABLE_COLUMNS]
 
             first_entry = parsed_data[0]
             account_id = account_repository.get_account_id(
                 data=["", str(first_entry.account_number), "", ""],
-                supplied_data=[False, True, False, False]
-                )
+                supplied_data=[False, True, False, False],
+            )
             account_data = get_account_by_id(account_id)
             assert account_data is not None
         else:
             logger.info("Empty file selected.")
-            return (file_path, ["null"], [["null"]], Account.empty(), "n.a.",
-                    [TransactionImportView.empty()], [(0, 0.0, "", "")],
-                    {"": ("", 0.0, 0)}, False)
+            return (
+                file_path,
+                ["null"],
+                [["null"]],
+                Account.empty(),
+                "n.a.",
+                [TransactionImportView.empty()],
+                [(0, 0.0, "", "")],
+                {"": ("", 0.0, 0)},
+                False,
+            )
 
-        return (file_path, headers, formatted_data,
-                account_data, new_balance, interpreted_data,
-                interpreted_history_data, latest, True)
+        return (
+            file_path,
+            headers,
+            formatted_data,
+            account_data,
+            new_balance,
+            interpreted_data,
+            interpreted_history_data,
+            latest,
+            True,
+        )
     else:
         logger.info("No file selected.")
-        return ("n.a.", ["null"], [["null"]], Account.empty(), "n.a.",
-                [TransactionImportView.empty()], [(0, 0.0, "", "")],
-                {"": ("", 0.0, 0)}, False)
+        return (
+            "n.a.",
+            ["null"],
+            [["null"]],
+            Account.empty(),
+            "n.a.",
+            [TransactionImportView.empty()],
+            [(0, 0.0, "", "")],
+            {"": ("", 0.0, 0)},
+            False,
+        )
 
 
 @log_fn
-def insert_transactions_to_db(data: List[TransactionImportView],
-                              history_data: List[Tuple[int, float, str, str]],
-                              latest: Dict[str, Tuple[str, float, int]]
-                              ) -> None:
+def insert_transactions_to_db(
+    data: list[TransactionImportView],
+    history_data: list[tuple[int, float, str, str]],
+    latest: dict[str, tuple[str, float, int]],
+) -> None:
     """Persist import transactions, history entries, and account balances.
 
     Args:

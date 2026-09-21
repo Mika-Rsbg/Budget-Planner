@@ -1,16 +1,15 @@
 import logging
-from typing import List, Any
-from models.transaction.import_view import TransactionImportView
-from features.importer.formater.table_config import TableColumn
+from typing import Any
 
+from features.importer.formater.table_config import TableColumn
+from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
 
 
 def format_data(
-    data: list[TransactionImportView],
-    columns: list[TableColumn]
-) -> List[List[Any]]:
+    data: list[TransactionImportView], columns: list[TableColumn]
+) -> list[list[Any]]:
     """Convert imported transactions into rows suitable for a table view.
 
     Each returned row follows the order of ``columns``. Values are read from
