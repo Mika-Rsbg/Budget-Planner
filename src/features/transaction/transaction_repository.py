@@ -1,24 +1,21 @@
+import logging
 import sqlite3
 from pathlib import Path
-import logging
-from typing import List, Optional
-from core.database.connection import DatabaseConnection
+
 import config
+from core.database.connection import DatabaseConnection
 from models.transaction.entity import Transaction
 from models.transaction.import_view import TransactionImportView
-
 
 logger = logging.getLogger(__name__)
 
 
 class Error(Exception):
     """General exception class for database errors."""
-    pass
 
 
 class AlreadyExistsError(Exception):
     """Exception raised when a record already exists."""
-    pass
 
 
 def delete_transaction(db_path: Path = config.Database.PATH):
@@ -30,7 +27,8 @@ def edit_transaction(db_path: Path = config.Database.PATH):
 
 
 def get_transaction_data(
-        db_path: Path = config.Database.PATH) -> List[Transaction]:
+    db_path: Path = config.Database.PATH,
+) -> list[Transaction]:
     """Retrieve all transaction records from the database.
 
     Args:
@@ -96,9 +94,8 @@ def get_transaction_data(
 
 
 def get_transaction_by_id(
-    transaction_id: int,
-    db_path: Path = config.Database.PATH
-) -> Optional[Transaction]:
+    transaction_id: int, db_path: Path = config.Database.PATH
+) -> Transaction | None:
     """
     Returns the data of a specific transaction identified by its TransactionID.
 
@@ -118,8 +115,10 @@ def get_transaction_by_id(
     return None
 
 
-def get_transaction_id(transaction: Transaction | TransactionImportView,
-                       db_path: Path = config.Database.PATH) -> int | None:
+def get_transaction_id(
+    transaction: Transaction | TransactionImportView,
+    db_path: Path = config.Database.PATH,
+) -> int | None:
     """Find the ID of an existing transaction based on its details.
 
     Args:
@@ -137,7 +136,7 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logger.exception(f"Error connecting to database: {e}")
+        logger.exception("Error connecting to database:")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -166,7 +165,7 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
         #     )
         # )
         cursor.execute(
-            '''
+            """
             SELECT i8_TransactionID
             FROM tbl_Transaction
             WHERE i8_AccountID=?
@@ -176,7 +175,7 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
               AND str_Purpose=?
               AND i8_CounterpartyID=?
               AND i8_CategoryID=?;
-            ''',
+            """,
             (
                 transaction.account_id,
                 transaction.date.isoformat(),
@@ -184,8 +183,8 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
                 transaction.amount,
                 transaction.purpose,
                 transaction.counterparty_id,
-                transaction.category_id
-            )
+                transaction.category_id,
+            ),
         )
         # TODO: add booking_date to query
         # bookingdate always has the year 2020 in the database
@@ -202,8 +201,10 @@ def get_transaction_id(transaction: Transaction | TransactionImportView,
     return None
 
 
-def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
-                           db_path: Path = config.Database.PATH) -> int | None:
+def get_transaction_id_gui(
+    transaction: Transaction | TransactionImportView,
+    db_path: Path = config.Database.PATH,
+) -> int | None:
     """Return the database ID of an existing transaction
     for the Import workflow.
 
@@ -232,7 +233,7 @@ def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
     try:
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logger.exception(f"Error connecting to database: {e}")
+        logger.exception("Error connecting to database:")
         raise Error(f"Error connecting to database: {e}")
 
     try:
@@ -261,7 +262,7 @@ def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
         #     )
         # )
         cursor.execute(
-            '''
+            """
             SELECT i8_TransactionID
             FROM tbl_Transaction
             WHERE i8_AccountID=?
@@ -270,7 +271,7 @@ def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
               AND real_Amount=?
               AND str_Purpose=?
               AND i8_CounterpartyID=?
-            ''',
+            """,
             (
                 transaction.account_id,
                 transaction.date.isoformat(),
@@ -278,7 +279,7 @@ def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
                 transaction.amount,
                 transaction.purpose,
                 transaction.counterparty_id,
-            )
+            ),
         )
         # TODO: add booking_date to query
         # bookingdate always has the year 2020 in the database
@@ -295,8 +296,10 @@ def get_transaction_id_gui(transaction: Transaction | TransactionImportView,
     return None
 
 
-def transaction_exists(transaction: Transaction | TransactionImportView,
-                       db_path: Path = config.Database.PATH) -> bool:
+def transaction_exists(
+    transaction: Transaction | TransactionImportView,
+    db_path: Path = config.Database.PATH,
+) -> bool:
     """Check if a transaction with the same details
     (except displayed_name and user_comments) exists
 
@@ -314,8 +317,10 @@ def transaction_exists(transaction: Transaction | TransactionImportView,
     return get_transaction_id(transaction, db_path) is not None
 
 
-def add_transaction(data: Transaction | TransactionImportView,
-                    db_path: Path = config.Database.PATH) -> None:
+def add_transaction(
+    data: Transaction | TransactionImportView,
+    db_path: Path = config.Database.PATH,
+) -> None:
     """
     Insert a transaction into the database after checking for duplicates.
 
@@ -348,7 +353,7 @@ def add_transaction(data: Transaction | TransactionImportView,
         conn = DatabaseConnection.get_connection(db_path)
         cursor = DatabaseConnection.get_cursor(db_path)
     except sqlite3.Error as e:
-        logger.exception(f"Error connecting to database: {e}")
+        logger.exception("Error connecting to database:")
         raise Error(f"Error connecting to database: {e}")
 
     if transaction_exists(data, db_path):
@@ -356,7 +361,7 @@ def add_transaction(data: Transaction | TransactionImportView,
 
     try:
         cursor.execute(
-            '''
+            """
             INSERT INTO tbl_Transaction (
                 i8_AccountID,
                 str_Date,
@@ -369,7 +374,7 @@ def add_transaction(data: Transaction | TransactionImportView,
                 str_UserComments,
                 str_DisplayedName
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            ''',
+            """,
             (
                 account_id,
                 date,
@@ -380,8 +385,8 @@ def add_transaction(data: Transaction | TransactionImportView,
                 counterparty_id,
                 category_id,
                 user_comments,
-                displayed_name
-            )
+                displayed_name,
+            ),
         )
         conn.commit()
     except sqlite3.Error as e:

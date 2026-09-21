@@ -4,11 +4,12 @@ import tkinter as tk
 from tkinter import ttk
 
 from core.logging.logging_tools import log_fn
-from features.account.account_repository import (get_account_data,
-                                                 get_total_account_balance)
+from features.account.account_repository import (
+    get_account_data,
+    get_total_account_balance,
+)
 from gui.app.basewindow import BaseWindow
 from shared.date_utils import get_month_literal
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +19,12 @@ class Homepage(BaseWindow):
         logger.debug("Initializing Homepage")
         # Init empty dictionary for account widgets
         self.account_widgets = {}
-        super().__init__(plugin_scope="homepage",
-                         title="Budget Planner - Homepage", geometry="800x600",
-                         fullscreen=fullscreen)
+        super().__init__(
+            plugin_scope="homepage",
+            title="Budget Planner - Homepage",
+            geometry="800x600",
+            fullscreen=fullscreen,
+        )
 
     def _create_account_widget_frame(self, row: int, column: int) -> tk.Frame:
         """
@@ -34,19 +38,19 @@ class Homepage(BaseWindow):
             tk.Frame: The created frame.
         """
         frame = tk.Frame(
-            self.main_frame,
-            padx=10, pady=10,
-            width=200, height=150
+            self.main_frame, padx=10, pady=10, width=200, height=150
         )
         frame.grid_propagate(False)
-        frame.grid(
-            row=row, column=column, sticky="nsew", padx=5, pady=5
-        )
+        frame.grid(row=row, column=column, sticky="nsew", padx=5, pady=5)
         return frame
 
-    def _make_account_widget_label(self, parent: tk.Widget, text: str = "",
-                                   font: tuple | None = None,
-                                   **kwargs) -> tk.Label:
+    def _make_account_widget_label(
+        self,
+        parent: tk.Widget,
+        text: str = "",
+        font: tuple | None = None,
+        **kwargs,
+    ) -> tk.Label:
         # TODO: check if default None is needed
         """
         Create a label for the account widget.
@@ -60,7 +64,7 @@ class Homepage(BaseWindow):
             tk.Label: The created label.
         """
         label = tk.Label(parent, text=text, font=font, **kwargs)  # type:ignore
-        label.pack(pady=kwargs.get('pady', 0))
+        label.pack(pady=kwargs.get("pady", 0))
         return label
 
     def _get_total_balance(self):
@@ -80,7 +84,7 @@ class Homepage(BaseWindow):
             self.heading_frame,
             text="Willkommen im Budget Planner",
             font=("Helvetica", 35),
-            padding=10
+            padding=10,
         )
         self.homepage_heading_label.grid(row=0, column=0, sticky="nsew")
         # Update the heading with the current month
@@ -97,7 +101,7 @@ class Homepage(BaseWindow):
             self.balance_frame,
             text="0.00 €",
             font=("Helvetica", 28, "bold"),
-            pady=10
+            pady=10,
         )
         self.balance_label.pack(expand=True)
         self._get_total_balance()
@@ -111,13 +115,16 @@ class Homepage(BaseWindow):
         logger.debug(f"Account data retrieved: {account_list}")
 
         for account in account_list:
-            logger.info(f"Creating widget for account '{account.name}' "
-                        f"at position {account.widget_position}")
+            logger.info(
+                f"Creating widget for account '{account.name}' "
+                f"at position {account.widget_position}"
+            )
             self.create_account_widget(
-                row=2, column=account.widget_position,
+                row=2,
+                column=account.widget_position,
                 account_name=account.name,
                 current_value=account.balance,
-                difference_value=account.difference
+                difference_value=account.difference,
             )
 
         total_columns = len(account_list) if len(account_list) > 0 else 1
@@ -141,9 +148,14 @@ class Homepage(BaseWindow):
         # List of recent transactions with amount, category and date
 
     @log_fn
-    def create_account_widget(self, row: int, column: int, account_name: str,
-                              current_value: float = 0.0,
-                              difference_value: float = 0.0) -> None:
+    def create_account_widget(
+        self,
+        row: int,
+        column: int,
+        account_name: str,
+        current_value: float = 0.0,
+        difference_value: float = 0.0,
+    ) -> None:
         """
         Create an account widget for the homepage.
 
@@ -156,38 +168,37 @@ class Homepage(BaseWindow):
         """
         frame = self._create_account_widget_frame(row, column)
         labels = {
-            'name': self._make_account_widget_label(
-                frame,
-                text=account_name,
-                font=("Helvetica", 14, "bold")
+            "name": self._make_account_widget_label(
+                frame, text=account_name, font=("Helvetica", 14, "bold")
             ),
-            'value': self._make_account_widget_label(
-                frame,
-                font=("Helvetica", 24, "bold"),
-                pady=5
+            "value": self._make_account_widget_label(
+                frame, font=("Helvetica", 24, "bold"), pady=5
             ),
-            'diff': self._make_account_widget_label(
-                frame,
-                font=("Helvetica", 16)
+            "diff": self._make_account_widget_label(
+                frame, font=("Helvetica", 16)
             ),
         }
         self.account_widgets[column] = {
-            'frame': frame,
-            'name_label': labels['name'],
-            'value_label': labels['value'],
-            'diff_label': labels['diff'],
+            "frame": frame,
+            "name_label": labels["name"],
+            "value_label": labels["value"],
+            "diff_label": labels["diff"],
         }
         self.update_account_values(column, current_value, difference_value)
 
     @log_fn
-    def update_account_values(self, widget_position: int, current_value: float,
-                              difference_value: float) -> None:
+    def update_account_values(
+        self,
+        widget_position: int,
+        current_value: float,
+        difference_value: float,
+    ) -> None:
         try:
             widget = self.account_widgets[widget_position]
-            frame = widget['frame']
-            value_label = widget['value_label']
-            diff_label = widget['diff_label']
-            name_label = widget['name_label']
+            frame = widget["frame"]
+            value_label = widget["value_label"]
+            diff_label = widget["diff_label"]
+            name_label = widget["name_label"]
 
             current_str = locale.format_string(
                 "%.2f €", current_value, grouping=True
@@ -208,12 +219,14 @@ class Homepage(BaseWindow):
             diff_label.config(bg=bg_color)
 
             value_label.config(text=current_str)
-            sign = '+' if difference_value >= 0 else '-'
+            sign = "+" if difference_value >= 0 else "-"
             diff_label.config(text=f"{sign}{diff_str}", fg=diff_fg)
             name_label.config(fg=current_fg)
-            logger.info(f"Updated widget {widget_position}: "
-                        f"value={current_value}, diff={difference_value}")
-        except Exception as e:
+            logger.info(
+                f"Updated widget {widget_position}: "
+                f"value={current_value}, diff={difference_value}"
+            )
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error updating widget {widget_position}: {e}")
 
     @log_fn
