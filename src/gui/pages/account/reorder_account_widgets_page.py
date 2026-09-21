@@ -3,11 +3,9 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 
-import features.account.account_repository as account_repository
-import features.account.account_service as account_service
+from features.account import account_repository, account_service
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-
 
 logger = logging.getLogger(__name__)
 
@@ -22,27 +20,30 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
             master (tk.Tk): The parent window.
         """
         self.account_widgets = {}
-        super().__init__(master, title="Reorder Account Widgets",
-                         geometry="620x300")
+        super().__init__(
+            master, title="Reorder Account Widgets", geometry="620x300"
+        )
 
     def init_ui(self) -> None:
         # Bind the Enter key to trigger saving the order
         self.bind("<Return>", lambda event: self.save_order())
 
         # Create a "Save Order" button at the top of the main frame
-        save_btn = ttk.Button(self.main_frame, text="Speichern",
-                              command=self.save_order)
+        save_btn = ttk.Button(
+            self.main_frame, text="Speichern", command=self.save_order
+        )
         save_btn.grid(row=1, column=0, sticky="nswe", padx=10, pady=10)
         account_list = account_repository.get_account_data()
 
         # ============= Konto-Widgets (Row 1) =============
         for account in account_list:
             self.create_account_widget(
-                row=0, column=account.widget_position,
+                row=0,
+                column=account.widget_position,
                 account_name=account.name,
                 current_value=account.balance,
                 difference_value=account.difference,
-                account_id=account.id
+                account_id=account.id,
             )
 
         total_columns = len(account_list)
@@ -51,9 +52,15 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
 
         self.add_reorder_buttons()
 
-    def create_account_widget(self, row: int, column: int, account_name: str,
-                              account_id: int, current_value: float = 0.0,
-                              difference_value: float = 0.0) -> None:
+    def create_account_widget(
+        self,
+        row: int,
+        column: int,
+        account_name: str,
+        account_id: int,
+        current_value: float = 0.0,
+        difference_value: float = 0.0,
+    ) -> None:
         """
         Creates a single account widget with fixed size
         and spacing to other widgets.
@@ -63,33 +70,47 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         )
         frame.grid_propagate(False)
         frame.grid(row=row, column=column, sticky="nsew", padx=5, pady=5)
-        name_label = tk.Label(frame, text=account_name,
-                              font=("Helvetica", 14, "bold"))
+        name_label = tk.Label(
+            frame, text=account_name, font=("Helvetica", 14, "bold")
+        )
         name_label.pack()
         value_label = tk.Label(frame, font=("Helvetica", 24, "bold"))
         value_label.pack(pady=5)
         diff_label = tk.Label(frame, font=("Helvetica", 16))
         diff_label.pack()
         self.account_widgets[column] = {
-            "frame": frame, "value_label": value_label,
-            "diff_label": diff_label, "name_label": name_label,
-            "account_id": account_id, "old_position": column
+            "frame": frame,
+            "value_label": value_label,
+            "diff_label": diff_label,
+            "name_label": name_label,
+            "account_id": account_id,
+            "old_position": column,
         }
-        self.update_account_values(widget_position=column,
-                                   current_value=current_value,
-                                   difference_value=difference_value)
+        self.update_account_values(
+            widget_position=column,
+            current_value=current_value,
+            difference_value=difference_value,
+        )
 
-    def update_account_values(self, widget_position: int, current_value: float,
-                              difference_value: float) -> None:
+    def update_account_values(
+        self,
+        widget_position: int,
+        current_value: float,
+        difference_value: float,
+    ) -> None:
         widget = self.account_widgets[widget_position]
         frame, value_label, diff_label, name_label = (
-            widget["frame"], widget["value_label"], widget["diff_label"],
+            widget["frame"],
+            widget["value_label"],
+            widget["diff_label"],
             widget["name_label"],
         )
-        current_str = locale.format_string("%.2f €", current_value,
-                                           grouping=True)
-        diff_str = locale.format_string("%.2f €", abs(difference_value),
-                                        grouping=True)
+        current_str = locale.format_string(
+            "%.2f €", current_value, grouping=True
+        )
+        diff_str = locale.format_string(
+            "%.2f €", abs(difference_value), grouping=True
+        )
         value_label.config(text=current_str)
         if current_value >= 0:
             bg, fg = "#ccffcc", "#006600"
@@ -111,20 +132,24 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
             frame = widget["frame"]
 
             # Skip adding buttons for the first and last widgets
-            if not position == 0:
+            if position != 0:
                 # Add left button
-                left_button = tk.Button(frame, text="←",
-                                        command=lambda pos=position:
-                                        self.move_widget(pos, -1))
+                left_button = tk.Button(
+                    frame,
+                    text="←",
+                    command=lambda pos=position: self.move_widget(pos, -1),
+                )
                 left_button.pack(side="left", padx=5)
 
             if position == total_widgets - 1:
                 continue
 
             # Add right button
-            right_button = tk.Button(frame, text="→",
-                                     command=lambda pos=position:
-                                     self.move_widget(pos, 1))
+            right_button = tk.Button(
+                frame,
+                text="→",
+                command=lambda pos=position: self.move_widget(pos, 1),
+            )
             right_button.pack(side="right", padx=5)
 
     def move_widget(self, position: int, delta: int) -> None:
@@ -168,15 +193,17 @@ class ReorderAccountWidgetsWindow(BaseToplevelWindow):
         Save the new order of the account widgets to the database.
         """
         for widget in self.account_widgets:
-            print(f"Widget Position: {widget} - AccountID: "
-                  f"{self.account_widgets[widget]['account_id']}"
-                  f" - Old Position: "
-                  f"{self.account_widgets[widget]['old_position']}")
+            print(
+                f"Widget Position: {widget} - AccountID: "
+                f"{self.account_widgets[widget]['account_id']}"
+                f" - Old Position: "
+                f"{self.account_widgets[widget]['old_position']}"
+            )
             try:
                 account_service.shift_widget_positions(
                     account_id=self.account_widgets[widget]["account_id"],
-                    old_pos=self.account_widgets[widget]['old_position'],
-                    new_pos=widget
+                    old_pos=self.account_widgets[widget]["old_position"],
+                    new_pos=widget,
                 )
             except account_service.NoChangesDetectedError as e:
                 print(f"Info: {e}")

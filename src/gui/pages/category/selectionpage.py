@@ -1,20 +1,26 @@
 import tkinter as tk
-import tkinter.ttk as ttk
-from typing import Optional
+from tkinter import ttk
+
+from features.category.category_repository import get_category_data
+from features.category.service import (
+    get_category_id_name_mapping,
+    get_category_name_id_mapping,
+    get_category_names,
+)
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-from features.category.category_repository import get_category_data
-from features.category.service import (get_category_names,
-                                       get_category_id_name_mapping,
-                                       get_category_name_id_mapping)
 
 
 class CategorySelectionPage(BaseToplevelWindow):
-    def __init__(self, master: BaseWindow, plugin_scope: str = "selection",
-                 title: str = "Kategorie auswählen ...",
-                 geometry: str = "600x160") -> None:
+    def __init__(
+        self,
+        master: BaseWindow,
+        plugin_scope: str = "selection",
+        title: str = "Kategorie auswählen ...",
+        geometry: str = "600x160",
+    ) -> None:
         self._get_category_data()
-        self.final_selected_category: Optional[int] = None
+        self.final_selected_category: int | None = None
         super().__init__(master, plugin_scope, title, geometry)
 
     def _get_category_data(self) -> None:
@@ -55,7 +61,8 @@ class CategorySelectionPage(BaseToplevelWindow):
         # AI: komplette Funktion
         search_text = self.category_name_dropdown.get().casefold()
         filtered_categories = [
-            category for category in self.category_name
+            category
+            for category in self.category_name
             if search_text in category.casefold()
         ]
         self.category_name_dropdown.configure(values=filtered_categories)
@@ -76,8 +83,7 @@ class CategorySelectionPage(BaseToplevelWindow):
         )
 
         self.category_name_dropdown = ttk.Combobox(
-            self.selection_fram, width=70,
-            values=self.category_name
+            self.selection_fram, width=70, values=self.category_name
         )
         self.category_name_dropdown.pack(padx=30, side="left")
         self.category_name_dropdown.bind(
@@ -95,14 +101,15 @@ class CategorySelectionPage(BaseToplevelWindow):
         self.footer_fram.grid(row=1, column=0, sticky="nsew")
 
         self.select_button = ttk.Button(
-            self.footer_fram, text="Auswählen", width=40,
-            command=self.select_category
+            self.footer_fram,
+            text="Auswählen",
+            width=40,
+            command=self.select_category,
         )
         self.select_button.pack(padx=0, side="left")
 
         self.cancel_button = ttk.Button(
-            self.footer_fram, text="Abbrechen",
-            command=self.destroy, width=40
+            self.footer_fram, text="Abbrechen", command=self.destroy, width=40
         )
         self.cancel_button.pack(padx=30, side="left")
         # endregion

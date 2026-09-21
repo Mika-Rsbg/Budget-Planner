@@ -1,20 +1,18 @@
 import logging
 import tkinter as tk
-from tkinter import ttk
-from typing import List, Union, cast
 from datetime import date
 from functools import partial
-from gui.app.basewindow import BaseWindow
-from gui.app.basetoplevelwindow import BaseToplevelWindow
-from features.account.account_repository import get_account_data
-from features.counterparty.counterparty_repository import get_counterparty_data
-from features.category.category_repository import get_category_data
-from features.transaction.transaction_repository import add_transaction
-from features.account.account_history_repository import (
-    add_account_history
-)
-from models.transaction.entity import Transaction
+from tkinter import ttk
+from typing import cast
 
+from features.account.account_history_repository import add_account_history
+from features.account.account_repository import get_account_data
+from features.category.category_repository import get_category_data
+from features.counterparty.counterparty_repository import get_counterparty_data
+from features.transaction.transaction_repository import add_transaction
+from gui.app.basetoplevelwindow import BaseToplevelWindow
+from gui.app.basewindow import BaseWindow
+from models.transaction.entity import Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +20,16 @@ logger = logging.getLogger(__name__)
 
 
 class TransactionPage(BaseToplevelWindow):
-    def __init__(self, parent: BaseWindow, plugin_scope: str,
-                 title="Transaction Page",
-                 geometry="500x600", bg_color="white"):
+    def __init__(
+        self,
+        parent: BaseWindow,
+        plugin_scope: str,
+        title="Transaction Page",
+        geometry="500x600",
+        bg_color="white",
+    ):
         self.parent = parent
-        self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
+        self.frames: list[tk.LabelFrame | tk.Frame] = []
         self.account_data = get_account_data()
         """List[Tuple[int, str, str, float]]"""
         self.counterparty_data = get_counterparty_data()
@@ -88,23 +91,21 @@ class TransactionPage(BaseToplevelWindow):
             counterparty_id=rti_counterparty_id,
             category_id=rti_category_id,
             user_comments=rti_user_comments,
-            displayed_name=rti_displayed_name
+            displayed_name=rti_displayed_name,
         )
 
         try:
-            add_transaction(
-                data=rti_data
-            )
+            add_transaction(data=rti_data)
             logger.info("Transaction saved successfully.")
             add_account_history(
                 account_id=rti_account_id,
                 balance=float(self.future_balance_entry.get()),
-                record_date=rti_date
+                record_date=rti_date,
             )
             logger.info("Account history add successfully.")
             self.destroy()  # Close the window after saving
             self.parent.reload()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error saving transaction: {e}")
 
     def init_ui(self) -> None:
@@ -113,8 +114,10 @@ class TransactionPage(BaseToplevelWindow):
         # === Frame ===
         # region
         self.account_infomation_frame = tk.LabelFrame(
-            self.main_frame, text="Account Informationen",
-            background=self.bg_color, foreground="black",
+            self.main_frame,
+            text="Account Informationen",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_infomation_frame.grid(
             row=0, column=0, padx=10, pady=10, sticky="nsew"
@@ -124,11 +127,13 @@ class TransactionPage(BaseToplevelWindow):
         # === Acount Name ===
         # region
         self.account_name_label = tk.Label(
-            self.account_infomation_frame, text="Account Name:",
-            background=self.bg_color, foreground="black"
+            self.account_infomation_frame,
+            text="Account Name:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_name_label.grid(row=0, column=0)  # , sticky="nsew")
-        account_names: List[str] = [
+        account_names: list[str] = [
             cast(str, account.name) for account in self.account_data
         ]
         self.account_name_var = tk.StringVar(value="Select Account")
@@ -136,7 +141,7 @@ class TransactionPage(BaseToplevelWindow):
             self.account_infomation_frame,
             textvariable=self.account_name_var,
             values=account_names,
-            state="readonly"
+            state="readonly",
         )
         self.account_name_dropdown.grid(row=0, column=1, sticky="ew")
 
@@ -155,32 +160,40 @@ class TransactionPage(BaseToplevelWindow):
                     break
 
         self.account_name_dropdown.bind(
-            '<<ComboboxSelected>>', on_account_selected
+            "<<ComboboxSelected>>", on_account_selected
         )
         # endregion
         # === Account Number ===
         # region
         self.account_number_label = tk.Label(
-            self.account_infomation_frame, text="Account Nummer:",
-            background=self.bg_color, foreground="black"
+            self.account_infomation_frame,
+            text="Account Nummer:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_number_label.grid(row=1, column=0)
         self.account_number_entry = tk.Entry(
-            self.account_infomation_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_infomation_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_number_entry.grid(row=1, column=1, sticky="ew")
         # endregion
         # === Account Balance ===
         # region
         self.account_balance_label = tk.Label(
-            self.account_infomation_frame, text="Account Balance:",
-            background=self.bg_color, foreground="black"
+            self.account_infomation_frame,
+            text="Account Balance:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_balance_label.grid(row=2, column=0)
         self.account_balance_entry = tk.Entry(
-            self.account_infomation_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_infomation_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.account_balance_entry.grid(row=2, column=1, sticky="ew")
         # endregion
@@ -196,8 +209,10 @@ class TransactionPage(BaseToplevelWindow):
         # === Frame ===
         # region
         self.transaction_information_frame = tk.LabelFrame(
-            self.main_frame, text="Transaktions Informationen",
-            background=self.bg_color, foreground="black"
+            self.main_frame,
+            text="Transaktions Informationen",
+            background=self.bg_color,
+            foreground="black",
         )
         self.transaction_information_frame.grid(
             row=1, column=0, padx=10, pady=10, sticky="nsew"
@@ -208,23 +223,25 @@ class TransactionPage(BaseToplevelWindow):
         # === Date ===
         # region
         self.date_label = tk.Label(
-            self.transaction_information_frame, text="Datum (YYYY-MM-DD):",
-            background=self.bg_color, foreground="black"
+            self.transaction_information_frame,
+            text="Datum (YYYY-MM-DD):",
+            background=self.bg_color,
+            foreground="black",
         )
         self.date_label.grid(row=0, column=0)
         self.date_entry = tk.Entry(
             self.transaction_information_frame,
             background=self.bg_color,
-            foreground="grey"
+            foreground="grey",
         )
         self.date_entry.insert(0, "YYYY-MM-DD")
         self.date_entry.bind(
             "<FocusIn>",
-            partial(self._clear_placeholder, placeholder="YYYY-MM-DD")
+            partial(self._clear_placeholder, placeholder="YYYY-MM-DD"),
         )
         self.date_entry.bind(
             "<FocusOut>",
-            partial(self._add_placeholder, placeholder="YYYY-MM-DD")
+            partial(self._add_placeholder, placeholder="YYYY-MM-DD"),
         )
         self.date_entry.grid(row=0, column=1, sticky="ew")
         # self.date_warning_label = tk.Label(
@@ -244,13 +261,12 @@ class TransactionPage(BaseToplevelWindow):
                     if account.name == account_name:
                         current_balance = account.balance
                         amount = float(self.amount_entry.get())
-                        future_balance = round(
-                            current_balance + amount, 2
-                        )
+                        future_balance = round(current_balance + amount, 2)
                         self.future_balance_entry.config(state="normal")
                         self.future_balance_entry.delete(0, tk.END)
                         self.future_balance_entry.insert(
-                            0, str(future_balance))
+                            0, str(future_balance)
+                        )
                         self.future_balance_entry.config(state="readonly")
                         break
             except ValueError:
@@ -260,13 +276,17 @@ class TransactionPage(BaseToplevelWindow):
                 self.future_balance_entry.config(state="readonly")
 
         self.amount_label = tk.Label(
-            self.transaction_information_frame, text="Betrag:",
-            background=self.bg_color, foreground="black"
+            self.transaction_information_frame,
+            text="Betrag:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.amount_label.grid(row=2, column=0)
         self.amount_entry = tk.Entry(
-            self.transaction_information_frame, background=self.bg_color,
-            foreground="black")
+            self.transaction_information_frame,
+            background=self.bg_color,
+            foreground="black",
+        )
         self.amount_entry.grid(row=2, column=1, sticky="ew")
         self.amount_entry.bind("<KeyRelease>", refresh_future_balance)
         # endregion
@@ -274,13 +294,17 @@ class TransactionPage(BaseToplevelWindow):
         #  === Future Balance === (read-only)
         # region
         self.future_balance_label = tk.Label(
-            self.transaction_information_frame, text="Zukünftiger Kontostand:",
-            background=self.bg_color, foreground="black"
+            self.transaction_information_frame,
+            text="Zukünftiger Kontostand:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.future_balance_label.grid(row=3, column=0)
         self.future_balance_entry = tk.Entry(
-            self.transaction_information_frame, state="readonly",
-            background="gray", foreground="black"
+            self.transaction_information_frame,
+            state="readonly",
+            background="gray",
+            foreground="black",
         )
         self.future_balance_entry.grid(row=3, column=1, sticky="ew")
         # endregion
@@ -288,13 +312,18 @@ class TransactionPage(BaseToplevelWindow):
         # === Purpose ===
         # region
         self.purpose_label = tk.Label(
-            self.transaction_information_frame, text="Beschreibung:",
-            background=self.bg_color, foreground="black", cursor="xterm"
+            self.transaction_information_frame,
+            text="Beschreibung:",
+            background=self.bg_color,
+            foreground="black",
+            cursor="xterm",
         )
         self.purpose_label.grid(row=4, column=0)
         self.purpose_entry = tk.Entry(
-            self.transaction_information_frame, background=self.bg_color,
-            foreground="black")
+            self.transaction_information_frame,
+            background=self.bg_color,
+            foreground="black",
+        )
         self.purpose_entry.grid(row=4, column=1, sticky="ew")
         # self.purpose_warning_label = tk.Label(
         #     self.transaction_information_frame, text="",
@@ -306,11 +335,13 @@ class TransactionPage(BaseToplevelWindow):
         # === Counterparty ===
         # region
         self.counterparty_label = tk.Label(
-            self.transaction_information_frame, text="Gegenpartei Name:",
-            background=self.bg_color, foreground="black"
+            self.transaction_information_frame,
+            text="Gegenpartei Name:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.counterparty_label.grid(row=6, column=0)
-        counterparty_names: List[str] = [
+        counterparty_names: list[str] = [
             cast(str, cp[1]) for cp in self.counterparty_data
         ]
         self.counterparty_var = tk.StringVar()
@@ -318,17 +349,18 @@ class TransactionPage(BaseToplevelWindow):
             self.transaction_information_frame,
             textvariable=self.counterparty_var,
             values=counterparty_names,
-            state="normal"
+            state="normal",
         )
         self.counterparty_combo.grid(row=6, column=1, sticky="ew")
 
         def filter_counterparties(event):
             entered = self.counterparty_var.get().lower()
             filtered = [v for v in counterparty_names if entered in v.lower()]
-            self.counterparty_combo['values'] = (filtered if filtered
-                                                 else counterparty_names)
+            self.counterparty_combo["values"] = (
+                filtered if filtered else counterparty_names
+            )
 
-        self.counterparty_combo.bind('<KeyRelease>', filter_counterparties)
+        self.counterparty_combo.bind("<KeyRelease>", filter_counterparties)
 
         def on_counterparty_selected(event):
             selected_name = self.counterparty_var.get()
@@ -341,20 +373,24 @@ class TransactionPage(BaseToplevelWindow):
                     break
 
         self.counterparty_combo.bind(
-            '<<ComboboxSelected>>', on_counterparty_selected
+            "<<ComboboxSelected>>", on_counterparty_selected
         )
         # endregion
 
         # === Counterparty Account Number (read-only) ===
         # region
         self.counterparty_account_label = tk.Label(
-            self.transaction_information_frame, text="Gegenpartei Konto:",
-            background=self.bg_color, foreground="black"
+            self.transaction_information_frame,
+            text="Gegenpartei Konto:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.counterparty_account_label.grid(row=7, column=0)
         self.counterparty_account_entry = tk.Entry(
-            self.transaction_information_frame, state="readonly",
-            background="gray", foreground="black"
+            self.transaction_information_frame,
+            state="readonly",
+            background="gray",
+            foreground="black",
         )
         self.counterparty_account_entry.grid(row=7, column=1, sticky="ew")
         # endregion
@@ -372,8 +408,10 @@ class TransactionPage(BaseToplevelWindow):
         # === Frame ===
         # region
         self.category_frame = tk.LabelFrame(
-            self.main_frame, text="Kategorie",
-            background=self.bg_color, foreground="black"
+            self.main_frame,
+            text="Kategorie",
+            background=self.bg_color,
+            foreground="black",
         )
         self.category_frame.grid(
             row=2, column=0, padx=10, pady=10, sticky="nsew"
@@ -383,11 +421,13 @@ class TransactionPage(BaseToplevelWindow):
         # === Category Name ===
         # region
         self.category_label = tk.Label(
-            self.category_frame, text="Kategorie:",
-            background=self.bg_color, foreground="black"
+            self.category_frame,
+            text="Kategorie:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.category_label.grid(row=0, column=0)
-        category_names: List[str] = [
+        category_names: list[str] = [
             cast(str, category.name) for category in self.category_data
         ]
         self.category_name_var = tk.StringVar(value="Select Category")
@@ -395,7 +435,7 @@ class TransactionPage(BaseToplevelWindow):
             self.category_frame,
             textvariable=self.category_name_var,
             values=category_names,
-            state="readonly"
+            state="readonly",
         )
         self.category_name_dropdown.grid(row=0, column=1, sticky="ew")
 
@@ -410,20 +450,24 @@ class TransactionPage(BaseToplevelWindow):
                     break
 
         self.category_name_dropdown.bind(
-            '<<ComboboxSelected>>', on_category_selected
+            "<<ComboboxSelected>>", on_category_selected
         )
         # endregion
 
         # === Category Budget ===
         # region
         self.category_budget_label = tk.Label(
-            self.category_frame, text="Budget:",
-            background=self.bg_color, foreground="black"
+            self.category_frame,
+            text="Budget:",
+            background=self.bg_color,
+            foreground="black",
         )
         self.category_budget_label.grid(row=1, column=0)
         self.category_budget_entry = tk.Entry(
-            self.category_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.category_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.category_budget_entry.grid(row=1, column=1, sticky="ew")
         # endregion
@@ -443,8 +487,7 @@ class TransactionPage(BaseToplevelWindow):
         self.cancel_button = ttk.Button(
             self.main_frame, text="Abbrechen", command=self.destroy
         )
-        self.cancel_button.grid(row=3, column=0, padx=10, pady=10,
-                                sticky="ew")
+        self.cancel_button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         # endregion
 
         # === Save Button ===
@@ -452,8 +495,7 @@ class TransactionPage(BaseToplevelWindow):
         self.save_button = ttk.Button(
             self.main_frame, text="Speichern", command=self.save_transaction
         )
-        self.save_button.grid(row=4, column=0, padx=10, pady=10,
-                              sticky="ew")
+        self.save_button.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
         # endregion
 
         # endregion
@@ -463,7 +505,10 @@ class TransactionPage(BaseToplevelWindow):
         self.main_frame.grid_columnconfigure(0, weight=1)
 
         # Then distribute the columns evenly in each frame
-        for frame in [self.account_infomation_frame,
-                      self.transaction_information_frame, self.category_frame]:
+        for frame in [
+            self.account_infomation_frame,
+            self.transaction_information_frame,
+            self.category_frame,
+        ]:
             frame.grid_columnconfigure(0, weight=1, uniform="col")
             frame.grid_columnconfigure(1, weight=2, uniform="col")

@@ -1,10 +1,9 @@
-from tkinter import ttk
 import logging
-from typing import Optional
-from gui.app.basewindow import BaseWindow
+from tkinter import ttk
+
 from core.logging.logging_tools import log_fn
 from gui.app.basetoplevelwindow import BaseToplevelWindow
-
+from gui.app.basewindow import BaseWindow
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +20,19 @@ class NameInputDialog(BaseToplevelWindow):
         logger.debug("Initializing NameInputDialog")
         self.number = number
         self.name = None
-        super().__init__(master, title="Name eingeben", geometry="250x200",
-                         plugin_scope="")
+        super().__init__(
+            master, title="Name eingeben", geometry="250x200", plugin_scope=""
+        )
 
     def init_ui(self) -> None:
         if self.number is not None:
-            self.number_label = ttk.Label(self.main_frame,
-                                          text=f"Nummer: {self.number}")
+            self.number_label = ttk.Label(
+                self.main_frame, text=f"Nummer: {self.number}"
+            )
         else:
-            self.number_label = ttk.Label(self.main_frame,
-                                          text="Konto Nummer (IBAN):")
+            self.number_label = ttk.Label(
+                self.main_frame, text="Konto Nummer (IBAN):"
+            )
         self.number_label.pack(pady=(10, 0))
 
         self.label = ttk.Label(self.main_frame, text="Name:")
@@ -40,8 +42,9 @@ class NameInputDialog(BaseToplevelWindow):
         self.entry.pack(pady=5)
         self.entry.focus()
 
-        self.button = ttk.Button(self.main_frame, text="OK",
-                                 command=self.on_ok)
+        self.button = ttk.Button(
+            self.main_frame, text="OK", command=self.on_ok
+        )
         self.button.pack(pady=10)
 
         self.protocol("WM_DELETE_WINDOW", self.on_cancel)
@@ -51,18 +54,21 @@ class NameInputDialog(BaseToplevelWindow):
         self.entry.focus_set()
 
     @log_fn
-    def validate_name_input(self) -> Optional[str]:
+    def validate_name_input(self) -> str | None:
         """
         Validates the name input from the entry widget.
         """
         name = self.entry.get().strip()
         if not name:
-            self.label.config(text="Bitte einen Namen eingeben!",
-                              foreground="red")
+            self.label.config(
+                text="Bitte einen Namen eingeben!", foreground="red"
+            )
             return None
         self.label.config(text="Name:", foreground="black")
-        logger.info("Name input successfully validated. "
-                    f"The name of the new account: {name}")
+        logger.info(
+            "Name input successfully validated. "
+            f"The name of the new account: {name}"
+        )
         return name
 
     @log_fn

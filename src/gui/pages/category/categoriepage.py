@@ -1,21 +1,21 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import List, Union
+
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 
 
 class CategoryPage(BaseToplevelWindow):
     def __init__(
-            self,
-            parent: BaseWindow,
-            plugin_scope: str,
-            title: str = "Category Page",
-            geometry: str = "500x600",
-            bg_color: str = "white",
+        self,
+        parent: BaseWindow,
+        plugin_scope: str,
+        title: str = "Category Page",
+        geometry: str = "500x600",
+        bg_color: str = "white",
     ) -> None:
         self.parent = parent
-        self.frames: List[Union[tk.LabelFrame, tk.Frame]] = []
+        self.frames: list[tk.LabelFrame | tk.Frame] = []
         super().__init__(parent, plugin_scope, title, geometry, bg_color)
 
     def _clear_placeholder(self, event, placeholder: str):
@@ -46,8 +46,10 @@ class CategoryPage(BaseToplevelWindow):
         # === Frame ===
         # region
         self.categorie_infomation_frame = tk.LabelFrame(
-            self.main_frame, text="Kategorie Informationen",
-            background=self.bg_color, foreground="black",
+            self.main_frame,
+            text="Kategorie Informationen",
+            background=self.bg_color,
+            foreground="black",
         )
         self.categorie_infomation_frame.grid(
             row=0, column=0, padx=10, pady=10, sticky="nsew"
@@ -58,13 +60,18 @@ class CategoryPage(BaseToplevelWindow):
         # === Categorie Name ===
         # region
         self.category_name_label = tk.Label(
-            self.categorie_infomation_frame, text="Kategorie Name:",
-            background=self.bg_color, foreground="black", cursor="xterm"
+            self.categorie_infomation_frame,
+            text="Kategorie Name:",
+            background=self.bg_color,
+            foreground="black",
+            cursor="xterm",
         )
         self.category_name_label.grid(row=4, column=0)
         self.category_name_entry = tk.Entry(
-            self.categorie_infomation_frame, background=self.bg_color,
-            foreground="black")
+            self.categorie_infomation_frame,
+            background=self.bg_color,
+            foreground="black",
+        )
         self.category_name_entry.grid(row=4, column=1, sticky="ew")
         # Placeholder handling for the category name entry
         self._category_name_placeholder = "Name eingeben"
@@ -73,12 +80,16 @@ class CategoryPage(BaseToplevelWindow):
         self.category_name_entry.config(foreground="grey")
         # Bind focus events to clear/add placeholder
         self.category_name_entry.bind(
-            "<FocusIn>", lambda e,
-            p=self._category_name_placeholder: self._clear_placeholder(e, p)
+            "<FocusIn>",
+            lambda e, p=self._category_name_placeholder: (
+                self._clear_placeholder(e, p)
+            ),
         )
         self.category_name_entry.bind(
-            "<FocusOut>", lambda e,
-            p=self._category_name_placeholder: self._add_placeholder(e, p)
+            "<FocusOut>",
+            lambda e, p=self._category_name_placeholder: self._add_placeholder(
+                e, p
+            ),
         )
         # endregion
 
@@ -89,8 +100,7 @@ class CategoryPage(BaseToplevelWindow):
         self.cancel_button = ttk.Button(
             self.main_frame, text="Abbrechen", command=self.destroy
         )
-        self.cancel_button.grid(row=3, column=0, padx=10, pady=10,
-                                sticky="ew")
+        self.cancel_button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         # endregion
 
         # === Save Button ===
@@ -98,8 +108,7 @@ class CategoryPage(BaseToplevelWindow):
         self.save_button = ttk.Button(
             self.main_frame, text="Speichern", command=self.save_categorie
         )
-        self.save_button.grid(row=4, column=0, padx=10, pady=10,
-                              sticky="ew")
+        self.save_button.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
         # endregion
 
         # Equalize column widths in all frames

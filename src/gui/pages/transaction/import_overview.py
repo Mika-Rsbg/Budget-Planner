@@ -1,48 +1,62 @@
 import logging
-import tksheet
-from tkinter import ttk
 import tkinter as tk
-from typing import List, Tuple, Union, Dict
+from tkinter import ttk
+
+import tksheet
+
+from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
+from features.importer.formater.table_formater import format_data
+from features.importer.mt940.importer import (
+    import_mt940_file,
+    insert_transactions_to_db,
+)
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 from gui.pages.category.selectionpage import CategorySelectionPage
-from features.importer.mt940.importer import (import_mt940_file,
-                                              insert_transactions_to_db)
-from features.importer.formater.table_formater import format_data
-from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from models.account.entity import Account
 from models.transaction.import_view import TransactionImportView
-
 
 logger = logging.getLogger(__name__)
 
 
 class ImportOverview(BaseToplevelWindow):
-    def __init__(self, parent: BaseWindow,
-                 title="Transactions Importer Page",
-                 geometry="500x600", bg_color="white") -> None:
+    def __init__(
+        self,
+        parent: BaseWindow,
+        title="Transactions Importer Page",
+        geometry="500x600",
+        bg_color="white",
+    ) -> None:
         self.parent = parent
 
-        (path, header, data, account_data,
-         new_balance, transactions, history_data,
-         latest, valid_file) = import_mt940_file(self.parent)
+        (
+            path,
+            header,
+            data,
+            account_data,
+            new_balance,
+            transactions,
+            history_data,
+            latest,
+            valid_file,
+        ) = import_mt940_file(self.parent)
 
         self.file_path: str = path
-        self.sheet_header: List[str] = header
-        self.sheet_data: List[List[Union[str, Tuple[str], int, float]]] = data
+        self.sheet_header: list[str] = header
+        self.sheet_data: list[list[str | tuple[str] | int | float]] = data
         self.account_data: Account = account_data
         self.new_balance: str = new_balance
-        self.transactions_by_import_id: Dict[int, TransactionImportView] = {
-            transaction.import_id: transaction
-            for transaction in transactions
+        self.transactions_by_import_id: dict[int, TransactionImportView] = {
+            transaction.import_id: transaction for transaction in transactions
         }
         self.history_data = history_data
         self.latest = latest
         self.valid_file_selected = valid_file
         plugin_scope = "import-overview"
         self._calculate_selection_data()
-        super().__init__(parent, plugin_scope, title, geometry, bg_color,
-                         fullscreen=True)
+        super().__init__(
+            parent, plugin_scope, title, geometry, bg_color, fullscreen=True
+        )
 
     def _calculate_selection_data(self) -> None:
         """Calculate row indices for the different transaction selections.
@@ -64,7 +78,7 @@ class ImportOverview(BaseToplevelWindow):
         """
         # Indices of transaction rows that are not yet in the database.
         # These rows are initially selected.
-        self.rows_not_in_database: List[int] = [
+        self.rows_not_in_database: list[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -73,7 +87,7 @@ class ImportOverview(BaseToplevelWindow):
         ]
 
         # Indices of transaction rows that are already in the database.
-        self.rows_in_database: List[int] = [
+        self.rows_in_database: list[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -83,7 +97,7 @@ class ImportOverview(BaseToplevelWindow):
 
         # Indices of transaction rows that are not in the database
         # and have no category assigned.
-        self.rows_not_in_database_not_categorized: List[int] = [
+        self.rows_not_in_database_not_categorized: list[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -92,7 +106,7 @@ class ImportOverview(BaseToplevelWindow):
         ]
 
         # Indices of transaction rows that have no category assigned.
-        self.rows_categorized: List[int] = [
+        self.rows_categorized: list[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -101,7 +115,7 @@ class ImportOverview(BaseToplevelWindow):
         ]
 
         # Indices of transaction rows that have a category assigned.
-        self.rows_not_categorized: List[int] = [
+        self.rows_not_categorized: list[int] = [
             index
             for index, transaction in enumerate(
                 self.transactions_by_import_id.values()
@@ -130,7 +144,7 @@ class ImportOverview(BaseToplevelWindow):
         self.number_selected_readonly_entry.insert(0, display_value)
         self.number_selected_readonly_entry.config(state="readonly")
 
-    def _select_rows(self, rows: List[int]) -> None:
+    def _select_rows(self, rows: list[int]) -> None:
         self.sheet.deselect("all")
         for row in rows:
             self.sheet.add_row_selection(row)
@@ -143,9 +157,7 @@ class ImportOverview(BaseToplevelWindow):
         elif mode == "Bereits importiert":
             self._select_rows(self.rows_in_database)
         elif mode == "Nicht importiert, nicht zugeordnet":
-            self._select_rows(
-                self.rows_not_in_database_not_categorized
-            )
+            self._select_rows(self.rows_not_in_database_not_categorized)
         elif mode == "Nicht zugeordnet":
             self._select_rows(self.rows_not_categorized)
         elif mode == "Bereits zugeordnet":
@@ -163,8 +175,10 @@ class ImportOverview(BaseToplevelWindow):
         self.file_info_frame = ttk.Frame(self.main_frame, padding=10)
         self.file_info_frame.grid(row=0, column=0, sticky="nsew")
         self.path_readonly_entry = ttk.Entry(
-            self.file_info_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.file_info_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.path_readonly_entry.config(state="normal")
         self.path_readonly_entry.delete(0, tk.END)
@@ -173,16 +187,14 @@ class ImportOverview(BaseToplevelWindow):
         self.path_readonly_entry.grid(row=0, column=0, sticky="ew")
         self.file_info_frame.grid_columnconfigure(0, minsize=550)
         self.open_file_button = ttk.Button(
-            self.file_info_frame, text="Öffne andere Datei",
-            command=self.open_file
+            self.file_info_frame,
+            text="Öffne andere Datei",
+            command=self.open_file,
         )
         self.open_file_button.grid(row=0, column=1, padx=10)
 
         # ============= Separator =============
-        self.separator = ttk.Separator(
-            self.main_frame,
-            orient="horizontal"
-        )
+        self.separator = ttk.Separator(self.main_frame, orient="horizontal")
         self.separator.grid(row=1, column=0, sticky="ew", padx=10)
         # endregion
 
@@ -192,7 +204,7 @@ class ImportOverview(BaseToplevelWindow):
         account_number = self.account_data.number
         last_database_entry = self.account_data.record_date.strftime(
             "%d.%m.%Y"
-            )
+        )
 
         account_balance = self.account_data.balance
 
@@ -201,13 +213,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Old Balance ======
         self.account_balance_label = ttk.Label(
-            self.account_info_frame, text="Alter Kontostand:",
-            background=self.bg_color, foreground="black", compound="right"
+            self.account_info_frame,
+            text="Alter Kontostand:",
+            background=self.bg_color,
+            foreground="black",
+            compound="right",
         )
         self.account_balance_label.grid(row=0, column=0, sticky="ew", pady=10)
         self.acc_old_balance_readonly_entry = ttk.Entry(
-            self.account_info_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_info_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.acc_old_balance_readonly_entry.config(state="normal")
         self.acc_old_balance_readonly_entry.delete(0, tk.END)
@@ -219,13 +236,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Account Name ======
         self.account_name_label = ttk.Label(
-            self.account_info_frame, text="Konto Name:",
-            background=self.bg_color, foreground="black", compound="right"
+            self.account_info_frame,
+            text="Konto Name:",
+            background=self.bg_color,
+            foreground="black",
+            compound="right",
         )
         self.account_name_label.grid(row=0, column=2, sticky="ew")
         self.acc_name_readonly_entry = ttk.Entry(
-            self.account_info_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_info_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.acc_name_readonly_entry.config(state="normal")
         self.acc_name_readonly_entry.delete(0, tk.END)
@@ -237,13 +259,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Account Number ======
         self.account_number_label = ttk.Label(
-            self.account_info_frame, text="Konto Nummer:",
-            background=self.bg_color, foreground="black", compound="right"
+            self.account_info_frame,
+            text="Konto Nummer:",
+            background=self.bg_color,
+            foreground="black",
+            compound="right",
         )
         self.account_number_label.grid(row=0, column=4, sticky="ew")
         self.acc_number_readonly_entry = ttk.Entry(
-            self.account_info_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_info_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.acc_number_readonly_entry.config(state="normal")
         self.acc_number_readonly_entry.delete(0, tk.END)
@@ -255,13 +282,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Last Database Entry ======
         self.last_db_entry_date_label = ttk.Label(
-            self.account_info_frame, text="Letzter Eintrag vom:",
-            background=self.bg_color, foreground="black", compound="right"
+            self.account_info_frame,
+            text="Letzter Eintrag vom:",
+            background=self.bg_color,
+            foreground="black",
+            compound="right",
         )
         self.last_db_entry_date_label.grid(row=0, column=6, sticky="ew")
         self.last_db_entry_readonly_entry = ttk.Entry(
-            self.account_info_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.account_info_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.last_db_entry_readonly_entry.config(state="normal")
         self.last_db_entry_readonly_entry.delete(0, tk.END)
@@ -272,10 +304,7 @@ class ImportOverview(BaseToplevelWindow):
         )
 
         # ============= Separator =============
-        self.separator = ttk.Separator(
-            self.main_frame,
-            orient="horizontal"
-        )
+        self.separator = ttk.Separator(self.main_frame, orient="horizontal")
         self.separator.grid(row=3, column=0, sticky="ew", padx=10)
         # endregion
 
@@ -299,16 +328,12 @@ class ImportOverview(BaseToplevelWindow):
 
         self.sheet.enable_bindings()
         self.sheet.bind(
-            "<<SheetSelect>>",
-            lambda event=None: self._update_selected_count()
+            "<<SheetSelect>>", lambda event=None: self._update_selected_count()
         )
         self.sheet.pack(fill="both", expand=True)
 
         # ============= Separator =============
-        self.separator = ttk.Separator(
-            self.main_frame,
-            orient="horizontal"
-        )
+        self.separator = ttk.Separator(self.main_frame, orient="horizontal")
         self.separator.grid(row=5, column=0, sticky="ew", padx=10)
         # endregion
 
@@ -319,13 +344,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== New Balance ======
         self.new_account_balance_label = ttk.Label(
-            self.selection_frame, text="Neuer Kontostand:",
-            background=self.bg_color, foreground="black", compound="right"
+            self.selection_frame,
+            text="Neuer Kontostand:",
+            background=self.bg_color,
+            foreground="black",
+            compound="right",
         )
         self.new_account_balance_label.grid(row=0, column=0, sticky="ew")
         self.acc_new_balance_readonly_entry = ttk.Entry(
-            self.selection_frame, state="readonly",
-            background=self.bg_color, foreground="black"
+            self.selection_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
         )
         self.acc_new_balance_readonly_entry.config(state="normal")
         self.acc_new_balance_readonly_entry.delete(0, tk.END)
@@ -337,17 +367,18 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Selection Mode ======
         self.selection_mode_dropdown = ttk.Combobox(
-            self.selection_frame, state="readonly",
+            self.selection_frame,
+            state="readonly",
             values=[
-                "Bereits importiert", "Nicht importiert",
+                "Bereits importiert",
+                "Nicht importiert",
                 "Nicht importiert, nicht zugeordnet",
-                "Nicht zugeordnet", "Bereits zugeordnet"
-                ]
+                "Nicht zugeordnet",
+                "Bereits zugeordnet",
+            ],
         )
         self.selection_mode_dropdown.current(1)
-        self.selection_mode_dropdown.grid(
-            row=0, column=2, sticky="ew"
-        )
+        self.selection_mode_dropdown.grid(row=0, column=2, sticky="ew")
         self.selection_mode_dropdown.bind(
             "<<ComboboxSelected>>", lambda _event: self._refresh_selection()
         )
@@ -355,8 +386,11 @@ class ImportOverview(BaseToplevelWindow):
         self.selection_frame.grid_columnconfigure(2, minsize=250)
 
         self.number_selected_readonly_entry = ttk.Entry(
-            self.selection_frame, state="readonly",
-            background=self.bg_color, foreground="black", width=10
+            self.selection_frame,
+            state="readonly",
+            background=self.bg_color,
+            foreground="black",
+            width=10,
         )
         self.number_selected_readonly_entry.config(justify="center")
         self.number_selected_readonly_entry.grid(
@@ -366,16 +400,14 @@ class ImportOverview(BaseToplevelWindow):
         self._select_rows(self.rows_not_in_database)
 
         self.refresh_selection_button = ttk.Button(
-            self.selection_frame, text="Aktualisieren",
-            command=self._refresh_selection
+            self.selection_frame,
+            text="Aktualisieren",
+            command=self._refresh_selection,
         )
         self.refresh_selection_button.grid(row=0, column=4)
 
         # ============= Separator =============
-        self.separator = ttk.Separator(
-            self.main_frame,
-            orient="horizontal"
-        )
+        self.separator = ttk.Separator(self.main_frame, orient="horizontal")
         self.separator.grid(row=7, column=0, sticky="ew", padx=10)
         # endregion
 
@@ -386,29 +418,33 @@ class ImportOverview(BaseToplevelWindow):
 
         # ====== Manage Categorization ======
         self.manage_categorization_button = ttk.Button(
-            self.categoration_frame, text="Zuordnungen verwalten",
+            self.categoration_frame,
+            text="Zuordnungen verwalten",
             # command=self.open_file
         )
         self.manage_categorization_button.grid(row=0, column=0, padx=10)
 
         # ====== Add Categorization ======
         self.add_categorization_button = ttk.Button(
-            self.categoration_frame, text="Zuordnungen anlegen",
+            self.categoration_frame,
+            text="Zuordnungen anlegen",
             # command=self.add_category_manual
         )
         self.add_categorization_button.grid(row=0, column=1, padx=10)
 
         # ====== Manual Categorization ======
         self.manual_categorization_button = ttk.Button(
-            self.categoration_frame, text="Manuell Zuordnen",
-            command=self.assign_category_to_selected
+            self.categoration_frame,
+            text="Manuell Zuordnen",
+            command=self.assign_category_to_selected,
         )
         self.manual_categorization_button.grid(row=0, column=2, padx=10)
 
         # ====== Toggle Categorization ======
         self.toggle_categorization_button = ttk.Checkbutton(
-            self.categoration_frame, text="Automatische Zuordnung",
-            variable=tk.BooleanVar(value=True)
+            self.categoration_frame,
+            text="Automatische Zuordnung",
+            variable=tk.BooleanVar(value=True),
         )
         self.toggle_categorization_button.grid(row=0, column=3, padx=10)
         # endregion
@@ -419,14 +455,15 @@ class ImportOverview(BaseToplevelWindow):
         self.footer_fram.grid(row=9, column=0, sticky="nsew")
 
         self.import_button = ttk.Button(
-            self.footer_fram, text="Importieren", width=30,
-            command=self.import_transactions
+            self.footer_fram,
+            text="Importieren",
+            width=30,
+            command=self.import_transactions,
         )
         self.import_button.grid(row=0, column=0, padx=10)
 
         self.cancel_button = ttk.Button(
-            self.footer_fram, text="Abbrechen",
-            command=self.destroy, width=30
+            self.footer_fram, text="Abbrechen", command=self.destroy, width=30
         )
         self.cancel_button.grid(row=0, column=1, padx=10)
         # endregion
@@ -436,17 +473,24 @@ class ImportOverview(BaseToplevelWindow):
         self.main_frame.grid_rowconfigure(4, weight=1)
 
     def open_file(self):
-        (path, header, data, account_data,
-         new_balance, transactions, history_data,
-         latest, valid_file) = import_mt940_file(self.parent)
+        (
+            path,
+            header,
+            data,
+            account_data,
+            new_balance,
+            transactions,
+            history_data,
+            latest,
+            valid_file,
+        ) = import_mt940_file(self.parent)
         self.file_path = path
         self.sheet_header = header
         self.sheet_data = data
         self.account_data = account_data
         self.new_balance = new_balance
         self.transactions_by_import_id = {
-            transaction.import_id: transaction
-            for transaction in transactions
+            transaction.import_id: transaction for transaction in transactions
         }
         self.history_data = history_data
         self.latest = latest
@@ -469,7 +513,7 @@ class ImportOverview(BaseToplevelWindow):
                 self.destroy()
                 return
 
-            selected_transactions: List[TransactionImportView] = [
+            selected_transactions: list[TransactionImportView] = [
                 self.transactions_by_import_id[row[0]]
                 for row in data_selected_rows
                 if row and row[0] in self.transactions_by_import_id
@@ -532,9 +576,9 @@ class ImportOverview(BaseToplevelWindow):
             for row in data_selected_rows:
                 import_id = row[0]
                 try:
-                    self.transactions_by_import_id[import_id].category_id = (
-                        selected_category_id
-                    )
+                    self.transactions_by_import_id[
+                        import_id
+                    ].category_id = selected_category_id
                 except KeyError:
                     logger.exception(
                         "Transaction with import ID %s not found.", import_id
@@ -553,8 +597,8 @@ class ImportOverview(BaseToplevelWindow):
             self.reload()
 
             logger.debug(
-                "Category ID %s successfully" +
-                "assigned to selected transactions.",
+                "Category ID %s successfully"
+                + "assigned to selected transactions.",
                 selected_category_id,
             )
         else:
