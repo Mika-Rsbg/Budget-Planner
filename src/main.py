@@ -1,8 +1,8 @@
 import logging
+
+import config
 from core.logging.logger_config import setup_logging
 from core.logging.logging_tools import log_fn
-import config
-
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ def main() -> None:
     Main function to run the application.
     It creates the database and runs the homepage application.
     """
-    from gui.pages.home.homepage import Homepage
     from core.database.schema import create_database
+    from gui.pages.home.homepage import Homepage
 
     logger.info("")
     logger.info("################### APPLICATION STARTED ###################")
@@ -36,9 +36,9 @@ def main_test() -> None:
     It creates the database and runs the homepage application in test mode.
     Logs in a test log file.
     """
+    from core.database.schema import create_database
     from gui.app.basewindow import BaseWindow
     from gui.pages.transaction.import_overview import ImportOverview
-    from core.database.schema import create_database
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -64,9 +64,10 @@ def main_fn_test() -> None:
     Logs in a test log file.
     """
     from datetime import date
+
     from core.database.schema import create_database
     from features.account.account_history_repository import (
-        get_total_cash_history
+        get_total_cash_history,
     )
 
     logger.info("")
