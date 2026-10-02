@@ -206,6 +206,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                     str_Name TEXT,
                     i8_Priority INTEGER NOT NULL,
                     i8_Enabled INTEGER NOT NULL,
+                    str_Rule TEXT UNIQUE,
                     FOREIGN KEY (i8_CategoryID)
                         REFERENCES tbl_Category(i8_CategoryID)
                         ON DELETE CASCADE
@@ -216,58 +217,6 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
             logger.debug("Category rule table created successfully.")
         except sqlite3.Error as e:
             logger.error(f"Error creating category rule table: {e}")
-
-    def create_category_rule_node_table(cursor, conn) -> None:
-        """
-        Create the category rule node table in the database.
-        """
-        logger.debug("Creating category rule node table...")
-        try:
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS tbl_CategoryRuleNode (
-                    i8_NodeID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    i8_CategoryRuleID INTEGER NOT NULL,
-                    i8_ParentNodeID INTEGER,
-                    str_NodeType TEXT NOT NULL,
-                    i8_Position INTEGER NOT NULL,
-                    FOREIGN KEY (i8_CategoryRuleID)
-                        REFERENCES tbl_CategoryRule(i8_CategoryRuleID)
-                        ON DELETE CASCADE,
-                    FOREIGN KEY (i8_ParentNodeID)
-                        REFERENCES tbl_CategoryRuleNode(i8_ParentNodeID)
-                        ON DELETE CASCADE
-                );
-                """
-            )
-            conn.commit()
-            logger.debug("Category rule node table created successfully.")
-        except sqlite3.Error as e:
-            logger.error(f"Error creating category rule node table: {e}")
-
-    def create_category_rule_condition_table(cursor, conn) -> None:
-        """
-        Create the category rule condition table in the database.
-        """
-        logger.debug("Creating category rule condition table...")
-        try:
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS tbl_CategoryRuleCondition (
-                    i8_NodeID INTEGER NOT NULL,
-                    str_Field TEXT NOT NULL,
-                    str_Operator TEXT NOT NULL,
-                    str_Value TEXT NOT NULL,
-                    FOREIGN KEY (i8_NodeID)
-                        REFERENCES tbl_CategoryRuleNode(i8_NodeID)
-                        ON DELETE CASCADE
-                );
-                """
-            )
-            conn.commit()
-            logger.debug("Category rule condition table created successfully.")
-        except sqlite3.Error as e:
-            logger.error(f"Error creating category rule condition table: {e}")
 
     # endregion
 
@@ -400,38 +349,18 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         """)
         logger.debug("Indexes for category table created successfully.")
 
-    def create_indexes_for_category_rule_tables(cursor) -> None:
+    def create_indexes_for_category_rule_table(cursor) -> None:
         """
-        Create indexes for the category rule tables.
+        Create indexes for the category rule table.
         """
-        logger.debug("Creating indexes for category rule tables...")
+        logger.debug("Creating indexes for category rule table...")
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_category_rule_category
             ON tbl_CategoryRule(i8_CategoryID);
         """)
 
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_category_rule_node_rule
-            ON tbl_CategoryRuleNode(i8_CategoryRuleID);
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_category_rule_node_parent
-            ON tbl_CategoryRuleNode(i8_ParentNodeID);
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_category_rule_node_position
-            ON tbl_CategoryRuleNode(i8_ParentNodeID, i8_Position);
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_category_rule_condition_node
-            ON tbl_CategoryRuleCondition(i8_NodeID);
-        """)
-
-        logger.debug("Indexes for category rule tables created successfully.")
+        logger.debug("Indexes for category rule table created successfully.")
 
     def create_all_indexes(cursor, conn) -> None:
         """
@@ -442,7 +371,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_indexes_for_account_table(cursor)
         create_indexes_for_account_history_table(cursor)
         create_indexes_for_category_table(cursor)
-        create_indexes_for_category_rule_tables(cursor)
+        create_indexes_for_category_rule_table(cursor)
         conn.commit()
         logger.debug("All indexes created successfully.")
 
@@ -461,8 +390,6 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_transaction_typ_table(cursor, conn)
         create_transactions_table(cursor, conn)
         create_category_rule_table(cursor, conn)
-        create_category_rule_node_table(cursor, conn)
-        create_category_rule_condition_table(cursor, conn)
 
         logger.info("Tables created successfully.")
 
