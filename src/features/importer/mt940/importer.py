@@ -116,7 +116,6 @@ def import_mt940_file(
             parsed_data = pars_file(file_content)
         except InvalidMT940FileError:
             logger.exception("")
-        finally:
             parsed_data = None
 
         if parsed_data:
