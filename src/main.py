@@ -38,7 +38,7 @@ def main_test() -> None:
     """
     from core.database.schema import create_database
     from gui.app.basewindow import BaseWindow
-    from gui.pages.transaction.import_overview import ImportOverview
+    from gui.pages.category_rule.creationpage import CategoryRuleCreationPage
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -49,10 +49,10 @@ def main_test() -> None:
         geometry="500x600",
         bg_color="white",
         plugin_scope="test",
-        auto_ui_init=False
+        auto_ui_init=False,
     )
     app.withdraw()  # Hide the root window
-    tested_page = ImportOverview(app)
+    tested_page = CategoryRuleCreationPage(app)
     app.wait_window(tested_page)
     app.destroy()
 
@@ -80,7 +80,7 @@ def main_fn_test() -> None:
 
 
 if __name__ == "__main__":
-    TEST_MODE: bool = False
+    TEST_MODE: bool = True
     if TEST_MODE:
         config.Logging.set_to_test_mode()
     setup_logging()
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     logger.info("")
     logger.info("=============== BOOTSTRAP APPLICATION =====================")
     logger.info("")
-    main()
-    # main_test()
+    # main()
+    main_test()
     # main_fn_test()
     logger.info("")
     logger.info("=============== SHUTDOWN COMPLETE =========================")
