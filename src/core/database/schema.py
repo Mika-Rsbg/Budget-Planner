@@ -15,6 +15,8 @@ class Error(Exception):
 
 @log_fn
 def create_database(db_path: Path = config.Database.PATH) -> None:
+    # Table creation
+    # region
     def create_transactions_table(cursor, conn) -> None:
         """
         Create the transactions table in the database.
@@ -100,49 +102,6 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
             logger.error(f"Error creating budget period table: {e}")
         insert_initial_budget_periods(cursor, conn)
 
-    def insert_initial_budget_periods(cursor, conn) -> None:
-        """
-        Insert initial budget periods into the database.
-        """
-        logger.debug("Inserting initial budget periods...")
-        try:
-            cursor.executemany(
-                """
-                INSERT OR IGNORE INTO tbl_BudgetPeriod
-                (i8_BudgetPeriodID, str_Name)
-                VALUES (?, ?)
-                """,
-                [(1, "daily"), (2, "weekly"), (3, "monthly"), (4, "yearly")],
-            )
-            conn.commit()
-            logger.debug("Initial budget periods inserted successfully.")
-        except sqlite3.Error as e:
-            logger.error(f"Error inserting initial budget periods: {e}")
-
-    def insert_initial_categories(cursor, conn) -> None:
-        """
-        Insert initial categories into the database.
-        """
-        logger.debug("Inserting initial categories...")
-        try:
-            cursor.executemany(
-                """
-                INSERT OR IGNORE INTO tbl_Category
-                (i8_CategoryID, str_CategoryName,
-                real_Budget, i8_BudgetPeriodID)
-                VALUES (?, ?, ?, ?)
-                """,
-                [
-                    (0, "Nicht zugeordnet", 0.0, 4),
-                    (1, "Sonstiges", 0.0, 3),
-                    (2, "Spareinlagen", 100.0, 3),
-                ],
-            )
-            conn.commit()
-            logger.debug("Initial categories inserted successfully.")
-        except sqlite3.Error as e:
-            logger.error(f"Error inserting initial categories: {e}")
-
     def create_counterparty_table(cursor, conn) -> None:
         """
         Create the counterparty table in the database.
@@ -183,25 +142,6 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         except sqlite3.Error as e:
             logger.error(f"Error creating transaction type table: {e}")
         insert_initial_transaction_types(cursor, conn)
-
-    def insert_initial_transaction_types(cursor, conn) -> None:
-        """
-        Insert initial transaction types into the database.
-        """
-        logger.debug("Inserting initial transaction types...")
-        try:
-            cursor.executemany(
-                """
-                INSERT OR IGNORE INTO tbl_TransactionTyp
-                (str_TransactionTypName, str_TransactionTypNumber)
-                VALUES (?, ?)
-                """,
-                [("Manuelle Transaktion", "1000")],
-            )
-            conn.commit()
-            logger.debug("Initial transaction types inserted successfully.")
-        except sqlite3.Error as e:
-            logger.error(f"Error inserting initial transaction types: {e}")
 
     def create_account_table(cursor, conn) -> None:
         """
@@ -252,6 +192,153 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         except sqlite3.Error as e:
             logger.error(f"Error creating account history table: {e}")
 
+    def create_category_rule_table(cursor, conn) -> None:
+        """
+        Create the category rule table in the database.
+        """
+        logger.debug("Creating category rule table...")
+        try:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS tbl_CategoryRule (
+                    i8_CategoryRuleID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    i8_CategoryID INTEGER NOT NULL,
+                    str_Name TEXT,
+                    i8_Priority INTEGER NOT NULL,
+                    i8_Enabled INTEGER NOT NULL,
+                    FOREIGN KEY (i8_CategoryID)
+                        REFERENCES tbl_Category(i8_CategoryID)
+                        ON DELETE CASCADE
+                );
+                """
+            )
+            conn.commit()
+            logger.debug("Category rule table created successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error creating category rule table: {e}")
+
+    def create_category_rule_node_table(cursor, conn) -> None:
+        """
+        Create the category rule node table in the database.
+        """
+        logger.debug("Creating category rule node table...")
+        try:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS tbl_CategoryRuleNode (
+                    i8_NodeID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    i8_CategoryRuleID INTEGER NOT NULL,
+                    i8_ParentNodeID INTEGER,
+                    str_NodeType TEXT NOT NULL,
+                    i8_Position INTEGER NOT NULL,
+                    FOREIGN KEY (i8_CategoryRuleID)
+                        REFERENCES tbl_CategoryRule(i8_CategoryRuleID)
+                        ON DELETE CASCADE,
+                    FOREIGN KEY (i8_ParentNodeID)
+                        REFERENCES tbl_CategoryRuleNode(i8_ParentNodeID)
+                        ON DELETE CASCADE
+                );
+                """
+            )
+            conn.commit()
+            logger.debug("Category rule node table created successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error creating category rule node table: {e}")
+
+    def create_category_rule_condition_table(cursor, conn) -> None:
+        """
+        Create the category rule condition table in the database.
+        """
+        logger.debug("Creating category rule condition table...")
+        try:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS tbl_CategoryRuleCondition (
+                    i8_NodeID INTEGER NOT NULL,
+                    str_Field TEXT NOT NULL,
+                    str_Operator TEXT NOT NULL,
+                    str_Value TEXT NOT NULL,
+                    FOREIGN KEY (i8_NodeID)
+                        REFERENCES tbl_CategoryRuleNode(i8_NodeID)
+                        ON DELETE CASCADE
+                );
+                """
+            )
+            conn.commit()
+            logger.debug("Category rule condition table created successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error creating category rule condition table: {e}")
+
+    # endregion
+
+    # Initial data
+    # region
+    def insert_initial_budget_periods(cursor, conn) -> None:
+        """
+        Insert initial budget periods into the database.
+        """
+        logger.debug("Inserting initial budget periods...")
+        try:
+            cursor.executemany(
+                """
+                INSERT OR IGNORE INTO tbl_BudgetPeriod
+                (i8_BudgetPeriodID, str_Name)
+                VALUES (?, ?)
+                """,
+                [(1, "daily"), (2, "weekly"), (3, "monthly"), (4, "yearly")],
+            )
+            conn.commit()
+            logger.debug("Initial budget periods inserted successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error inserting initial budget periods: {e}")
+
+    def insert_initial_categories(cursor, conn) -> None:
+        """
+        Insert initial categories into the database.
+        """
+        logger.debug("Inserting initial categories...")
+        try:
+            cursor.executemany(
+                """
+                INSERT OR IGNORE INTO tbl_Category
+                (i8_CategoryID, str_CategoryName,
+                real_Budget, i8_BudgetPeriodID)
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (0, "Nicht zugeordnet", 0.0, 4),
+                    (1, "Sonstiges", 0.0, 3),
+                    (2, "Spareinlagen", 100.0, 3),
+                ],
+            )
+            conn.commit()
+            logger.debug("Initial categories inserted successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error inserting initial categories: {e}")
+
+    def insert_initial_transaction_types(cursor, conn) -> None:
+        """
+        Insert initial transaction types into the database.
+        """
+        logger.debug("Inserting initial transaction types...")
+        try:
+            cursor.executemany(
+                """
+                INSERT OR IGNORE INTO tbl_TransactionTyp
+                (str_TransactionTypName, str_TransactionTypNumber)
+                VALUES (?, ?)
+                """,
+                [("Manuelle Transaktion", "1000")],
+            )
+            conn.commit()
+            logger.debug("Initial transaction types inserted successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Error inserting initial transaction types: {e}")
+
+    # endregion
+
+    # Indexes
+    # region
     def create_indexes_for_transaction_table(cursor) -> None:
         """
         Create indexes for the transaction table.
@@ -313,6 +400,39 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         """)
         logger.debug("Indexes for category table created successfully.")
 
+    def create_indexes_for_category_rule_tables(cursor) -> None:
+        """
+        Create indexes for the category rule tables.
+        """
+        logger.debug("Creating indexes for category rule tables...")
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_category_rule_category
+            ON tbl_CategoryRule(i8_CategoryID);
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_category_rule_node_rule
+            ON tbl_CategoryRuleNode(i8_CategoryRuleID);
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_category_rule_node_parent
+            ON tbl_CategoryRuleNode(i8_ParentNodeID);
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_category_rule_node_position
+            ON tbl_CategoryRuleNode(i8_ParentNodeID, i8_Position);
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_category_rule_condition_node
+            ON tbl_CategoryRuleCondition(i8_NodeID);
+        """)
+
+        logger.debug("Indexes for category rule tables created successfully.")
+
     def create_all_indexes(cursor, conn) -> None:
         """
         Create all indexes in the database.
@@ -322,8 +442,11 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_indexes_for_account_table(cursor)
         create_indexes_for_account_history_table(cursor)
         create_indexes_for_category_table(cursor)
+        create_indexes_for_category_rule_tables(cursor)
         conn.commit()
         logger.debug("All indexes created successfully.")
+
+    # endregion
 
     try:
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -337,6 +460,9 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
         create_account_history_table(cursor, conn)
         create_transaction_typ_table(cursor, conn)
         create_transactions_table(cursor, conn)
+        create_category_rule_table(cursor, conn)
+        create_category_rule_node_table(cursor, conn)
+        create_category_rule_condition_table(cursor, conn)
 
         logger.info("Tables created successfully.")
 
