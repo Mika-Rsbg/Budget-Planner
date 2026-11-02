@@ -38,7 +38,7 @@ def main_test() -> None:
     """
     from core.database.schema import create_database
     from gui.app.basewindow import BaseWindow
-    from gui.pages.category_rule.creationpage import CategoryRuleCreationPage
+    from gui.pages.category_rule.rulepage import CategoryRulePage
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -52,7 +52,7 @@ def main_test() -> None:
         auto_ui_init=False,
     )
     app.withdraw()  # Hide the root window
-    tested_page = CategoryRuleCreationPage(app)
+    tested_page = CategoryRulePage(app)
     app.wait_window(tested_page)
     app.destroy()
 
