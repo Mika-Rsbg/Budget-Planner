@@ -46,13 +46,14 @@ class ImportOverview(BaseToplevelWindow):
         self.sheet_data: list[list[str | tuple[str] | int | float]] = data
         self.account_data: Account = account_data
         self.new_balance: str = new_balance
-        self.transactions_by_import_id: dict[int, TransactionImportView] = {
-            transaction.import_id: transaction for transaction in transactions
+        self.transactions_by_view_id: dict[int, TransactionImportView] = {
+            transaction.view_id: transaction for transaction in transactions
         }
         self.history_data = history_data
         self.latest = latest
         self.valid_file_selected = valid_file
         plugin_scope = "import-overview"
+        self.auto_categorization_toggle = tk.BooleanVar(value=True)
         self._calculate_selection_data()
         super().__init__(
             parent, plugin_scope, title, geometry, bg_color, fullscreen=True
@@ -62,7 +63,7 @@ class ImportOverview(BaseToplevelWindow):
         """Calculate row indices for the different transaction selections.
 
         The calculated indices are stored in instance attributes and are based
-        on the current state of ``transactions_by_import_id``.
+        on the current state of ``transactions_by_view_id``.
 
         The following selections are calculated:
             rows_not_in_database:
@@ -81,7 +82,7 @@ class ImportOverview(BaseToplevelWindow):
         self.rows_not_in_database: list[int] = [
             index
             for index, transaction in enumerate(
-                self.transactions_by_import_id.values()
+                self.transactions_by_view_id.values()
             )
             if not transaction.in_database
         ]
@@ -90,7 +91,7 @@ class ImportOverview(BaseToplevelWindow):
         self.rows_in_database: list[int] = [
             index
             for index, transaction in enumerate(
-                self.transactions_by_import_id.values()
+                self.transactions_by_view_id.values()
             )
             if transaction.in_database
         ]
@@ -100,7 +101,7 @@ class ImportOverview(BaseToplevelWindow):
         self.rows_not_in_database_not_categorized: list[int] = [
             index
             for index, transaction in enumerate(
-                self.transactions_by_import_id.values()
+                self.transactions_by_view_id.values()
             )
             if not transaction.in_database and transaction.category_id == 0
         ]
@@ -109,7 +110,7 @@ class ImportOverview(BaseToplevelWindow):
         self.rows_categorized: list[int] = [
             index
             for index, transaction in enumerate(
-                self.transactions_by_import_id.values()
+                self.transactions_by_view_id.values()
             )
             if transaction.category_id != 0
         ]
@@ -118,7 +119,7 @@ class ImportOverview(BaseToplevelWindow):
         self.rows_not_categorized: list[int] = [
             index
             for index, transaction in enumerate(
-                self.transactions_by_import_id.values()
+                self.transactions_by_view_id.values()
             )
             if transaction.category_id == 0
         ]
@@ -444,7 +445,7 @@ class ImportOverview(BaseToplevelWindow):
         self.toggle_categorization_button = ttk.Checkbutton(
             self.categoration_frame,
             text="Automatische Zuordnung",
-            variable=tk.BooleanVar(value=True),
+            variable=self.auto_categorization_toggle,
         )
         self.toggle_categorization_button.grid(row=0, column=3, padx=10)
         # endregion
@@ -489,8 +490,8 @@ class ImportOverview(BaseToplevelWindow):
         self.sheet_data = data
         self.account_data = account_data
         self.new_balance = new_balance
-        self.transactions_by_import_id = {
-            transaction.import_id: transaction for transaction in transactions
+        self.transactions_by_view_id = {
+            transaction.view_id: transaction for transaction in transactions
         }
         self.history_data = history_data
         self.latest = latest
@@ -514,9 +515,9 @@ class ImportOverview(BaseToplevelWindow):
                 return
 
             selected_transactions: list[TransactionImportView] = [
-                self.transactions_by_import_id[row[0]]
+                self.transactions_by_view_id[row[0]]
                 for row in data_selected_rows
-                if row and row[0] in self.transactions_by_import_id
+                if row and row[0] in self.transactions_by_view_id
             ]
 
             insert_transactions_to_db(
@@ -574,17 +575,17 @@ class ImportOverview(BaseToplevelWindow):
             )
 
             for row in data_selected_rows:
-                import_id = row[0]
+                view_id = row[0]
                 try:
-                    self.transactions_by_import_id[
-                        import_id
+                    self.transactions_by_view_id[
+                        view_id
                     ].category_id = selected_category_id
                 except KeyError:
                     logger.exception(
-                        "Transaction with import ID %s not found.", import_id
+                        "Transaction with import ID %s not found.", view_id
                     )
 
-            transactions = list(self.transactions_by_import_id.values())
+            transactions = list(self.transactions_by_view_id.values())
 
             self.sheet_data = format_data(
                 transactions, TRANSACTION_TABLE_COLUMNS

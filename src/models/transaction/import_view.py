@@ -4,7 +4,7 @@ from datetime import date as datetime
 
 @dataclass
 class TransactionImportView:
-    import_id: int  # different in ImportedTransaction
+    view_id: int  # different in ImportedTransaction
     reference: str
 
     account_number: str
@@ -32,18 +32,22 @@ class TransactionImportView:
     counterparty_id: int | None  # different in ImportedTransaction
 
     category_id: int  # different in ImportedTransaction
+    auto_category_ids: list[
+        tuple[int, int]
+    ]  # different in ImportedTransaction
 
     user_comments: str | None  # different in ImportedTransaction
     displayed_name: str | None  # different in ImportedTransaction
 
     in_database: bool = False  # different in ImportedTransaction
+    manual_category: bool = False  # different in ImportedTransaction
 
     transaction_id: int | None = None  # different in ImportedTransaction
 
     @classmethod
     def empty(cls) -> "TransactionImportView":
         return cls(
-            import_id=-1,
+            view_id=-1,
             reference="",
             account_number="",
             account_id=-1,
@@ -61,6 +65,7 @@ class TransactionImportView:
             counterparty_name="",
             counterparty_id=-1,
             category_id=-1,
+            auto_category_ids=[(-1, -1)],
             user_comments=None,
             displayed_name=None,
         )
