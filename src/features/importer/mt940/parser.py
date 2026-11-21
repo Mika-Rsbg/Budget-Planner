@@ -44,7 +44,7 @@ def split_toblocks(file_content: str) -> list[str]:
 
 
 @log_fn
-def pars_block(blocks: list[str]) -> list[ImportTransaction]:
+def parse_block(blocks: list[str]) -> list[ImportTransaction]:
     """Parse a List of "blocks" (aka a Line from the .txt) from a mt940 file.
 
     Args:
@@ -263,6 +263,6 @@ def pars_file(file_content: str) -> list[ImportTransaction]:
     """
     logger.info("Start file parsing.")
     split_content = split_toblocks(file_content)
-    parsed_content = pars_block(split_content)
+    parsed_content = parse_block(split_content)
     logger.debug("Bank statement successfully parsed.")
     return parsed_content
