@@ -237,7 +237,7 @@ def interpret_transactions(
             )
             assert db_transaction is not None
             transaction = TransactionImportView(
-                import_id=transaction_id,
+                view_id=transaction_id,
                 reference=entry.reference,
                 account_number=entry.account_number,
                 account_id=rti_account_id,
@@ -255,6 +255,7 @@ def interpret_transactions(
                 counterparty_name=entry.counterparty_name,
                 counterparty_id=rti_counterparty_id,
                 category_id=db_transaction.category_id,
+                auto_category_ids=[],
                 user_comments=db_transaction.user_comments,
                 displayed_name=db_transaction.displayed_name,
                 in_database=rti_in_database,
@@ -262,7 +263,7 @@ def interpret_transactions(
             )
         else:
             transaction = TransactionImportView(
-                import_id=transaction_id,
+                view_id=transaction_id,
                 reference=entry.reference,
                 account_number=entry.account_number,
                 account_id=rti_account_id,
@@ -280,6 +281,7 @@ def interpret_transactions(
                 counterparty_name=entry.counterparty_name,
                 counterparty_id=rti_counterparty_id,
                 category_id=rti_category_id,
+                auto_category_ids=[],
                 user_comments=rti_user_comments,
                 displayed_name=rti_displayed_name,
                 in_database=rti_in_database,
