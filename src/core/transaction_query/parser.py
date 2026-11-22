@@ -2,6 +2,7 @@ from models.category_rule.query import (
     DatePartOperator,
     DateRangeOperator,
     LogicalOperator,
+    Query,
     QueryCondition,
     QueryDatePartCondition,
     QueryDateRangeCondition,
@@ -12,10 +13,7 @@ from models.category_rule.query import (
 
 
 def parse_object(
-    query: QueryCondition
-    | QueryDatePartCondition
-    | QueryDateRangeCondition
-    | QueryGroup,
+    query: Query,
 ) -> str:
     """Convert a query object into its textual query representation.
 
@@ -79,12 +77,7 @@ def parse_object(
 
 def parse_string(
     query: str,
-) -> (
-    QueryCondition
-    | QueryDatePartCondition
-    | QueryDateRangeCondition
-    | QueryGroup
-):
+) -> Query:
     """Parse a textual query into its corresponding query object.
 
     Args:
@@ -141,12 +134,7 @@ def value_parser(value: str) -> QueryValue:
 
 def parse_simple_string(
     query: str,
-) -> (
-    QueryCondition
-    | QueryDatePartCondition
-    | QueryDateRangeCondition
-    | QueryGroup
-):
+) -> Query:
     """Parse a query containing one condition without nested groups.
 
     Args:
@@ -188,12 +176,7 @@ def parse_simple_string(
 
 def parse_nested_string(
     query: str,
-) -> (
-    QueryCondition
-    | QueryDatePartCondition
-    | QueryDateRangeCondition
-    | QueryGroup
-):
+) -> Query:
     """Parse a query string containing nested logical groups.
 
     A group starts with ``(`` and ends with ``)``. All direct children of a

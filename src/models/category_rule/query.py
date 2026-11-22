@@ -74,8 +74,16 @@ class QueryGroup:
     ]
 
 
+Query: TypeAlias = (
+    QueryCondition
+    | QueryDatePartCondition
+    | QueryDateRangeCondition
+    | QueryGroup
+)
+
+
 example_query = QueryGroup(
-    operator=LogicalOperator.AND,
+    operator=LogicalOperator.OR,
     children=[
         QueryCondition(
             field="purpose", operator=QueryOperator.CONTAINS, value="test"
