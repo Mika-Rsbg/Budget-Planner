@@ -161,6 +161,11 @@ Query: TypeAlias = (
 )
 
 
+test_query = QueryCondition(
+    field="amount", operator=QueryOperator.GREATER_THAN, value=120
+)
+
+
 example_query = QueryGroup(
     operator=LogicalOperator.OR,
     children=[
