@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date as datetime
 
 
@@ -36,9 +36,9 @@ class TransactionImportView:
     user_comments: str | None  # different in ImportedTransaction
     displayed_name: str | None  # different in ImportedTransaction
 
-    auto_category_ids: list[tuple[int, int]] | None = (
-        None  # different in ImportedTransaction
-    )
+    auto_category_ids: list[tuple[int, int]] = field(
+        default_factory=list
+    )  # different in ImportedTransaction
 
     in_database: bool = False  # different in ImportedTransaction
     manual_category: bool = False  # different in ImportedTransaction
@@ -93,7 +93,7 @@ example_transaction = TransactionImportView(
     counterparty_name="test",
     counterparty_id=1,
     category_id=1,
-    auto_category_ids=None,
+    auto_category_ids=[],
     user_comments=None,
     displayed_name=None,
 )
