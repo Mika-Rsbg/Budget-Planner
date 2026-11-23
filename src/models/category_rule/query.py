@@ -16,19 +16,19 @@ class LogicalOperator(StrEnum):
 
 
 def contains(a: str, b: str) -> bool:
-    return b in a
+    return b.lower() in a.lower()
 
 
 def not_contains(a: str, b: str) -> bool:
-    return b not in a
+    return b.lower() not in a.lower()
 
 
 def starts_with(a: str, b: str) -> bool:
-    return a.startswith(b)
+    return a.casefold().startswith(b.casefold())
 
 
 def ends_with(a: str, b: str) -> bool:
-    return a.endswith(b)
+    return a.casefold().endswith(b.casefold())
 
 
 class QueryOperator(StrEnum):
@@ -161,9 +161,23 @@ Query: TypeAlias = (
 )
 
 
-test_query = QueryCondition(
-    field="amount", operator=QueryOperator.GREATER_THAN, value=120
+test_query = QueryGroup(
+    operator=LogicalOperator.OR,
+    children=[
+        QueryCondition(
+            field="amount", operator=QueryOperator.GREATER_THAN, value=120
+        ),
+        QueryCondition(
+            field="purpose",
+            operator=QueryOperator.CONTAINS,
+            value="test",
+        ),
+    ],
 )
+
+# test_query = QueryCondition(
+#     field="amount", operator=QueryOperator.GREATER_THAN, value=120
+# )
 
 
 example_query = QueryGroup(
