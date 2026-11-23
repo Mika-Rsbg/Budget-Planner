@@ -1,5 +1,4 @@
 import logging
-import tkinter as tk
 from tkinter import ttk
 
 import tksheet
@@ -10,20 +9,27 @@ from gui.app.basewindow import BaseWindow
 logger = logging.getLogger(__name__)
 
 
-class CategoryRulePage(BaseToplevelWindow):
+class CategoryRuleOverviewPage(BaseToplevelWindow):
     def __init__(
         self,
         master: BaseWindow,
-        plugin_scope: str = "automationcreation",
-        title: str = "Kategorie Zuordnungsregel für "
+        plugin_scope: str = "rule-overview",
+        title: str = "Kategorie Zuordnungsregelen für "
         "Transaktionsimport verwalten",
         geometry: str = "600x160",
     ) -> None:
-        self.sheet_header = ["Aktiv", "Datum", "Prio", "Kategorie", "Name"]
+        self.sheet_header = [
+            "Aktiv",
+            "Datum",
+            "Prio",
+            "Kategorie",
+            "Name",
+            "Query",
+        ]
         self.sheet_data = [
-            [True, "21.03.2026", 0, 2, "Test"],
-            [False, "21.03.2026", 0, 2, "Test"],
-            [True, "21.03.2026", 0, 2, "Test"],
+            [True, "21.03.2026", 0, 2, "Test", ""],
+            [False, "21.03.2026", 0, 2, "Test", ""],
+            [True, "21.03.2026", 0, 2, "Test", ""],
         ]
         super().__init__(
             master, plugin_scope, title, geometry, fullscreen=True
@@ -79,7 +85,8 @@ class CategoryRulePage(BaseToplevelWindow):
         self.sheet.readonly(True)
 
         # self.sheet.bind(
-        #     "<<SheetSelect>>", lambda event=None: self._update_selected_count()
+        #     "<<SheetSelect>>",
+        #     lambda event=None: self._update_selected_count()
         # )
         self.sheet.pack(fill="both", expand=True)
 
@@ -109,7 +116,9 @@ class CategoryRulePage(BaseToplevelWindow):
         #     foreground="black",
         #     compound="right",
         # )
-        # self.account_balance_label.grid(row=0, column=0, sticky="ew", pady=10)
+        # self.account_balance_label.grid(
+        #     row=0, column=0, sticky="ew", pady=10
+        # )
         # self.acc_old_balance_readonly_entry = ttk.Entry(
         #     self.account_info_frame,
         #     state="readonly",
