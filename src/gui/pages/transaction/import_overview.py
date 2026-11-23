@@ -4,6 +4,8 @@ from tkinter import ttk
 
 import tksheet
 
+from core.logging.logging_tools import log_fn
+from core.transaction_query.evaluator import evaluate
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from features.importer.formater.table_formater import format_data
 from features.importer.mt940.importer import (
@@ -14,6 +16,7 @@ from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 from gui.pages.category.selectionpage import CategorySelectionPage
 from models.account.entity import Account
+from models.category_rule.entity import CategoryRule, example_rule
 from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
@@ -58,6 +61,7 @@ class ImportOverview(BaseToplevelWindow):
         super().__init__(
             parent, plugin_scope, title, geometry, bg_color, fullscreen=True
         )
+        self.run_auto_category_assignment()
 
     def _calculate_selection_data(self) -> None:
         """Calculate row indices for the different transaction selections.
@@ -152,6 +156,7 @@ class ImportOverview(BaseToplevelWindow):
         self._update_selected_count()
 
     def _refresh_selection(self):
+        self.run_auto_category_assignment()
         mode = self.selection_mode_dropdown.get()
         if mode == "Nicht importiert":
             self._select_rows(self.rows_not_in_database)
@@ -497,6 +502,7 @@ class ImportOverview(BaseToplevelWindow):
         self.latest = latest
         self.valid_file_selected = valid_file
         self._calculate_selection_data()
+        self.run_auto_category_assignment()
         self.reload()
 
     def import_transactions(self):
@@ -580,6 +586,9 @@ class ImportOverview(BaseToplevelWindow):
                     self.transactions_by_view_id[
                         view_id
                     ].category_id = selected_category_id
+                    self.transactions_by_view_id[
+                        view_id
+                    ].manual_category = True
                 except KeyError:
                     logger.exception(
                         "Transaction with import ID %s not found.", view_id
@@ -607,3 +616,49 @@ class ImportOverview(BaseToplevelWindow):
             logger.debug(
                 "Category assignment cancelled: No category selected."
             )
+
+    @log_fn
+    def run_auto_category_assignment(self):
+        # TODO: add docs
+
+        logger.debug("Starting auto category assignment for all transactions.")
+
+        if self.auto_categorization_toggle.get():
+            rules: list[CategoryRule] = [example_rule]
+            # TODO: implement retrieving Rules from database
+        else:
+            rules = []
+
+        for transaction in self.transactions_by_view_id.values():
+            transaction.auto_category_ids.clear()
+
+            if transaction.manual_category:
+                continue
+
+            transaction.category_id = 0
+
+            for rule in rules:
+                if not rule.enabled:
+                    continue
+
+                if not evaluate(rule, transaction):
+                    continue
+
+                transaction.auto_category_ids.append(
+                    (rule.priority, rule.category_id)
+                )
+
+            transaction.auto_category_ids.sort(key=lambda item: item[0])
+
+            if transaction.auto_category_ids:
+                _, category_id = transaction.auto_category_ids[0]
+                transaction.category_id = category_id
+
+        transactions = list(self.transactions_by_view_id.values())
+
+        self.sheet_data = format_data(transactions, TRANSACTION_TABLE_COLUMNS)
+
+        self._calculate_selection_data()
+        self.reload()
+
+        logger.debug("Automatic category assignment completed")
