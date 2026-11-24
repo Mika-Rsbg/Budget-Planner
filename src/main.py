@@ -38,7 +38,7 @@ def main_test() -> None:
     """
     from core.database.schema import create_database
     from gui.app.basewindow import BaseWindow
-    from gui.pages.category_rule.rulepage import CategoryRulePage
+    from gui.pages.category_rule.rule_overview import CategoryRuleOverviewPage
 
     logger.info("")
     logger.info("################### TEST MODE STARTED #####################")
@@ -52,7 +52,7 @@ def main_test() -> None:
         auto_ui_init=False,
     )
     app.withdraw()  # Hide the root window
-    tested_page = CategoryRulePage(app)
+    tested_page = CategoryRuleOverviewPage(app)
     app.wait_window(tested_page)
     app.destroy()
 
@@ -76,7 +76,9 @@ def main_fn_test() -> None:
     )
     logger.info("")
     create_database()
+    print(" ")
     print(get_total_cash_history(start_date=date(2024, 12, 1)))
+    print(" ")
 
 
 if __name__ == "__main__":
