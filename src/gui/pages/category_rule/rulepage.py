@@ -193,16 +193,21 @@ class CategoryRulePage(BaseToplevelWindow):
         """Erstellt die Auswahl der vorhandenen Regeln."""
         frame = ttk.Frame(self.main_frame, padding=10)
         frame.grid(row=0, column=0, sticky="ew")
+
         ttk.Label(frame, text="Ausgewählte Zuordnungsregel:").grid(
             row=0, column=0, sticky="w"
         )
+
         self.rule_selector = ttk.Combobox(
             frame, state="readonly", values=self.rule_names
         )
         self.rule_selector.grid(row=0, column=1, sticky="ew", padx=10)
         self.rule_selector.current(self.selected_rule_index)
         self.rule_selector.bind("<<ComboboxSelected>>", self._on_rule_selected)
+
         frame.columnconfigure(1, weight=1)
+
+        # ============= Separator =============
         ttk.Separator(self.main_frame, orient="horizontal").grid(
             row=1, column=0, sticky="ew", padx=10
         )
@@ -215,6 +220,7 @@ class CategoryRulePage(BaseToplevelWindow):
         """Erstellt die nicht editierbare Transaktionsvorschau."""
         frame = ttk.Frame(self.main_frame, padding=10)
         frame.grid(row=2, column=0, sticky="nsew")
+
         self.sheet = tksheet.Sheet(
             frame, headers=self.sheet_header, data=self.sheet_data
         )
@@ -223,6 +229,8 @@ class CategoryRulePage(BaseToplevelWindow):
             self.sheet.column_width(column=5, width=500)
         self.sheet.readonly(True)
         self.sheet.pack(fill="both", expand=True)
+
+        # ============= Separator =============
         ttk.Separator(self.main_frame, orient="horizontal").grid(
             row=3, column=0, sticky="ew", padx=10
         )
@@ -234,21 +242,25 @@ class CategoryRulePage(BaseToplevelWindow):
         frame.grid(row=4, column=0, sticky="ew")
         self.rule_detail_frame = frame
 
+        # ====== Rule Name ======
         self._add_detail_label(frame, "Name der Zuordnungsregel:", 0)
         self.rule_name_entry = ttk.Entry(frame)
         self.rule_name_entry.grid(row=0, column=1, sticky="ew")
         self.rule_id_entry = ttk.Entry(frame, state="readonly")
         self.rule_id_entry.grid(row=0, column=2, sticky="ew", padx=10)
 
+        # ====== Rule Priority ======
         self._add_detail_label(frame, "Priorität der Zuordnungsregel:", 1)
         self.priority_entry = ttk.Entry(frame)
         self.priority_entry.grid(row=1, column=1, sticky="ew", pady=5)
 
+        # ====== Rule Enabled ======
         self._add_detail_label(frame, "Status der Zuordnungsregel:", 2)
         ttk.Checkbutton(
             frame, text="Zuordnung ist aktiviert", variable=self.enabled
         ).grid(row=2, column=1, sticky="w", padx=10)
 
+        # ====== Rule Category ======
         self._add_detail_label(frame, "Kategorie der Zuordnungsregel:", 3)
         self.category_selector = ttk.Combobox(
             frame, values=self.category_names
@@ -261,6 +273,7 @@ class CategoryRulePage(BaseToplevelWindow):
         self.category_id_entry = ttk.Entry(frame, state="readonly")
         self.category_id_entry.grid(row=3, column=2, sticky="ew", padx=10)
 
+        # ====== Rule Query ======
         self._add_detail_label(frame, "Query der Zuordnungsregel:", 4)
         self.query_entry = ttk.Entry(frame)
         self.query_entry.grid(row=4, column=1, sticky="ew")
@@ -274,6 +287,8 @@ class CategoryRulePage(BaseToplevelWindow):
         frame.columnconfigure(0, minsize=200)
         frame.columnconfigure(1, minsize=300, weight=1)
         self._refresh_selection(reload=False)
+
+        # ============= Separator =============
         ttk.Separator(self.main_frame, orient="horizontal").grid(
             row=5, column=0, sticky="ew", padx=10
         )
@@ -287,6 +302,7 @@ class CategoryRulePage(BaseToplevelWindow):
         """Erstellt Test-, Speichern- und Abbrechen-Schaltflächen."""
         frame = ttk.Frame(self.main_frame, padding=10)
         frame.grid(row=6, column=0, sticky="ew")
+
         ttk.Button(
             frame, text="Testen", width=30, command=self.test_rule
         ).grid(row=0, column=0, padx=10)
