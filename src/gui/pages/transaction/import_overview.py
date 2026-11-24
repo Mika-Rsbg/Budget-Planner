@@ -5,18 +5,21 @@ from tkinter import ttk
 import tksheet
 
 from core.logging.logging_tools import log_fn
-from core.transaction_query.evaluator import evaluate
+from features.category_rule.category_rule_repository import (
+    get_category_rule_data,
+)
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from features.importer.formater.table_formater import format_data
 from features.importer.mt940.importer import (
     import_mt940_file,
     insert_transactions_to_db,
 )
+from features.importer.transaction_query.evaluator import evaluate
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 from gui.pages.category.selectionpage import CategorySelectionPage
 from models.account.entity import Account
-from models.category_rule.entity import CategoryRule, example_rule
+from models.category_rule.entity import CategoryRule
 from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
@@ -624,8 +627,7 @@ class ImportOverview(BaseToplevelWindow):
         logger.debug("Starting auto category assignment for all transactions.")
 
         if self.auto_categorization_toggle.get():
-            rules: list[CategoryRule] = [example_rule]
-            # TODO: implement retrieving Rules from database
+            rules: list[CategoryRule] = get_category_rule_data()
         else:
             rules = []
 

@@ -3,6 +3,11 @@ from tkinter import ttk
 
 import tksheet
 
+from features.category_rule.category_rule_repository import (
+    get_category_rule_data,
+)
+from features.importer.formater.table_config import CATEGORY_RULE_TABLE_COLUMNS
+from features.importer.formater.table_formater import format_data
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 
@@ -19,18 +24,12 @@ class CategoryRuleOverviewPage(BaseToplevelWindow):
         geometry: str = "600x160",
     ) -> None:
         self.sheet_header = [
-            "Aktiv",
-            "Datum",
-            "Prio",
-            "Kategorie",
-            "Name",
-            "Query",
+            column.header for column in CATEGORY_RULE_TABLE_COLUMNS
         ]
-        self.sheet_data = [
-            [True, "21.03.2026", 0, 2, "Test", ""],
-            [False, "21.03.2026", 0, 2, "Test", ""],
-            [True, "21.03.2026", 0, 2, "Test", ""],
-        ]
+        category_rules = get_category_rule_data()
+        self.sheet_data = format_data(
+            category_rules, CATEGORY_RULE_TABLE_COLUMNS
+        )
         super().__init__(
             master, plugin_scope, title, geometry, fullscreen=True
         )

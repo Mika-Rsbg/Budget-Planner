@@ -12,18 +12,21 @@ from tkinter import ttk
 
 import tksheet
 
-from core.transaction_query.evaluator import evaluate
 from features.category.category_repository import get_category_data
 from features.category.service import (
     get_category_id_name_mapping,
     get_category_name_id_mapping,
     get_category_names,
 )
+from features.category_rule.category_rule_repository import (
+    get_category_rule_data,
+)
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from features.importer.formater.table_formater import format_data
+from features.importer.transaction_query.evaluator import evaluate
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
-from models.category_rule.entity import CategoryRule, example_rule
+from models.category_rule.entity import CategoryRule
 from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
@@ -81,7 +84,7 @@ class CategoryRulePage(BaseToplevelWindow):
     def _load_rules(self) -> None:
         """Initialisiert die derzeit verfügbaren Beispielregeln."""
         # TODO: Regeln aus dem Repository bzw. der Datenbank laden.
-        self.rules: list[CategoryRule] = [example_rule, example_rule]
+        self.rules: list[CategoryRule] = get_category_rule_data()
         self.rule_names = [rule.name for rule in self.rules]
         self.rule_id_by_name = {rule.name: rule.id for rule in self.rules}
         self.rule_by_id = {rule.id: rule for rule in self.rules}
