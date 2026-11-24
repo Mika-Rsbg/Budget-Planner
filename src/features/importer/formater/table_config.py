@@ -25,3 +25,11 @@ TRANSACTION_TABLE_COLUMNS = [
     TableColumn("opening_balance", "Eröffnungssaldo", format_mt940_currency),
     TableColumn("category_id", "Kategorie ID"),
 ]
+
+CATEGORY_RULE_TABLE_COLUMNS = [
+    TableColumn("enabled", "Aktiv"),
+    TableColumn("priority", "Priorität"),
+    TableColumn("category_id", "Kategorie"),
+    TableColumn("name", "Name"),
+    TableColumn("rule", "Query"),
+]
