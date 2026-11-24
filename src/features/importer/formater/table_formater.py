@@ -2,22 +2,21 @@ import logging
 from typing import Any
 
 from features.importer.formater.table_config import TableColumn
-from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
 
 
 def format_data(
-    data: list[TransactionImportView], columns: list[TableColumn]
+    data: list[Any], columns: list[TableColumn]
 ) -> list[list[Any]]:
-    """Convert imported transactions into rows suitable for a table view.
+    """Convert data into rows suitable for a table view.
 
     Each returned row follows the order of ``columns``. Values are read from
     the transaction attribute named by ``TableColumn.attribute`` and are
     passed through the column's formatter when one is configured.
 
     Args:
-        data: Transactions to convert.
+        data: Data to convert.
         columns: Column definitions describing the attribute and optional
             formatter to use for each cell.
 
@@ -33,11 +32,11 @@ def format_data(
     """
     formatted_data = []
 
-    for transaction in data:
+    for set in data:
         row = []
 
         for column in columns:
-            value = getattr(transaction, column.attribute)
+            value = getattr(set, column.attribute)
 
             if column.formatter is not None:
                 value = column.formatter(value)
@@ -46,5 +45,5 @@ def format_data(
 
         formatted_data.append(row)
 
-    logger.debug("Formatted TransactionImportView's for table view.")
+    logger.debug("Formatted data for table view.")
     return formatted_data
