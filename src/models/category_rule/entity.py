@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 
-from models.category_rule.query import (
-    Query,
-    test_query,
-)
+from models.category_rule.query import Query
 
 
 @dataclass
@@ -21,14 +18,3 @@ class CategoryRule:
     rule: str
 
     query: Query | None = None
-
-
-example_rule = CategoryRule(
-    id=1,
-    name="Test Query",
-    priority=1,
-    enabled=True,
-    category_id=2,
-    rule="",
-    query=test_query,
-)
