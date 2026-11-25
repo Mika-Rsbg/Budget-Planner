@@ -19,39 +19,39 @@ class QueryFieldType(StrEnum):
 
 @dataclass(frozen=True)
 class QueryFieldDefinition:
-    name: str
+    field: str
     label: str
     field_type: QueryFieldType
 
 
 QUERY_FIELDS = {
     "date": QueryFieldDefinition(
-        name="date",
+        field="date",
         label="Datum",
         field_type=QueryFieldType.DATE,
     ),
     "amount": QueryFieldDefinition(
-        name="amount",
+        field="amount",
         label="Betrag",
         field_type=QueryFieldType.FLOAT,
     ),
     "transaction_typ_number": QueryFieldDefinition(
-        name="transaction_typ_number",
+        field="transaction_typ_number",
         label="Transaktions Typ Nummer",
         field_type=QueryFieldType.SIMPLE_NUMBER,
     ),
     "purpose": QueryFieldDefinition(
-        name="purpose",
+        field="purpose",
         label="Verwendungszweck",
         field_type=QueryFieldType.STRING,
     ),
     "counterparty_account_number": QueryFieldDefinition(
-        name="counterparty_account_number",
+        field="counterparty_account_number",
         label="Counterparty Kontonummer",
         field_type=QueryFieldType.SIMPLE_NUMBER,
     ),
     "counterparty_name": QueryFieldDefinition(
-        name="counterparty_name",
+        field="counterparty_name",
         label="Counterparty Name",
         field_type=QueryFieldType.STRING,
     ),
