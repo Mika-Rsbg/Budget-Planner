@@ -1,15 +1,23 @@
+from __future__ import annotations
+
 import logging
 from tkinter import ttk
 
 import tksheet
 
 from features.category_rule.category_rule_repository import (
+    delete_category_rule,
     get_category_rule_data,
 )
-from features.importer.formater.table_config import CATEGORY_RULE_TABLE_COLUMNS
+from features.importer.formater.table_config import (
+    CATEGORY_RULE_TABLE_COLUMNS,
+)
 from features.importer.formater.table_formater import format_data
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
+from gui.pages.category_rule.rulepage import CategoryRulePage
+from models.category_rule.entity import CategoryRule
+from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +26,31 @@ class CategoryRuleOverviewPage(BaseToplevelWindow):
     def __init__(
         self,
         master: BaseWindow,
+        transactions_by_view_id: dict[int, TransactionImportView],
         plugin_scope: str = "rule-overview",
         title: str = "Kategorie Zuordnungsregelen für "
         "Transaktionsimport verwalten",
-        geometry: str = "600x160",
+        geometry: str = "1500x844",
     ) -> None:
+        self.parent = master
+        self.transactions_by_view_id = transactions_by_view_id
+        self._load_rules()
+
         self.sheet_header = [
             column.header for column in CATEGORY_RULE_TABLE_COLUMNS
         ]
-        category_rules = get_category_rule_data()
-        self.sheet_data = format_data(
-            category_rules, CATEGORY_RULE_TABLE_COLUMNS
-        )
+        self.sheet_data = format_data(self.rules, CATEGORY_RULE_TABLE_COLUMNS)
+        self.selected_rule: CategoryRule
+        self._load_rules()
         super().__init__(
-            master, plugin_scope, title, geometry, fullscreen=True
+            master, plugin_scope, title, geometry, fullscreen=False
         )
+
+    def _load_rules(self) -> None:
+        """Initialisiert die derzeit verfügbaren Beispielregeln."""
+        self.rules: list[CategoryRule] = get_category_rule_data()
+        self.rule_id_by_name = {rule.name: rule.id for rule in self.rules}
+        self.rule_by_id = {rule.id: rule for rule in self.rules}
 
     def init_ui(self) -> None:
         # ============= Header =============
@@ -42,17 +60,26 @@ class CategoryRuleOverviewPage(BaseToplevelWindow):
         # self.header_frame.grid_columnconfigure(0, minsize=550)
         self.create_rule_button = ttk.Button(
             self.header_frame,
-            text="Neu Regel erstellen",
+            text="Neue Regel erstellen",
             command=self.create_rule,
         )
+        self.separator = ttk.Separator(self.header_frame, orient="vertical")
+        self.separator.grid(row=0, column=1, sticky="ns", padx=10)
         self.create_rule_button.grid(row=0, column=0, padx=10)
         self.delete_rule_button = ttk.Button(
             self.header_frame,
-            text="Ausgewählte Regel löschen",
-            command=self.create_rule,
+            text="Regel löschen",
+            command=self.delete_rule,
         )
-        self.delete_rule_button.grid(row=0, column=1, padx=10)
+        self.delete_rule_button.grid(row=0, column=2, padx=10)
         self.delete_rule_button.config(state="disabled")
+        self.edit_rule_button = ttk.Button(
+            self.header_frame,
+            text="Regel bearbeiten",
+            command=self.edit_rule,
+        )
+        self.edit_rule_button.grid(row=0, column=3, padx=10)
+        self.edit_rule_button.config(state="disabled")
 
         # ============= Separator =============
         self.separator = ttk.Separator(self.main_frame, orient="horizontal")
@@ -83,6 +110,32 @@ class CategoryRuleOverviewPage(BaseToplevelWindow):
         self.sheet.enable_bindings("single_select", "row_select")
         self.sheet.readonly(True)
 
+        def on_double_click(event):
+            if self.sheet.identify_column(event) == 0:
+                return
+            identified_row = self.sheet.identify_row(event)
+            row = identified_row if identified_row is not None else 0
+            self.edit_rule(row=row)
+
+        def on_cell_select(event):
+            self.delete_rule_button.config(state="enable")
+            self.edit_rule_button.config(state="enable")
+
+            identified_row = self.sheet.identify_row(event)
+            row = identified_row if identified_row is not None else 0
+            id = self.sheet.get_cell_data(row, 1)
+
+            self.selected_rule = self.rule_by_id[id]
+
+        def on_deselect(event):
+            self.delete_rule_button.config(state="disabled")
+            self.edit_rule_button.config(state="disabled")
+
+        self.sheet.bind("<Double-Button-1>", on_double_click)
+
+        self.sheet.extra_bindings("cell_select", func=on_cell_select)
+        self.sheet.extra_bindings("deselect", func=on_deselect)
+
         # self.sheet.bind(
         #     "<<SheetSelect>>",
         #     lambda event=None: self._update_selected_count()
@@ -94,123 +147,54 @@ class CategoryRuleOverviewPage(BaseToplevelWindow):
         self.separator.grid(row=5, column=0, sticky="ew", padx=10)
         # endregion
 
-        # # ============= Account Info =============
-        # region
-        # account_name = self.account_data.name
-        # account_number = self.account_data.number
-        # last_database_entry = self.account_data.record_date.strftime(
-        #     "%d.%m.%Y"
-        # )
-
-        # account_balance = self.account_data.balance
-
-        # self.account_info_frame = ttk.Frame(self.main_frame, padding=10)
-        # self.account_info_frame.grid(row=2, column=0, sticky="nsew")
-
-        # # ====== Old Balance ======
-        # self.account_balance_label = ttk.Label(
-        #     self.account_info_frame,
-        #     text="Alter Kontostand:",
-        #     background=self.bg_color,
-        #     foreground="black",
-        #     compound="right",
-        # )
-        # self.account_balance_label.grid(
-        #     row=0, column=0, sticky="ew", pady=10
-        # )
-        # self.acc_old_balance_readonly_entry = ttk.Entry(
-        #     self.account_info_frame,
-        #     state="readonly",
-        #     background=self.bg_color,
-        #     foreground="black",
-        # )
-        # self.acc_old_balance_readonly_entry.config(state="normal")
-        # self.acc_old_balance_readonly_entry.delete(0, tk.END)
-        # self.acc_old_balance_readonly_entry.insert(0, str(account_balance))
-        # self.acc_old_balance_readonly_entry.config(state="readonly")
-        # self.acc_old_balance_readonly_entry.grid(
-        #     row=0, column=1, sticky="ew", padx=10
-        # )
-
-        # # ====== Account Name ======
-        # self.account_name_label = ttk.Label(
-        #     self.account_info_frame,
-        #     text="Konto Name:",
-        #     background=self.bg_color,
-        #     foreground="black",
-        #     compound="right",
-        # )
-        # self.account_name_label.grid(row=0, column=2, sticky="ew")
-        # self.acc_name_readonly_entry = ttk.Entry(
-        #     self.account_info_frame,
-        #     state="readonly",
-        #     background=self.bg_color,
-        #     foreground="black",
-        # )
-        # self.acc_name_readonly_entry.config(state="normal")
-        # self.acc_name_readonly_entry.delete(0, tk.END)
-        # self.acc_name_readonly_entry.insert(0, account_name)
-        # self.acc_name_readonly_entry.config(state="readonly")
-        # self.acc_name_readonly_entry.grid(
-        #     row=0, column=3, sticky="ew", padx=10
-        # )
-
-        # # ====== Account Number ======
-        # self.account_number_label = ttk.Label(
-        #     self.account_info_frame,
-        #     text="Konto Nummer:",
-        #     background=self.bg_color,
-        #     foreground="black",
-        #     compound="right",
-        # )
-        # self.account_number_label.grid(row=0, column=4, sticky="ew")
-        # self.acc_number_readonly_entry = ttk.Entry(
-        #     self.account_info_frame,
-        #     state="readonly",
-        #     background=self.bg_color,
-        #     foreground="black",
-        # )
-        # self.acc_number_readonly_entry.config(state="normal")
-        # self.acc_number_readonly_entry.delete(0, tk.END)
-        # self.acc_number_readonly_entry.insert(0, account_number)
-        # self.acc_number_readonly_entry.config(state="readonly")
-        # self.acc_number_readonly_entry.grid(
-        #     row=0, column=5, sticky="ew", padx=10
-        # )
-
-        # # ====== Last Database Entry ======
-        # self.last_db_entry_date_label = ttk.Label(
-        #     self.account_info_frame,
-        #     text="Letzter Eintrag vom:",
-        #     background=self.bg_color,
-        #     foreground="black",
-        #     compound="right",
-        # )
-        # self.last_db_entry_date_label.grid(row=0, column=6, sticky="ew")
-        # self.last_db_entry_readonly_entry = ttk.Entry(
-        #     self.account_info_frame,
-        #     state="readonly",
-        #     background=self.bg_color,
-        #     foreground="black",
-        # )
-        # self.last_db_entry_readonly_entry.config(state="normal")
-        # self.last_db_entry_readonly_entry.delete(0, tk.END)
-        # self.last_db_entry_readonly_entry.insert(0, last_database_entry)
-        # self.last_db_entry_readonly_entry.config(state="readonly")
-        # self.last_db_entry_readonly_entry.grid(
-        #     row=0, column=7, sticky="ew", padx=10
-        # )
-
-        # # ============= Separator =============
-        # self.separator = ttk.Separator(self.main_frame, orient="horizontal")
-        # self.separator.grid(row=3, column=0, sticky="ew", padx=10)
-        # endregion
-
         self.main_frame.columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(4, weight=1)
 
+    def edit_rule(self, row: int | None = None) -> None:
+        """Open the category rule editor for the selected rule."""
+        if row is None:
+            selected_rows = self.sheet.get_selected_rows(
+                get_cells_as_rows=True
+            )
+
+            if not selected_rows:
+                return
+
+            selected_row = next(iter(selected_rows))
+
+            if isinstance(selected_row, tuple):
+                row = selected_row[0]
+            else:
+                row = selected_row
+
+        rule_id = self.sheet.get_cell_data(row, 1)
+
+        selected_rule = self.rule_by_id.get(rule_id)
+
+        if selected_rule is None:
+            logger.error("Category rule with ID %s not found.", rule_id)
+            return
+
+        self.selected_rule = selected_rule
+
+        rulepage = CategoryRulePage(
+            self.parent,
+            self.transactions_by_view_id,
+            selected_rule=selected_rule,
+        )
+        self.wait_window(rulepage)
+
     def create_rule(self) -> None:
-        pass
+        rulepage = CategoryRulePage(
+            self.parent,
+            self.transactions_by_view_id,
+        )
+        self.wait_window(rulepage)
+        self._load_rules()
+        self.reload()
+
+    def delete_rule(self) -> None:
+        delete_category_rule(self.selected_rule)
 
     def on_checkbox_changed(self, event) -> None:
         print(event)
