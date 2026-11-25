@@ -28,6 +28,7 @@ TRANSACTION_TABLE_COLUMNS = [
 
 CATEGORY_RULE_TABLE_COLUMNS = [
     TableColumn("enabled", "Aktiv"),
+    TableColumn("id", "ID"),
     TableColumn("priority", "Priorität"),
     TableColumn("category_id", "Kategorie"),
     TableColumn("name", "Name"),
