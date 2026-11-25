@@ -160,6 +160,11 @@ Query: TypeAlias = (
     | QueryGroup
 )
 
+test_query_1 = QueryCondition(
+    field="purpose",
+    operator=QueryOperator.CONTAINS,
+    value="test",
+)
 
 test_query = QueryGroup(
     operator=LogicalOperator.OR,
