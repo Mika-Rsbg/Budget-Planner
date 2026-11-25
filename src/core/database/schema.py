@@ -203,7 +203,7 @@ def create_database(db_path: Path = config.Database.PATH) -> None:
                 CREATE TABLE IF NOT EXISTS tbl_CategoryRule (
                     i8_CategoryRuleID INTEGER PRIMARY KEY AUTOINCREMENT,
                     i8_CategoryID INTEGER NOT NULL,
-                    str_Name TEXT,
+                    str_Name TEXT UNIQUE,
                     i8_Priority INTEGER NOT NULL,
                     i8_Enabled INTEGER NOT NULL,
                     str_Rule TEXT UNIQUE,
