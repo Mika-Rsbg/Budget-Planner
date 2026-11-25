@@ -359,7 +359,9 @@ class ImportOverview(BaseToplevelWindow):
             foreground="black",
             compound="right",
         )
-        self.new_account_balance_label.grid(row=0, column=0, sticky="ew")
+        self.new_account_balance_label.grid(
+            row=0, column=0, sticky="ew", padx=10
+        )
         self.acc_new_balance_readonly_entry = ttk.Entry(
             self.selection_frame,
             state="readonly",
@@ -371,8 +373,12 @@ class ImportOverview(BaseToplevelWindow):
         self.acc_new_balance_readonly_entry.insert(0, self.new_balance)
         self.acc_new_balance_readonly_entry.config(state="readonly")
         self.acc_new_balance_readonly_entry.grid(
-            row=0, column=1, sticky="ew", padx=10
+            row=0,
+            column=1,
+            sticky="ew",
         )
+        self.separator = ttk.Separator(self.selection_frame, orient="vertical")
+        self.separator.grid(row=0, column=2, sticky="ns", padx=10)
 
         # ====== Selection Mode ======
         self.selection_mode_dropdown = ttk.Combobox(
@@ -387,12 +393,12 @@ class ImportOverview(BaseToplevelWindow):
             ],
         )
         self.selection_mode_dropdown.current(1)
-        self.selection_mode_dropdown.grid(row=0, column=2, sticky="ew")
+        self.selection_mode_dropdown.grid(row=0, column=3, sticky="ew")
         self.selection_mode_dropdown.bind(
             "<<ComboboxSelected>>", lambda _event: self._refresh_selection()
         )
 
-        self.selection_frame.grid_columnconfigure(2, minsize=250)
+        self.selection_frame.grid_columnconfigure(3, minsize=250)
 
         self.number_selected_readonly_entry = ttk.Entry(
             self.selection_frame,
@@ -403,7 +409,7 @@ class ImportOverview(BaseToplevelWindow):
         )
         self.number_selected_readonly_entry.config(justify="center")
         self.number_selected_readonly_entry.grid(
-            row=0, column=3, sticky="ew", padx=10
+            row=0, column=4, sticky="ew", padx=10
         )
 
         self._select_rows(self.rows_not_in_database)
@@ -413,7 +419,7 @@ class ImportOverview(BaseToplevelWindow):
             text="Aktualisieren",
             command=self._refresh_selection,
         )
-        self.refresh_selection_button.grid(row=0, column=4)
+        self.refresh_selection_button.grid(row=0, column=5)
 
         # ============= Separator =============
         self.separator = ttk.Separator(self.main_frame, orient="horizontal")
