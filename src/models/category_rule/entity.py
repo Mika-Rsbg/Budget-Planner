@@ -18,3 +18,17 @@ class CategoryRule:
     rule: str
 
     query: Query | None = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CategoryRule):
+            return NotImplemented
+
+        return (
+            self.id == other.id
+            and self.name == other.name
+            and self.priority == other.priority
+            and self.enabled == other.enabled
+            and self.category_id == other.category_id
+            and self.rule == other.rule
+            and self.query == other.query
+        )
