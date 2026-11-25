@@ -1,11 +1,6 @@
-"""Dialog zum Anzeigen und Testen von Kategorie-Zuordnungsregeln.
-
-Die Regelverwaltung lädt Regeln derzeit noch aus Beispieldaten. Das Speichern
-ist deshalb absichtlich als TODO markiert und verändert keine Datenbank.
-"""
-
 from __future__ import annotations
 
+import copy
 import logging
 import tkinter as tk
 from tkinter import ttk
@@ -24,9 +19,19 @@ from features.category_rule.category_rule_repository import (
 from features.importer.formater.table_config import TRANSACTION_TABLE_COLUMNS
 from features.importer.formater.table_formater import format_data
 from features.importer.transaction_query.evaluator import evaluate
+from features.importer.transaction_query.parser import (
+    parse_object,
+    parse_string,
+)
 from gui.app.basetoplevelwindow import BaseToplevelWindow
 from gui.app.basewindow import BaseWindow
 from models.category_rule.entity import CategoryRule
+from models.category_rule.query import Query, QueryGroup
+from models.category_rule.query_fields import (
+    FIELD_OPERATORS,
+    QUERY_FIELDS,
+    QueryFieldType,
+)
 from models.transaction.import_view import TransactionImportView
 
 logger = logging.getLogger(__name__)
@@ -43,7 +48,6 @@ class CategoryRulePage(BaseToplevelWindow):
     def __init__(
         self,
         master: BaseWindow,
-        header: list[str],
         transactions_by_view_id: dict[int, TransactionImportView],
         plugin_scope: str = "automationdetails",
         title: str = "Kategorie Zuordnungsregel für "
@@ -52,19 +56,23 @@ class CategoryRulePage(BaseToplevelWindow):
         selected_rule: CategoryRule | None = None,
     ) -> None:
         self.transactions_by_view_id = transactions_by_view_id
-        self.sheet_header = header
+        self.sheet_header = [
+            column.header for column in TRANSACTION_TABLE_COLUMNS
+        ]
         self.sheet_data = format_data([], TRANSACTION_TABLE_COLUMNS)
 
         self._load_categories()
         self._load_rules()
 
         self.selected_rule = selected_rule or self.rules[0]
-        self.selected_rule_index = self._rule_index(self.selected_rule)
-        self.rule_name = self.selected_rule.name
-        self.priority = self.selected_rule.priority
-        self.enabled = tk.BooleanVar(value=self.selected_rule.enabled)
-        self.category_id = self.selected_rule.category_id
-        self.query = self._rule_query(self.selected_rule)
+        self.rule_in_entries = copy.deepcopy(self.selected_rule)
+        self.selected_rule_index = self._rule_index(self.rule_in_entries)
+        self.rule_name = self.rule_in_entries.name
+        self.priority = self.rule_in_entries.priority
+        self.enabled = tk.BooleanVar(value=self.rule_in_entries.enabled)
+        self.category_id = self.rule_in_entries.category_id
+        self.query = self._rule_query(self.rule_in_entries)
+        self.rule = self.rule_in_entries.rule
 
         super().__init__(
             master, plugin_scope, title, geometry, fullscreen=False
@@ -83,16 +91,16 @@ class CategoryRulePage(BaseToplevelWindow):
 
     def _load_rules(self) -> None:
         """Initialisiert die derzeit verfügbaren Beispielregeln."""
-        # TODO: Regeln aus dem Repository bzw. der Datenbank laden.
         self.rules: list[CategoryRule] = get_category_rule_data()
         self.rule_names = [rule.name for rule in self.rules]
         self.rule_id_by_name = {rule.name: rule.id for rule in self.rules}
         self.rule_by_id = {rule.id: rule for rule in self.rules}
 
+    # region
     @staticmethod
-    def _rule_query(rule: CategoryRule) -> str:
+    def _rule_query(rule: CategoryRule) -> Query | None:
         """Liefert den Query-Text; ältere Modelle können ``None`` enthalten."""
-        return getattr(rule, "query", None) or ""
+        return getattr(rule, "query", None)
 
     def _rule_index(self, rule: CategoryRule) -> int:
         """Ermittelt die Anzeigeposition anhand der ID, nicht des Namens."""
@@ -101,7 +109,9 @@ class CategoryRulePage(BaseToplevelWindow):
                 return index
         return 0
 
-    def _refresh_selection(self, reload: bool = True) -> None:
+    def _refresh_selection(
+        self, reload: bool = True, overwrite: bool = False
+    ) -> None:
         """Überträgt die ausgewählte Regel in die sichtbaren Eingabefelder."""
         rule_name = self.rule_selector.get()
         rule_id = self.rule_id_by_name.get(rule_name)
@@ -114,22 +124,29 @@ class CategoryRulePage(BaseToplevelWindow):
             return
 
         self.selected_rule = rule
+        if overwrite:
+            self.rule_in_entries = copy.deepcopy(rule)
         self.selected_rule_index = self._rule_index(rule)
-        self.rule_name = rule.name
-        self.priority = rule.priority
-        self.enabled.set(bool(rule.enabled))
-        self.category_id = rule.category_id
-        self.query = self._rule_query(rule)
+        self.rule_name = self.rule_in_entries.name
+        self.priority = self.rule_in_entries.priority
+        self.enabled.set(bool(self.rule_in_entries.enabled))
+        self.category_id = self.rule_in_entries.category_id
+        self.query = self._rule_query(self.rule_in_entries)
+        self.rule = self.rule_in_entries.rule
 
         if hasattr(self, "rule_name_entry"):
             self._set_entry(self.rule_name_entry, self.rule_name)
             self._set_entry(self.priority_entry, str(self.priority))
             self._set_entry(self.rule_id_entry, str(rule.id), readonly=True)
-            self._set_entry(self.query_entry, self.query)
+            self._set_entry(self.query_entry, self.rule)
             self._show_category_id()
             category_name = self.category_id_to_name.get(self.category_id, "")
             self.category_selector.set(category_name)
         if reload:
+            self.sheet_header = [
+                column.header for column in TRANSACTION_TABLE_COLUMNS
+            ]
+            self.sheet_data = format_data([], TRANSACTION_TABLE_COLUMNS)
             self.reload()
 
     @staticmethod
@@ -144,7 +161,10 @@ class CategoryRulePage(BaseToplevelWindow):
         if readonly:
             entry.configure(state="readonly")
 
+    # endregion
+
     # --------------------------------------------------------------- callbacks
+    # region
     def _category_selected(self, _event: tk.Event | None = None) -> None:
         """Aktualisiert die Kategorie-ID passend
         zum gewählten Kategorienamen."""
@@ -181,12 +201,100 @@ class CategoryRulePage(BaseToplevelWindow):
         except tk.TclError:
             logger.debug("Combobox-Liste konnte nicht geöffnet werden")
 
+    def _get_rule_from_entries(self) -> None:
+        self.rule_in_entries.name = self.rule_name_entry.get()
+        self.rule_in_entries.priority = int(self.priority_entry.get())
+        self.rule_in_entries.enabled = self.enabled.get()
+        self.rule_in_entries.category_id = int(self.category_id_entry.get())
+        self.rule_in_entries.rule = self.query_entry.get()
+        self.rule_in_entries.query = parse_string(self.rule_in_entries.rule)
+
+    def _update_query_operators(self, field_name: str) -> None:
+        field = QUERY_FIELDS[field_name]
+
+        operators = FIELD_OPERATORS[field.field_type]
+
+        self.query_operator_selector["values"] = [
+            operator.value for operator in operators
+        ]
+
+        self.query_operator_selector.set("")
+
+        self._update_query_value_editor(field.field_type)
+
+    def _on_query_field_selected(self, event=None) -> None:
+        field_name = self.query_attribute_selector.get()
+
+        if field_name not in QUERY_FIELDS:
+            return
+
+        self._update_query_operators(field_name)
+
+    def _update_query_value_editor(self, field_type: QueryFieldType) -> None:
+        for widget in self.query_value_frame.winfo_children():
+            widget.destroy()
+
+        if (
+            field_type == QueryFieldType.STRING
+            or field_type == QueryFieldType.NUMBER
+        ):
+            self.query_value_entry = ttk.Entry(self.query_value_frame)
+            self.query_value_entry.pack(fill="x")
+
+        elif field_type == QueryFieldType.BOOLEAN:
+            self.query_value_selector = ttk.Combobox(
+                self.query_value_frame,
+                values=("True", "False"),
+                state="readonly",
+            )
+            self.query_value_selector.pack(fill="x")
+
+    def _refresh_query_tree(self) -> None:
+        self.query_tree.delete(*self.query_tree.get_children())
+        self.query_nodes = {}
+
+        if self.query is None:
+            return
+
+        self._insert_query_node("", self.query)
+
+    def _insert_query_node(self, parent: str, node: Query) -> None:
+        if isinstance(node, QueryGroup):
+            text = node.operator.value + "-Gruppe"
+            open = parent == ""
+            item_id = self.query_tree.insert(
+                parent,
+                "end",
+                text=text,
+                tags=("group",),
+                open=open,
+            )
+
+            self.query_nodes[item_id] = node
+            for child in node.children:
+                self._insert_query_node(item_id, child)
+        else:
+            text = parse_object(node)
+            item_id = self.query_tree.insert(
+                parent,
+                "end",
+                text=text,
+                tags=("condition",),
+                # open=True,
+            )
+
+            self.query_nodes[item_id] = node
+
+    # endregion
+
     # --------------------------------------------------------------------- UI
+    # region
     def init_ui(self) -> None:
         """Erstellt die Regel-Auswahl, Vorschau, Details und Aktionsleiste."""
         self._build_rule_selector()
         self._build_transaction_sheet()
         self._build_rule_details()
+        self._build_query_details()
         self._build_footer()
 
         self.main_frame.columnconfigure(0, weight=1)
@@ -217,7 +325,7 @@ class CategoryRulePage(BaseToplevelWindow):
 
     def _on_rule_selected(self, _event: tk.Event) -> None:
         """Combobox-Adapter für den Regelauswahl-Callback."""
-        self._refresh_selection()
+        self._refresh_selection(overwrite=True)
 
     def _build_transaction_sheet(self) -> None:
         """Erstellt die nicht editierbare Transaktionsvorschau."""
@@ -280,20 +388,181 @@ class CategoryRulePage(BaseToplevelWindow):
         self._add_detail_label(frame, "Query der Zuordnungsregel:", 4)
         self.query_entry = ttk.Entry(frame)
         self.query_entry.grid(row=4, column=1, sticky="ew")
-        ttk.Button(
+        self.show_query_details_button = ttk.Button(
             frame,
-            text="Eigenschaften",
+            text="Query Testen",
             width=20,
+            padding=(0, 0),
             command=self.test_rule,
-        ).grid(row=4, column=2, padx=10)
+        )
+        self.show_query_details_button.grid(row=4, column=2, padx=10)
 
         frame.columnconfigure(0, minsize=200)
         frame.columnconfigure(1, minsize=300, weight=1)
-        self._refresh_selection(reload=False)
+        self._refresh_selection(reload=False, overwrite=False)
 
         # ============= Separator =============
         ttk.Separator(self.main_frame, orient="horizontal").grid(
             row=5, column=0, sticky="ew", padx=10
+        )
+
+    def _build_query_details(self) -> None:
+        frame = ttk.Frame(self.main_frame, padding=10)
+        frame.grid(row=6, column=0, sticky="ew")
+        frame.columnconfigure(0, weight=1)
+        self.query_detail_frame = frame
+
+        # ============= Query Editor =============
+        query_frame = ttk.LabelFrame(
+            frame, text="Query bearbeiten", padding=10
+        )
+        query_frame.grid(row=0, column=0, sticky="nsew")
+
+        query_frame.columnconfigure(0, weight=3)
+        query_frame.columnconfigure(1, weight=2)
+        query_frame.rowconfigure(0, weight=1)
+
+        # ====== Query Tree ======
+        tree_frame = ttk.Frame(query_frame)
+        tree_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        tree_frame.columnconfigure(0, weight=1)
+        tree_frame.rowconfigure(0, weight=1)
+
+        # region
+        self.query_tree = ttk.Treeview(
+            tree_frame,
+            columns=(),
+            show="tree headings",
+            selectmode="browse",
+        )
+
+        self.query_tree.heading("#0", text="Element")
+        # self.query_tree.heading("value", text="Bedingung")
+
+        self.query_tree.column("#0", width=500, minwidth=120)
+        # self.query_tree.column("value", width=100, minwidth=100)
+
+        self.query_tree.grid(row=0, column=0, sticky="nsew")
+
+        tree_scrollbar = ttk.Scrollbar(
+            tree_frame, orient="vertical", command=self.query_tree.yview
+        )
+        tree_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        self.query_tree.configure(yscrollcommand=tree_scrollbar.set)
+        # endregion
+
+        # ====== Query Tree Tags ======
+        self.query_tree.tag_configure("group", foreground="#D69E36")
+        self.query_tree.tag_configure("condition", foreground="#3989D6")
+
+        # ====== Query Actions ======
+        # region
+        action_frame = ttk.Frame(tree_frame)
+        action_frame.grid(
+            row=1, column=0, columnspan=2, sticky="ew", pady=(10, 0)
+        )
+
+        ttk.Button(
+            action_frame, text="Gruppe hinzufügen", command=self.save_rule
+        ).pack(side="left", padx=(0, 5))
+
+        ttk.Button(
+            action_frame, text="Bedingung hinzufügen", command=self.save_rule
+        ).pack(side="left", padx=5)
+
+        ttk.Button(action_frame, text="Löschen", command=self.save_rule).pack(
+            side="right"
+        )
+        # endregion
+
+        # ====== Query Element Editor ======
+        editor_frame = ttk.LabelFrame(
+            query_frame, text="Element bearbeiten", padding=10
+        )
+        editor_frame.grid(row=0, column=1, sticky="nsew")
+
+        editor_frame.columnconfigure(1, weight=1)
+        # region
+
+        # ====== Element Type ======
+        ttk.Label(editor_frame, text="Elementtyp:").grid(
+            row=0, column=0, sticky="w", pady=5
+        )
+
+        self.query_type_selector = ttk.Combobox(
+            editor_frame, values=("AND", "OR", "CONDITION"), state="readonly"
+        )
+        self.query_type_selector.grid(
+            row=0, column=1, sticky="ew", padx=(10, 0), pady=5
+        )
+
+        # ====== Condition Attribute ======
+        ttk.Label(editor_frame, text="Attribut:").grid(
+            row=1, column=0, sticky="w", pady=5
+        )
+
+        self.query_attribute_selector = ttk.Combobox(
+            editor_frame, state="readonly"
+        )
+        self.query_attribute_selector.grid(
+            row=1, column=1, sticky="ew", padx=(10, 0), pady=5
+        )
+
+        # ====== Condition Operator ======
+        ttk.Label(editor_frame, text="Vergleich:").grid(
+            row=2, column=0, sticky="w", pady=5
+        )
+
+        self.query_operator_selector = ttk.Combobox(
+            editor_frame, state="readonly"
+        )
+        self.query_operator_selector.grid(
+            row=2, column=1, sticky="ew", padx=(10, 0), pady=5
+        )
+
+        # ====== Condition Value ======
+        # ttk.Label(editor_frame, text="Wert:").grid(
+        #     row=3, column=0, sticky="w", pady=5
+        # )
+
+        # self.query_value_entry = ttk.Entry(editor_frame)
+        # self.query_value_entry.grid(
+        #     row=3, column=1, sticky="ew", padx=(10, 0), pady=5
+        # )
+        # ====== Condition Value Editor ======
+        self.query_value_frame = ttk.Frame(editor_frame)
+        self.query_value_frame.grid(
+            row=3, column=0, columnspan=2, sticky="ew", pady=5
+        )
+
+        # ====== Element Actions ======
+        editor_button_frame = ttk.Frame(editor_frame)
+        editor_button_frame.grid(
+            row=4, column=0, columnspan=2, sticky="e", pady=(15, 0)
+        )
+
+        ttk.Button(
+            editor_button_frame, text="Übernehmen", command=self.save_rule
+        ).pack(side="right")
+
+        # ====== Query Selection ======
+        # self.query_tree.bind(
+        #     "<<TreeviewSelect>>",
+        #     self._on_query_selection
+        # )
+
+        self._refresh_query_tree()
+        # endregion
+
+        # ====== Frame Configuration ======
+        query_frame.columnconfigure(0, weight=1)
+        query_frame.rowconfigure(0, weight=1)
+
+        # ============= Separator =============
+        ttk.Separator(self.main_frame, orient="horizontal").grid(
+            row=7, column=0, sticky="ew", padx=10
         )
 
     @staticmethod
@@ -304,7 +573,7 @@ class CategoryRulePage(BaseToplevelWindow):
     def _build_footer(self) -> None:
         """Erstellt Test-, Speichern- und Abbrechen-Schaltflächen."""
         frame = ttk.Frame(self.main_frame, padding=10)
-        frame.grid(row=6, column=0, sticky="ew")
+        frame.grid(row=8, column=0, sticky="ew")
 
         ttk.Button(
             frame, text="Testen", width=30, command=self.test_rule
@@ -316,7 +585,10 @@ class CategoryRulePage(BaseToplevelWindow):
             frame, text="Abbrechen", width=30, command=self.destroy
         ).grid(row=0, column=2, padx=10)
 
+    # endregion
+
     # --------------------------------------------------------------- actions
+    # region
     def save_rule(self) -> None:
         """Speichert eine Regel.
 
@@ -327,7 +599,8 @@ class CategoryRulePage(BaseToplevelWindow):
 
     def test_rule(self) -> None:
         """Wendet die aktuell ausgewählte Regel auf alle Transaktionen an."""
-        rule = self.selected_rule
+        self._get_rule_from_entries()
+        rule = self.rule_in_entries
         matching_transactions: list[TransactionImportView] = []
 
         for transaction in self.transactions_by_view_id.values():
@@ -344,3 +617,5 @@ class CategoryRulePage(BaseToplevelWindow):
             matching_transactions, TRANSACTION_TABLE_COLUMNS
         )
         self.reload()
+
+    # endregion
