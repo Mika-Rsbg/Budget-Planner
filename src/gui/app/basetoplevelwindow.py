@@ -49,10 +49,13 @@ class BaseToplevelWindow(tk.Toplevel):
         style = ttk.Style(self)
         style.theme_use("clam")
         style.configure("TFrame", background=self.bg_color)
+        style.configure("TLabelframe", background=self.bg_color)
+        style.configure("TLabelframe.Label", background=self.bg_color)
         style.configure("TLabel", background=self.bg_color)
         style.configure("TButton", background=self.bg_color)
         style.configure("TEntry", fieldbackground=self.bg_color)
         style.configure("TCheckbutton", background=self.bg_color)
+        style.configure("Treeview.Heading", background=self.bg_color)
 
     def _setup_main_frame(self) -> None:
         self.main_frame = ttk.Frame(self)
